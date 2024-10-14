@@ -1,0 +1,15 @@
+---
+repositories:
+  src/3rdParty/Sophus:
+    type: git
+    url: https://github.com/strasdat/Sophus
+    version: 1.24.6
+  src/3rdParty/g2o:
+    type: git
+    url: https://github.com/RainerKuemmerle/g2o
+    version: 20230223_git
+  src/3rdParty/Pangolin:
+    type: git
+    url: https://github.com/stevenlovegrove/Pangolin
+    version: v0.9.2
+  
