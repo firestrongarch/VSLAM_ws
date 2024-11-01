@@ -1,9 +1,7 @@
 # VSLAM_ws
-1.下载依赖
+1.下载库
 ``` 
-vcs import < dependency.yaml --shallow
+vcs import < dependencies.yaml --shallow
 
-sudo apt install libeigen3-dev libceres-dev libopencv-dev libopencv-contrib-dev
-
-# 安装Pangolin所需依赖项
-sudo apt install libboost-dev libglew-dev libepoxy-dev
+# 其他依赖可以查看对应包目录下的 README.md 文件
+sudo apt install libceres-dev libopencv-dev libopencv-contrib-dev
