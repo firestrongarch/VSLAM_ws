@@ -36,3 +36,5 @@ build
 install
 3rdParty
 .cache
+poses.txt
+poses_kf.txt

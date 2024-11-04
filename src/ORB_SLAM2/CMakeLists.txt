@@ -39,6 +39,17 @@ add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
+add_executable(stereo_uma
+Examples/Stereo/stereo_uma.cc)
+target_link_libraries(stereo_uma ${PROJECT_NAME})
+
+install(
+    TARGETS stereo_kitti stereo_uma
+    # LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    # ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    # INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Targets)
 install(EXPORT ${PROJECT_NAME}Targets
