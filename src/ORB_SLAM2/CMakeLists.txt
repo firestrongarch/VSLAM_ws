@@ -17,6 +17,8 @@ find_package(g2o REQUIRED)
 find_package(DBoW2 REQUIRED)
 # find_package(realsense2)
 
+find_package(LetNet REQUIRED)
+
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp src/*.cc)
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
 
@@ -41,7 +43,7 @@ target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
 add_executable(stereo_uma
 Examples/Stereo/stereo_uma.cc)
-target_link_libraries(stereo_uma ${PROJECT_NAME})
+target_link_libraries(stereo_uma ${PROJECT_NAME} LetNet::LetNet)
 
 install(
     TARGETS stereo_kitti stereo_uma
@@ -66,7 +68,7 @@ configure_package_config_file(
     NO_CHECK_REQUIRED_COMPONENTS_MACRO
 )
 
-# # Install cmake targets
+# Install cmake targets
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
             # ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
         DESTINATION lib/cmake/${PROJECT_NAME})

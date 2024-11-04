@@ -27,6 +27,9 @@
 
 #include<opencv2/core/core.hpp>
 #include<orbslam2/System.h>
+#include <thread>
+
+#include "LetNet/letnet.h"
 
 using namespace std;
 
@@ -144,6 +147,7 @@ int main(int argc, char **argv)
     cout << "Start processing sequence ..." << endl;
     cout << "Images in the sequence: " << nImages << endl << endl;
 
+    LetNet net("/home/fu/Downloads/LET-NET-main/model");
     // Main loop
     // step 4 对每一张输入的图像执行追踪
     cv::Mat imLeft, imRight, imLeftRect, imRightRect;
@@ -188,7 +192,10 @@ int main(int argc, char **argv)
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         // Pass the images to the SLAM system
         // step 4.5 开始追踪
-        SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
+        cv::Mat left,right;
+        net.extract(imLeftRect, left);
+        net.extract(imRightRect, right);
+        SLAM.TrackStereo(left,right,tframe);
 
         // step 4.6 追踪完成，停止计时，计算追踪时间
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -197,16 +204,16 @@ int main(int argc, char **argv)
 
         vTimesTrack[ni]=ttrack;
 
-        // // Wait to load the next frame
-        // // step 4.7 等待一段时间以符合下一帧图像的时间戳
-        // double T=0;
-        // if(ni<nImages-1)
-        //     T = vTimeStamp[ni+1]-tframe;
-        // else if(ni>0)
-        //     T = tframe-vTimeStamp[ni-1];
+        // Wait to load the next frame
+        // step 4.7 等待一段时间以符合下一帧图像的时间戳
+        double T=0;
+        if(ni<nImages-1)
+            T = vTimeStamp[ni+1]-tframe;
+        else if(ni>0)
+            T = tframe-vTimeStamp[ni-1];
 
-        // if(ttrack<T)
-        //     usleep((T-ttrack)*1e6);
+        if(ttrack<T)
+            std::this_thread::sleep_for((T-ttrack)*1ns);
     }
 
     // step 5 追踪过程执行完毕，退出系统
