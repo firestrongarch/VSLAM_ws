@@ -1,1 +1,3 @@
 include ( "${CMAKE_CURRENT_LIST_DIR}/LetNetTargets.cmake" )
+set(ncnn_DIR /home/fu/Documents/SDK/ncnn/lib/cmake/ncnn)
+find_package(ncnn REQUIRED)

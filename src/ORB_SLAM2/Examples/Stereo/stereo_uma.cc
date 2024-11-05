@@ -25,7 +25,9 @@
 #include<fstream>
 #include<chrono>
 
+#include <opencv2/calib3d.hpp>
 #include<opencv2/core/core.hpp>
+#include <opencv2/core/mat.hpp>
 #include<orbslam2/System.h>
 #include <thread>
 
@@ -85,51 +87,28 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    cv::Mat K_l, K_r, P_l, P_r, R_l, R_r, D_l, D_r;
-    //相机内参
-    fsSettings["LEFT.K"] >> K_l;
-    fsSettings["RIGHT.K"] >> K_r;
-    //TODO 目测是经过双目立体矫正后的投影矩阵
-    fsSettings["LEFT.P"] >> P_l;
-    fsSettings["RIGHT.P"] >> P_r;
+    cv::Mat K_l, K_r, R_l, T_l, D_l, D_r;
 
-    // 修正变换矩阵,见下面的函数调用
-    fsSettings["LEFT.R"] >> R_l;
-    fsSettings["RIGHT.R"] >> R_r;
+    //相机内参
+    fsSettings["cam0"]["K"] >> K_l;
+    fsSettings["cam1"]["K"] >> K_r;
+    fsSettings["cam0"]["R"] >> R_l;
+    fsSettings["cam0"]["T"] >> T_l;
 
     //去畸变参数
-    fsSettings["LEFT.D"] >> D_l;
-    fsSettings["RIGHT.D"] >> D_r;
-
-    //图像尺寸
-    int rows_l = fsSettings["LEFT.height"];
-    int cols_l = fsSettings["LEFT.width"];
-    int rows_r = fsSettings["RIGHT.height"];
-    int cols_r = fsSettings["RIGHT.width"];
-
-    //参数合法性检查(不为空就行)
-    if(K_l.empty() || K_r.empty() || P_l.empty() || P_r.empty() || R_l.empty() || R_r.empty() || D_l.empty() || D_r.empty() ||
-            rows_l==0 || rows_r==0 || cols_l==0 || cols_r==0)
-    {
-        cerr << "ERROR: Calibration parameters to rectify stereo are missing!" << endl;
-        return -1;
-    }
+    fsSettings["cam0"]["D"] >> D_l;
+    fsSettings["cam1"]["D"] >> D_r;
 
     //存储四个映射矩阵
     cv::Mat M1l,M2l,M1r,M2r;
-
-    const int ImgWidth = 1024;
-    const int ImgHeight = 768;
-    cv::Size imageSize(ImgWidth, ImgHeight);
-    cv::Mat NewK_l;
-    cv::Mat NewK_r;
-    cv::fisheye::estimateNewCameraMatrixForUndistortRectify(K_l, D_l, imageSize, cv::Mat(),NewK_l);
-    cout << "1\n";
-    cv::fisheye::initUndistortRectifyMap(K_l, D_l, cv::Mat(), NewK_l,imageSize, CV_16SC2, M1l, M2l);
-
-    cv::fisheye::estimateNewCameraMatrixForUndistortRectify(K_r, D_r, imageSize, cv::Mat(),NewK_r);
-    cv::fisheye::initUndistortRectifyMap(K_r, D_r, cv::Mat(), NewK_r,imageSize, CV_16SC2, M1r, M2r);
-
+    const int IMG_W = 1024;
+    const int IMG_H = 768;
+    cv::Size imageSize(IMG_W, IMG_H);
+    cv::Mat R1, R2, P1, P2, Q;
+    cv::stereoRectify(K_l, D_l, K_r, D_r,
+        imageSize, R_l, T_l, R1, R2, P1, P2, Q);
+    cv::fisheye::initUndistortRectifyMap(K_l, D_l, R1, P1,imageSize, CV_16SC2, M1l, M2l);
+    cv::fisheye::initUndistortRectifyMap(K_r, D_r, R2, P2,imageSize, CV_16SC2, M1r, M2r);
     // step 3 构造SLAM系统
 
     // 获取图像数目
@@ -192,10 +171,11 @@ int main(int argc, char **argv)
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
         // Pass the images to the SLAM system
         // step 4.5 开始追踪
-        cv::Mat left,right;
-        net.extract(imLeftRect, left);
-        net.extract(imRightRect, right);
-        SLAM.TrackStereo(left,right,tframe);
+        // cv::Mat left(IMG_H, IMG_W, CV_8UC3),right(IMG_H, IMG_W, CV_8UC3);
+        // net.extract(imLeftRect, left);
+        // net.extract(imRightRect, right);
+        // SLAM.TrackStereo(left,right,tframe);
+        SLAM.TrackStereo(imLeftRect,imRightRect,tframe);
 
         // step 4.6 追踪完成，停止计时，计算追踪时间
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
