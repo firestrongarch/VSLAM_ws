@@ -512,7 +512,7 @@ bool MultiViewGeometry::ceresPnP(
 
     size_t nbkps = vunkps.size();
 
-    ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+    ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
     PoseParametersBlock posepar = PoseParametersBlock(0, Twc);
 

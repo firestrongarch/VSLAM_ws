@@ -36,11 +36,11 @@
     1. T + dT = Exp(dT) * T 
     2. T o X = T^(-1) * X (i.e. T: cam -> world)  
 */
-class SE3LeftParameterization : public ceres::LocalParameterization {
+class SE3LeftParameterization : public ceres::Manifold {
 public:
     virtual bool Plus(const double* x,
                       const double* delta,
-                      double* x_plus_delta) const 
+                      double* x_plus_delta) const override
     {
         Eigen::Map<const Eigen::Vector3d> t(x);
         Eigen::Map<const Eigen::Quaterniond> q(x+3);
@@ -59,8 +59,8 @@ public:
         return true;
     }
 
-    virtual bool ComputeJacobian(const double* x,
-                                 double* jacobian) const
+    virtual bool PlusJacobian(const double* x,
+                                 double* jacobian) const override
     {
         Eigen::Map<Eigen::Matrix<double, 7, 6, Eigen::RowMajor> > J(jacobian);
         J.topRows<6>().setIdentity();
@@ -68,8 +68,25 @@ public:
         return true;
     }
 
-    virtual int GlobalSize() const { return 7; }
-    virtual int LocalSize() const { return 6; }
+    virtual bool Minus(const double* y,
+                     const double* x,
+                     double* y_minus_x) const override{
+
+                     };
+
+    // Compute the derivative of Minus(y, x) w.r.t y at y = x, i.e
+    //
+    //   (D_1 Minus) (x, x)
+    //
+    // Jacobian is a row-major TangentSize() x AmbientSize() matrix.
+    //
+    // Return value indicates whether the operation was successful or not.
+    virtual bool MinusJacobian(const double* x, double* jacobian) const override {
+        
+    };
+
+    virtual int AmbientSize() const override{ return 7; }
+    virtual int TangentSize() const override{ return 6; }
 };
 
 

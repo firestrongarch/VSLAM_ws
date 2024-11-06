@@ -25,11 +25,14 @@
 */
 #pragma once
 
+#include <iomanip>
 #include <iostream>
+#include <fstream>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <map>
 #include <sophus/se3.hpp>
 
 struct SE3Pose {

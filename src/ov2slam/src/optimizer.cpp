@@ -28,6 +28,7 @@
 
 #include "ceres_parametrization.hpp"
 
+#include <ceres/manifold.h>
 #include <thread>
 
 
@@ -117,7 +118,7 @@ void Optimizer::localBA(Frame &newframe, const bool buse_robust_cost)
         Trl = Tlr.inverse();
         rlextrinpose = PoseParametersBlock(0, Trl);
 
-        ceres::LocalParameterization *local_param = new SE3LeftParameterization();
+        ceres::Manifold *local_param = new SE3LeftParameterization();
 
         problem.AddParameterBlock(rlextrinpose.values(), 7, local_param);
         ordering->AddElementToGroup(rlextrinpose.values(), 1);
@@ -166,7 +167,7 @@ void Optimizer::localBA(Frame &newframe, const bool buse_robust_cost)
         // Add every KF to BA problem
         map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, pkf->getTwc()));
 
-        ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+        ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
         problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
         ordering->AddElementToGroup(map_id_posespar_.at(kfid).values(), 1);
@@ -236,7 +237,7 @@ void Optimizer::localBA(Frame &newframe, const bool buse_robust_cost)
                 map_local_pkfs.emplace(kfid, pkf);
                 map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, pkf->getTwc()));
 
-                ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+                ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
                 problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
                 ordering->AddElementToGroup(map_id_posespar_.at(kfid).values(), 1);
@@ -975,7 +976,7 @@ void Optimizer::looseBA(int inikfid, const int nkfid, const bool buse_robust_cos
         Trl = Tlr.inverse();
         rlextrinpose = PoseParametersBlock(0, Trl);
 
-        ceres::LocalParameterization *local_param = new SE3LeftParameterization();
+        ceres::Manifold *local_param = new SE3LeftParameterization();
 
         problem.AddParameterBlock(rlextrinpose.values(), 7, local_param);
         ordering->AddElementToGroup(rlextrinpose.values(), 1);
@@ -1003,7 +1004,7 @@ void Optimizer::looseBA(int inikfid, const int nkfid, const bool buse_robust_cos
 
         map_id_posespar_.emplace(pkf->kfid_, PoseParametersBlock(pkf->kfid_, pkf->getTwc()));
 
-        ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+        ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
         problem.AddParameterBlock(map_id_posespar_.at(pkf->kfid_).values(), 7, local_parameterization);
         ordering->AddElementToGroup(map_id_posespar_.at(pkf->kfid_).values(), 1);
@@ -1071,7 +1072,7 @@ void Optimizer::looseBA(int inikfid, const int nkfid, const bool buse_robust_cos
                 map_local_pkfs.emplace(kfid, pkf);
                 map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, pkf->getTwc()));
 
-                ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+                ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
                 problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
                 ordering->AddElementToGroup(map_id_posespar_.at(kfid).values(), 1);
@@ -1747,7 +1748,7 @@ void Optimizer::fullBA(const bool buse_robust_cost)
         Trl = Tlr.inverse();
         rlextrinpose = PoseParametersBlock(0, Trl);
 
-        ceres::LocalParameterization *local_param = new SE3LeftParameterization();
+        ceres::Manifold *local_param = new SE3LeftParameterization();
 
         problem.AddParameterBlock(rlextrinpose.values(), 7, local_param);
         ordering->AddElementToGroup(rlextrinpose.values(), 1);
@@ -1777,7 +1778,7 @@ void Optimizer::fullBA(const bool buse_robust_cost)
 
         map_id_posespar_.emplace(pkf->kfid_, PoseParametersBlock(pkf->kfid_, pkf->getTwc()));
 
-        ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+        ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
         problem.AddParameterBlock(map_id_posespar_.at(pkf->kfid_).values(), 7, local_parameterization);
         ordering->AddElementToGroup(map_id_posespar_.at(pkf->kfid_).values(), 1);
@@ -1845,7 +1846,7 @@ void Optimizer::fullBA(const bool buse_robust_cost)
                 map_local_pkfs.emplace(kfid, pkf);
                 map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, pkf->getTwc()));
 
-                ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+                ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
                 problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
                 ordering->AddElementToGroup(map_id_posespar_.at(kfid).values(), 1);
@@ -2373,7 +2374,7 @@ bool Optimizer::localPoseGraph(Frame &newframe, int kfloop_id, const Sophus::SE3
     Sophus::SE3d Twc = ploopkf->getTwc();
     map_id_posespar_.emplace(kfloop_id, PoseParametersBlock(kfloop_id, Twc));
 
-    ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+    ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
     problem.AddParameterBlock(map_id_posespar_.at(kfloop_id).values(), 7, local_parameterization);
 
@@ -2405,7 +2406,7 @@ bool Optimizer::localPoseGraph(Frame &newframe, int kfloop_id, const Sophus::SE3
 
         map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, Twcj));
 
-        ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+        ceres::Manifold *local_parameterization = new SE3LeftParameterization();
         problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
 
         Sophus::SE3d Tcicj = Tciw * Twcj;
@@ -2640,7 +2641,7 @@ void Optimizer::structureOnlyBA(const std::vector<int> &vlm2optids)
         Trl = Tlr.inverse();
         rlextrinpose = PoseParametersBlock(0, Trl);
 
-        ceres::LocalParameterization *local_param = new SE3LeftParameterization();
+        ceres::Manifold *local_param = new SE3LeftParameterization();
 
         problem.AddParameterBlock(rlextrinpose.values(), 7, local_param);
         ordering->AddElementToGroup(rlextrinpose.values(), 1);
@@ -2681,7 +2682,7 @@ void Optimizer::structureOnlyBA(const std::vector<int> &vlm2optids)
             {
                 map_id_posespar_.emplace(kfid, PoseParametersBlock(kfid, pkf->getTwc()));
 
-                ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+                ceres::Manifold *local_parameterization = new SE3LeftParameterization();
 
                 problem.AddParameterBlock(map_id_posespar_.at(kfid).values(), 7, local_parameterization);
                 ordering->AddElementToGroup(map_id_posespar_.at(kfid).values(), 1);
@@ -2795,7 +2796,7 @@ bool Optimizer::fullPoseGraph(std::vector<Sophus::SE3d, Eigen::aligned_allocator
     {
         map_id_posespar_.emplace(i, PoseParametersBlock(i, vTwc.at(i)));
 
-        ceres::LocalParameterization *local_parameterization = new SE3LeftParameterization();
+        ceres::Manifold *local_parameterization = new SE3LeftParameterization();
         problem.AddParameterBlock(map_id_posespar_.at(i).values(), 7, local_parameterization);
 
         if( viskf.at(i) ) {

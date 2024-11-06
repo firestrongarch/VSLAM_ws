@@ -36,6 +36,22 @@ if (ibow_lcd_FOUND)
   message(STATUS "iBoW-LCD found!  Going to use Loop Closer! : ${lcdetector_VERSION} - ${lcdetector_DIR}")
 endif (ibow_lcd_FOUND)
 
+find_package(jsoncpp REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
+# find_package(backward_ros REQUIRED)
+
+##################################################
+
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
 
@@ -46,7 +62,6 @@ add_library(${PROJECT_NAME} SHARED ${srcs} ${headers})
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     ${OpenCV_INCLUDE_DIRS}
-  PRIVATE
     ${PROJECT_SOURCE_DIR}/include/
     ${PROJECT_SOURCE_DIR}/include/ceres_parametrization/
 )
@@ -72,6 +87,19 @@ if (opengv_FOUND)
   )
 endif (opengv_FOUND)
 
+ament_target_dependencies(${PROJECT_NAME}
+  rclcpp
+  tf2
+  tf2_ros
+  visualization_msgs
+  pcl_conversions
+  PCL
+  std_msgs
+  cv_bridge
+  image_transport
+  # backward_ros
+)
+
 install(DIRECTORY include/ DESTINATION include/)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/)
 
@@ -80,3 +108,17 @@ install(TARGETS ${PROJECT_NAME} DESTINATION lib/)
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ov2slam_node.cpp)
 
+add_executable(${PROJECT_NAME}_node test/ov2slam_node.cpp)
+
+ament_target_dependencies(${PROJECT_NAME}_node
+  rclcpp
+  image_transport
+  std_msgs
+  sensor_msgs
+  cv_bridge
+)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_node
+  ${PROJECT_NAME}
+)
