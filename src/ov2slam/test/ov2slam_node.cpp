@@ -70,7 +70,7 @@ public:
         // Get and prepare images
         cv_bridge::CvImageConstPtr ptr;
         try {    
-            ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
+            ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::TYPE_8UC3);
         } 
         catch(cv_bridge::Exception &e)
         {
@@ -114,6 +114,8 @@ public:
                     {
                         image0 = getGrayImageFromMsg(img0_buf.front());
                         image1 = getGrayImageFromMsg(img1_buf.front());
+                        cv::cvtColor(image0, image0, cv::COLOR_BGR2GRAY);
+                        cv::cvtColor(image1, image1, cv::COLOR_BGR2GRAY);
                         img0_buf.pop();
                         img1_buf.pop();
 

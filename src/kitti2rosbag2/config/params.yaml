@@ -1,0 +1,8 @@
+kitti_rec:
+  ros__parameters:
+    sequence: 0
+    data_dir: '/data/datasets/kitti'
+    odom_dir: '/home/parallels/Documents/kitti_dataset/dataset_2'
+    bag_dir : '/data/datasets/kitti/my_bag'
+    odom : False
+  
