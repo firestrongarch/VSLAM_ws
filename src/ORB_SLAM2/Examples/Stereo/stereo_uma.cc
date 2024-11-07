@@ -186,14 +186,14 @@ int main(int argc, char **argv)
 
         // Wait to load the next frame
         // step 4.7 等待一段时间以符合下一帧图像的时间戳
-        double T=0;
-        if(ni<nImages-1)
-            T = vTimeStamp[ni+1]-tframe;
-        else if(ni>0)
-            T = tframe-vTimeStamp[ni-1];
+        // double T=0;
+        // if(ni<nImages-1)
+        //     T = vTimeStamp[ni+1]-tframe;
+        // else if(ni>0)
+        //     T = tframe-vTimeStamp[ni-1];
 
-        if(ttrack<T)
-            std::this_thread::sleep_for((T-ttrack)*1ns);
+        // if(ttrack<T)
+        //     std::this_thread::sleep_for((T-ttrack)*1ns);
     }
 
     // step 5 追踪过程执行完毕，退出系统
@@ -224,7 +224,7 @@ int main(int argc, char **argv)
 void LoadImages(const string &strPath, vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
 {
     ifstream data;
-    data.open(strPath + "/cam0/data.csv");
+    data.open(strPath + "/cam0/data_1.csv");
     vTimeStamps.reserve(5000);
     vstrImageLeft.reserve(5000);
     vstrImageRight.reserve(5000);

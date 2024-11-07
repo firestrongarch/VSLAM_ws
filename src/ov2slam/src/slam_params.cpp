@@ -83,6 +83,8 @@ SlamParams::SlamParams(const cv::FileStorage &fsSettings) {
 
         cv::cv2eigen(cvTbc0,Tbc0);
         cv::cv2eigen(cvTbc1,Tbc1);
+        Tbc0.block<3, 3>(0, 0) = Eigen::Quaterniond(Tbc0.block<3, 3>(0, 0)).normalized().toRotationMatrix();
+        Tbc1.block<3, 3>(0, 0) = Eigen::Quaterniond(Tbc1.block<3, 3>(0, 0)).normalized().toRotationMatrix();
 
         T_left_right_ = Sophus::SE3d(Tbc0.inverse() * Tbc1);
     }

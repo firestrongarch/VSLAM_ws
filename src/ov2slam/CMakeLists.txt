@@ -122,3 +122,18 @@ ament_target_dependencies(${PROJECT_NAME}_node
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}
 )
+
+add_executable(${PROJECT_NAME}_datasets test/ov2slam_datasets.cpp)
+
+ament_target_dependencies(${PROJECT_NAME}_datasets
+  rclcpp
+  image_transport
+  std_msgs
+  sensor_msgs
+  cv_bridge
+)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_datasets
+  ${PROJECT_NAME}
+)
