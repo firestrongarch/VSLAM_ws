@@ -38,3 +38,5 @@ install
 .cache
 poses.txt
 poses_kf.txt
+config_pkg
+desc.png
