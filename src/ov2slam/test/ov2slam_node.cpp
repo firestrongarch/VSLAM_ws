@@ -25,6 +25,7 @@
 */
 
 #include <iostream>
+#include <opencv2/imgcodecs.hpp>
 #include <string>
 #include <thread>
 #include <mutex>
@@ -114,6 +115,8 @@ public:
                     {
                         image0 = getGrayImageFromMsg(img0_buf.front());
                         image1 = getGrayImageFromMsg(img1_buf.front());
+                        // cv::imwrite("1.png", image0);
+                        // cv::imwrite("2.png", image1);
                         cv::cvtColor(image0, image0, cv::COLOR_BGR2GRAY);
                         cv::cvtColor(image1, image1, cv::COLOR_BGR2GRAY);
                         img0_buf.pop();

@@ -60,7 +60,7 @@ void readParameters(rclcpp::Node::SharedPtr n)
 
     std::string OUTPUT_PATH;
     fsSettings["output_path"] >> OUTPUT_PATH;
-    VINS_RESULT_PATH = OUTPUT_PATH + "/vins_result_no_loop.csv";
+    VINS_RESULT_PATH = OUTPUT_PATH + "/vins_result_no_loop.tum";
     RCLCPP_INFO(n->get_logger(), "result path %s", VINS_RESULT_PATH.c_str());
 
     // create folder if not exists
