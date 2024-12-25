@@ -9,12 +9,24 @@
 
 ⚠ 编译需要 RAM >= 32G, 如果不够则添加虚拟内存
 ## 主要内容
-| 软件      | 修改说明 |
+| 依赖      | 版本 |
 | ----------- | ----------- |
-| ORB-SLAM2      | 24.04       |
-| ov2slam   | 适配ubuntu24.04和ROS2; 增加直接读取数据集代码   |
+| g2o      |   20230223_git     |
+| sophus   |  1.24.6  |
+| pangolin   |  v0.9.2  |
+| DBoW2   |  master  |
+| ncnn   |  master  |
+
+| 修改      | 说明 |
+| ----------- | ----------- |
+| obindex2   |  删除 boost 依赖  |
+| ibow_lcd   |  只保留库文件  |
+| ORB-SLAM2      | 适配新版g2o和opencv       |
+| ov2slam   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
 
 引用 
+[obindex2](https://github.com/emiliofidalgo/obindex2)
+[ibow_lcd](https://github.com/emiliofidalgo/ibow-lcd)
 [ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments)
 [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)
 [ov2slam](https://github.com/ov2slam/ov2slam)
