@@ -19,7 +19,6 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
 # Build
 add_library(${PROJECT_NAME} SHARED src/letnet.cpp ${headers})
 target_include_directories(${PROJECT_NAME}  PUBLIC
-    ${NCNN_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/inc>
     INTERFACE
     $<INSTALL_INTERFACE:include>

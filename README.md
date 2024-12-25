@@ -18,7 +18,7 @@
 [ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments)
 [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)
 [ov2slam](https://github.com/ov2slam/ov2slam)
-## 1. 下载依赖
+## 依赖
 ```
 vcs import < dependencies.yaml --shallow
 
@@ -32,4 +32,12 @@ sudo apt install libepoxy-dev
 ## 编译
 ```
 colcon build
+
+# 如果显示找不到某个包, 可以先source工作空间, 注意区分.zsh和.bash
+source ./install/setup.zsh
+colcon build
+
 ```
+💡 build完成后也可以把 ```source (path)/install/setup.zsh(bash)``` 添加到环境变量中, 这样可以在对应包目录中单独利用cmake编译包, 运行和调试
+
+## 运行
