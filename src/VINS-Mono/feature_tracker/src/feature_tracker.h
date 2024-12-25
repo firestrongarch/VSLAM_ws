@@ -18,7 +18,7 @@
 #include "tic_toc.h"
 
 // add
-#include "ncnn/net.h"
+#include "net.h"
 
 #define LET_NET
 

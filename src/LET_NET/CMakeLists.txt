@@ -11,7 +11,6 @@ project(LetNet)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-set(ncnn_DIR /home/fu/Documents/SDK/ncnn/lib/cmake/ncnn)
 find_package(ncnn REQUIRED)
 
 # file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp src/*.cc)
@@ -31,13 +30,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 )
 
 # install
-install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}Targets)
+install(TARGETS ${PROJECT_NAME} 
+    EXPORT ${PROJECT_NAME}Targets)
 install(EXPORT ${PROJECT_NAME}Targets
     FILE ${PROJECT_NAME}Targets.cmake
     NAMESPACE ${PROJECT_NAME}::
     DESTINATION lib/cmake/${PROJECT_NAME}
 )
-export(PACKAGE ${PROJECT_NAME})
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(

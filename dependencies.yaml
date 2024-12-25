@@ -16,3 +16,7 @@ repositories:
     type: git
     url: https://github.com/shinsumicco/DBoW2
     version: master
+  src/3rdParty/ncnn:
+    type: git
+    url: https://github.com/Tencent/ncnn
+    version: master
