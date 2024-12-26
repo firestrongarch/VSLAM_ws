@@ -168,7 +168,7 @@ int main(int argc, char** argv)
 
     if(argc < 2)
     {
-       std::cout << "\nUsage: rosrun ov2slam ov2slam_node parameters_files/params.yaml\n";
+       std::cout << "\nUsage: ros2 run ov2slam ov2slam_node parameters_files/params.yaml\n";
        return 1;
     }
 

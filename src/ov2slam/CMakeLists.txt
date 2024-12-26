@@ -137,3 +137,11 @@ ament_target_dependencies(${PROJECT_NAME}_datasets
 target_link_libraries(${PROJECT_NAME}_datasets
   ${PROJECT_NAME}
 )
+
+install(TARGETS
+  ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}
+  INCLUDES DESTINATION include
+)
+
+ament_package()

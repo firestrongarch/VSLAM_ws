@@ -17,19 +17,14 @@
 | DBoW2   |  master  |
 | ncnn   |  master  |
 
-| 修改      | 说明 |
+| 原仓库      | 修改说明 |
 | ----------- | ----------- |
-| obindex2   |  删除 boost 依赖  |
-| ibow_lcd   |  只保留库文件  |
-| ORB-SLAM2      | 适配新版g2o和opencv       |
-| ov2slam   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
+| [obindex2](https://github.com/emiliofidalgo/obindex2)   |  删除 boost 依赖  |
+| [ibow_lcd](https://github.com/emiliofidalgo/ibow-lcd)   |  只保留库文件  |
+| [ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments)      | 适配新版g2o和opencv       |
+| [ov2slam](https://github.com/ov2slam/ov2slam)   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
+| [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
 
-引用 
-[obindex2](https://github.com/emiliofidalgo/obindex2)
-[ibow_lcd](https://github.com/emiliofidalgo/ibow-lcd)
-[ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments)
-[VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)
-[ov2slam](https://github.com/ov2slam/ov2slam)
 ## 依赖
 ```
 vcs import < dependencies.yaml --shallow
@@ -52,4 +47,21 @@ colcon build
 ```
 💡 build完成后也可以把 ```source (path)/install/setup.zsh(bash)``` 添加到环境变量中, 这样可以在对应包目录中单独利用cmake编译包, 运行和调试
 
-## 运行
+## SLAM运行
+1. 在build目录中运行
+```
+# ov2slam
+./build/ov2slam/ov2slam_node
+```
+
+2. 通过ros2 run运行
+```
+# ov2slam
+ros2 run ov2slam ov2slam_node param
+```
+3. 通过ros2 launch运行
+
+## colcon配置
+
+1. 在目录下放置名为COLCON_IGNORE的空文件, 则该目录不会被索引
+2. 使用colcon.meta自定义每个包的命令行参数
