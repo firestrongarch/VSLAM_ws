@@ -1,5 +1,6 @@
 ORB:
     name: ORBvoc.txt
-
+    url: https://gh.llkk.cc/https://github.com/raulmur/ORB_SLAM2/raw/refs/heads/master/Vocabulary/ORBvoc.txt.tar.gz
 VINS:
     name: brief_k10L6.bin
+    url: https://gh.llkk.cc/https://github.com/dongbo19/VINS-MONO-ROS2/raw/refs/heads/main/config_pkg/support_files/brief_k10L6.bin

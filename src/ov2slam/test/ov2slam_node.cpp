@@ -179,11 +179,13 @@ int main(int argc, char** argv)
     // Load the parameters
     std::string parameters_file = argv[1];
 
-    std::cout << "\nLoading parameters file : " << parameters_file << "...\n";
+    std::string ros_param = node->declare_parameter<std::string>("config_file", parameters_file);
 
-    const cv::FileStorage fsSettings(parameters_file.c_str(), cv::FileStorage::READ);
+    std::cout << "\nLoading parameters file : " << ros_param << "...\n";
+
+    const cv::FileStorage fsSettings(ros_param.c_str(), cv::FileStorage::READ);
     if(!fsSettings.isOpened()) {
-       std::cout << "Failed to open settings file...";
+       std::cout << "Failed to open settings file " + ros_param;
        return 1;
     } else {
         std::cout << "\nParameters file loaded...\n";

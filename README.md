@@ -51,16 +51,19 @@ colcon build
 1. 在build目录中运行
 ```
 # ov2slam
-./build/ov2slam/ov2slam_node
+./build/ov2slam/ov2slam_node config_file_path
 ```
 
 2. 通过ros2 run运行
 ```
 # ov2slam
-ros2 run ov2slam ov2slam_node param
+ros2 run ov2slam ov2slam_node config_file_path
 ```
-3. 通过ros2 launch运行
 
+3. 通过ros2 launch运行
+```
+ros2 launch ov2slam kitti.py
+```
 ## colcon配置
 
 1. 在目录下放置名为COLCON_IGNORE的空文件, 则该目录不会被索引
