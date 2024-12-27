@@ -62,7 +62,12 @@ ros2 run ov2slam ov2slam_node config_file_path
 
 3. 通过ros2 launch运行
 ```
+# ov2slam
 ros2 launch ov2slam kitti.py
+
+# vins_mono
+ros2 launch feature_tracker vins_feature_tracker.launch.py            # for feature tracking and rviz2
+ros2 launch vins_estimator euroc.launch.py                            # for backend optimization and 
 ```
 ## colcon配置
 

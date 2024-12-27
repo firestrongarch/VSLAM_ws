@@ -10,7 +10,7 @@ def generate_launch_description():
 
     config_path = PathJoinSubstitution([
         config_pkg_path,
-        'config/euroc/euroc_config.yaml'
+        'config/vins/euroc/euroc_config.yaml'
     ])
 
     vins_path = PathJoinSubstitution([
@@ -20,9 +20,20 @@ def generate_launch_description():
 
     support_path = PathJoinSubstitution([
         config_pkg_path,
-        'support_files'
+        'voc'
     ])
-
+    # Define the node
+    feature_tracker_node = Node(
+        package='feature_tracker',
+        executable='feature_tracker_illustration',
+        name='feature_tracker',
+        namespace='feature_tracker',
+        output='screen',
+        parameters=[{
+            'config_file': config_path,
+            'vins_folder': vins_path
+        }]
+    )
     
     # Define the vins_estimator node
     vins_estimator_node = Node(
@@ -54,10 +65,20 @@ def generate_launch_description():
         }]
     )
 
+    rviz_config_path = PathJoinSubstitution([
+        config_pkg_path,
+        'config/vins_euroc_rviz.rviz'
+    ])
+
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config_path],
+        output='screen'
+    )
+
     return LaunchDescription([
-        LogInfo(msg=['[vins estimator launch] config path: ', config_path]),
-        LogInfo(msg=['[vins estimator launch] vins path: ', vins_path]),
-        LogInfo(msg=['[vins estimator launch] support path: ', support_path]),
         vins_estimator_node,
         pose_graph_node
     ])
