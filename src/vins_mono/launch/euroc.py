@@ -10,25 +10,51 @@ def generate_launch_description():
 
     config_path = PathJoinSubstitution([
         config_pkg_path,
-        'config/uma_vi.yaml'
+        'config/vins/euroc/euroc_config.yaml'
     ])
 
-
-    vins_path = PathJoinSubstitution([
+    support_path = PathJoinSubstitution([
         config_pkg_path,
-        'config/../'
+        'voc'
     ])
-
     # Define the node
     feature_tracker_node = Node(
-        package='feature_tracker',
+        package='vins_mono',
         executable='feature_tracker_illustration',
         name='feature_tracker',
         namespace='feature_tracker',
         output='screen',
         parameters=[{
             'config_file': config_path,
-            'vins_folder': vins_path
+        }]
+    )
+    
+    # Define the vins_estimator node
+    vins_estimator_node = Node(
+        package='vins_mono',
+        executable='vins_estimator',
+        name='vins_estimator',
+        namespace='vins_estimator',
+        output='screen',
+        parameters=[{
+            'config_file': config_path,
+        }]
+    )
+
+    # Define the pose_graph node
+    pose_graph_node = Node(
+        package='vins_mono',
+        executable='pose_graph',
+        name='pose_graph',
+        namespace='pose_graph',
+        output='screen',
+        parameters=[{
+            'config_file': config_path,
+            'support_file': support_path,
+            'visualization_shift_x': 0,
+            'visualization_shift_y': 0,
+            'skip_cnt': 0,
+            'skip_dis': 0.0
         }]
     )
 
@@ -46,7 +72,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        LogInfo(msg=['[feature tracker launch] config path: ', config_path]),
         feature_tracker_node,
-        rviz_node
+        vins_estimator_node,
+        pose_graph_node
     ])

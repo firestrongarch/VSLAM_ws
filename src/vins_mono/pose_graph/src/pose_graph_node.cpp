@@ -472,8 +472,7 @@ int main(int argc, char **argv)
     n->get_parameter("skip_dis", SKIP_DIS);
 
     std::string config_file;
-    n->declare_parameter<std::string>("config_file", "/data/datasets/config/VINS_Mono/uma_vi.yaml");
-    n->get_parameter("config_file", config_file);
+    config_file = n->declare_parameter<std::string>("config_file", "/data/datasets/config/VINS_Mono/uma_vi.yaml");
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
@@ -496,11 +495,11 @@ int main(int argc, char **argv)
         std::string support_path = fsSettings["support_path"];
         n->declare_parameter<std::string>("support_file", "");
         n->get_parameter("support_file", support_path);
-        string vocabulary_file = support_path + "/../support_files/brief_k10L6.bin";
+        string vocabulary_file = support_path + "/brief_k10L6.bin";
         cout << "vocabulary_file: " << vocabulary_file << endl;
         posegraph.loadVocabulary(vocabulary_file);
 
-        BRIEF_PATTERN_FILE = support_path + "/../support_files/brief_pattern.yml";
+        BRIEF_PATTERN_FILE = support_path + "/brief_pattern.yml";
         cout << "BRIEF_PATTERN_FILE" << BRIEF_PATTERN_FILE << endl;
         m_camera = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(config_file.c_str());
 

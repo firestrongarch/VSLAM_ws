@@ -3,6 +3,7 @@ from launch.actions import DeclareLaunchArgument, LogInfo
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch.actions import TimerAction
 
 def generate_launch_description():
 
@@ -10,12 +11,7 @@ def generate_launch_description():
 
     config_path = PathJoinSubstitution([
         config_pkg_path,
-        'config/vins/euroc/euroc_config.yaml'
-    ])
-
-    vins_path = PathJoinSubstitution([
-        config_pkg_path,
-        'config/../'
+        'config/vins/uma_vi.yaml'
     ])
 
     support_path = PathJoinSubstitution([
@@ -24,33 +20,31 @@ def generate_launch_description():
     ])
     # Define the node
     feature_tracker_node = Node(
-        package='feature_tracker',
+        package='vins_mono',
         executable='feature_tracker_illustration',
         name='feature_tracker',
         namespace='feature_tracker',
         output='screen',
         parameters=[{
             'config_file': config_path,
-            'vins_folder': vins_path
         }]
     )
     
     # Define the vins_estimator node
     vins_estimator_node = Node(
-        package='vins_estimator',
+        package='vins_mono',
         executable='vins_estimator',
         name='vins_estimator',
         namespace='vins_estimator',
         output='screen',
         parameters=[{
             'config_file': config_path,
-            'vins_folder': vins_path
         }]
     )
 
     # Define the pose_graph node
     pose_graph_node = Node(
-        package='pose_graph',
+        package='vins_mono',
         executable='pose_graph',
         name='pose_graph',
         namespace='pose_graph',
@@ -67,7 +61,7 @@ def generate_launch_description():
 
     rviz_config_path = PathJoinSubstitution([
         config_pkg_path,
-        'config/vins_euroc_rviz.rviz'
+        'config/vins/rviz.rviz'
     ])
 
     rviz_node = Node(
@@ -79,6 +73,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        rviz_node,
         vins_estimator_node,
-        pose_graph_node
+        pose_graph_node,
+        TimerAction(
+            period=2.0,  # 这里设置延迟时间为2秒
+            actions=[feature_tracker_node]
+        ),
     ])

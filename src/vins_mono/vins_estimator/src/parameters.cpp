@@ -43,8 +43,7 @@ T readParam(rclcpp::Node::SharedPtr n, std::string name)
 
 void readParameters(rclcpp::Node::SharedPtr n)
 {
-    std::string config_file;
-    config_file = readParam<std::string>(n, "config_file");
+    std::string config_file = n->declare_parameter<std::string>("config_file", "/data/datasets/config/VINS_Mono/uma_vi.yaml");
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {

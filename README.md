@@ -66,8 +66,7 @@ ros2 run ov2slam ov2slam_node config_file_path
 ros2 launch ov2slam kitti.py
 
 # vins_mono
-ros2 launch feature_tracker vins_feature_tracker.launch.py            # for feature tracking and rviz2
-ros2 launch vins_estimator euroc.launch.py                            # for backend optimization and 
+ros2 launch vins_mono uma_vi.py    
 ```
 ## colcon配置
 

@@ -560,6 +560,6 @@ void FeatureTracker::let_net(const cv::Mat& image_bgr) {
     memcpy((uchar*)score.data, out1.data, LET_HEIGHT*LET_WIDTH*sizeof(float));
     cv::Mat desc_tmp(LET_HEIGHT, LET_WIDTH, CV_8UC3);
     out2.to_pixels(desc_tmp.data, ncnn::Mat::PIXEL_BGR);
-    desc = desc_tmp.clone();
-    cv::imwrite("desc.png", desc);
+    // desc = desc_tmp.clone();
+    // cv::imwrite("desc.png", desc);
 }

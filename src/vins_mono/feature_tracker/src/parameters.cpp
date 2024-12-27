@@ -38,17 +38,14 @@ T readParam(rclcpp::Node::SharedPtr n, std::string name)
 
 void readParameters(rclcpp::Node::SharedPtr &n)
 {
-    std::string config_file;
-    config_file = "/data/datasets/config/VINS_Mono/uma_vi.yaml";
-    // config_file = readParam<std::string>(n, "config_file");
+    std::string config_file = n->declare_parameter<std::string>("config_file", "/data/datasets/config/VINS_Mono/uma_vi.yaml");
     RCUTILS_LOG_INFO("config_file: %s", config_file.c_str());
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
     {
         RCUTILS_LOG_ERROR("ERROR: Wrong path to settings");
     }
-    // std::string VINS_FOLDER_PATH = readParam<std::string>(n, "vins_folder");
-    std::string VINS_FOLDER_PATH = "/home/fu/Documents/SDK/VSLAM_ws/src/VINS-Mono";
+    std::string VINS_FOLDER_PATH = n->declare_parameter<std::string>("vins_folder", "/home/fu/Desktop/VSLAM_ws/src/vins_mono");
 
     fsSettings["image_topic"] >> IMAGE_TOPIC;
     fsSettings["imu_topic"] >> IMU_TOPIC;

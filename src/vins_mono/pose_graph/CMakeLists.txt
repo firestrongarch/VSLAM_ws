@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.5)
-project(pose_graph)
-
-set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_STANDARD 14)
-add_compile_options(-Wextra -Wpedantic)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -15,12 +9,9 @@ find_package(visualization_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(camera_model REQUIRED)
 find_package(image_transport REQUIRED)
 
 find_package(OpenCV 4 REQUIRED)
-
-include_directories("../camera_models/include")
 
 find_package(Ceres REQUIRED)
 
@@ -42,11 +33,12 @@ add_executable(pose_graph
     src/ThirdParty/DUtils/Timestamp.cpp
     src/ThirdParty/DVision/BRIEF.cpp
     src/ThirdParty/VocabularyBinary.cpp
-    )
+)
 
-ament_target_dependencies(pose_graph rclcpp rcpputils std_msgs sensor_msgs visualization_msgs geometry_msgs nav_msgs tf2 tf2_ros cv_bridge camera_model image_transport)
+ament_target_dependencies(pose_graph rclcpp rcpputils std_msgs sensor_msgs visualization_msgs geometry_msgs nav_msgs tf2 tf2_ros cv_bridge image_transport)
 
-target_link_libraries(pose_graph ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
+target_link_libraries(pose_graph ${OpenCV_LIBS} ${CERES_LIBRARIES} camera_model) 
+target_include_directories(pose_graph PUBLIC "${CMAKE_CURRENT_LIST_DIR}/../camera_model/include")
 
 # Install nodes
 install(
@@ -54,4 +46,3 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_package()

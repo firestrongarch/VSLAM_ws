@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.5)
-project(camera_model)
-
-set(CMAKE_CXX_STANDARD 14)
-add_compile_options(-Wextra -Wpedantic)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -73,5 +68,3 @@ install(TARGETS Calibration
 install(DIRECTORY include/
     DESTINATION include/
 )
-
-ament_package()
