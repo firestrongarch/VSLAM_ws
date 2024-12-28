@@ -130,17 +130,17 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
 
    if (PUB_THIS_FRAME)
    {
-        std::cout<<"pub points\n";
+        // std::cout<<"pub points\n";
         pub_count++;
-        sensor_msgs::msg::PointCloud::SharedPtr feature_points(new sensor_msgs::msg::PointCloud);
+        sensor_msgs::msg::PointCloud feature_points;
         sensor_msgs::msg::ChannelFloat32 id_of_point;
         sensor_msgs::msg::ChannelFloat32 u_of_point;
         sensor_msgs::msg::ChannelFloat32 v_of_point;
         sensor_msgs::msg::ChannelFloat32 velocity_x_of_point;
         sensor_msgs::msg::ChannelFloat32 velocity_y_of_point;
 
-        feature_points->header = img_msg->header;
-        feature_points->header.frame_id = "world";
+        feature_points.header = img_msg->header;
+        feature_points.header.frame_id = "world";
 
         vector<set<int>> hash_ids(NUM_OF_CAM);
         for (int i = 0; i < NUM_OF_CAM; i++)
@@ -150,9 +150,10 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
             auto &ids = trackerData[i].ids;
             auto &pts_velocity = trackerData[i].pts_velocity;
 
-            std::cout<<ids.size()<<"- ids.size()\n";
+            // std::cout<<ids.size()<<"- ids.size()\n";
             for (unsigned int j = 0; j < ids.size(); j++)
             {
+                // std::cout<<trackerData[i].track_cnt[j]<<"\n";
                 if (trackerData[i].track_cnt[j] > 1)
                 {
                     int p_id = ids[j];
@@ -162,9 +163,9 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
                     p.y = un_pts[j].y;
                     p.z = 1;
 
-                    std::cout<<p.x<<"- x\n";
+                    // std::cout<<p.x<<"- x\n";
 
-                    feature_points->points.push_back(p);
+                    feature_points.points.push_back(p);
                     id_of_point.values.push_back(p_id * NUM_OF_CAM + i);
                     u_of_point.values.push_back(cur_pts[j].x);
                     v_of_point.values.push_back(cur_pts[j].y);
@@ -173,19 +174,19 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
                 }
             }
         }
-        feature_points->channels.push_back(id_of_point);
-        feature_points->channels.push_back(u_of_point);
-        feature_points->channels.push_back(v_of_point);
-        feature_points->channels.push_back(velocity_x_of_point);
-        feature_points->channels.push_back(velocity_y_of_point);
-        RCUTILS_LOG_DEBUG("publish %f, at %f", feature_points->header.stamp.sec+feature_points->header.stamp.nanosec * (1e-9), rclcpp::Clock().now().nanoseconds()*(1e-9));
+        feature_points.channels.push_back(id_of_point);
+        feature_points.channels.push_back(u_of_point);
+        feature_points.channels.push_back(v_of_point);
+        feature_points.channels.push_back(velocity_x_of_point);
+        feature_points.channels.push_back(velocity_y_of_point);
+        RCUTILS_LOG_DEBUG("publish %f, at %f", feature_points.header.stamp.sec+feature_points.header.stamp.nanosec * (1e-9), rclcpp::Clock().now().nanoseconds()*(1e-9));
         // skip the first image; since no optical speed on frist image
         if (!init_pub)
         {
             init_pub = 1;
         }
         else{
-            pub_img->publish(*feature_points);
+            pub_img->publish(feature_points);
             // std::cout<<"x:\n";
             // std::cout<<"x:"<<feature_points->points[0].x<<"\n";
         }
@@ -324,7 +325,7 @@ void readImage(rclcpp::Node::SharedPtr n) {
 #endif
 
     pub_raw->publish(*img_ptr);
-    // img_callback(img_ptr);
+    img_callback(img_ptr);
 
     decltype(imu_timestamp.size()) pub_index = 1;
     decltype(imu_timestamp.size()) imu_index = 0;
@@ -360,7 +361,7 @@ void readImage(rclcpp::Node::SharedPtr n) {
             memcpy(&img_msg.data[0], img.data, ROW * COL);
             img_ptr = boost::make_shared<sensor_msgs::Image>(img_msg);
 #endif
-            // img_callback(img_ptr);
+            img_callback(img_ptr);
             sensor_msgs::msg::Image img_msg_gray;
             img_msg_gray.header.stamp = start + rclcpp::Duration::from_nanoseconds((int64)timestamp[pub_index]);
             img_msg_gray.header.frame_id = "world";
@@ -404,7 +405,7 @@ int main(int argc, char **argv)
         }
     }
 
-    auto sub_img = n->create_subscription<sensor_msgs::msg::Image>(IMAGE_TOPIC, rclcpp::QoS(rclcpp::KeepLast(100)), img_callback);
+    // auto sub_img = n->create_subscription<sensor_msgs::msg::Image>(IMAGE_TOPIC, rclcpp::QoS(rclcpp::KeepLast(100)), img_callback);
     
     pub_img = n->create_publisher<sensor_msgs::msg::PointCloud>("feature", 1000);
     pub_raw = n->create_publisher<sensor_msgs::msg::Image>(IMAGE_TOPIC, 2000);

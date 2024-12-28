@@ -1,4 +1,5 @@
 #include "feature_tracker.h"
+#include <ostream>
 
 
 #define LET_WIDTH 256 // 512
@@ -146,6 +147,11 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
         }
         cv::calcOpticalFlowPyrLK(last_desc, desc, corners1, corners2,
                                  status,err,cv::Size(21, 21),5);
+        // cv::calcOpticalFlowPyrLK(last_desc, desc, corners1, corners2,
+        //                          status,err);
+        // std::cout<<"corners1: "<<corners1<<std::endl;
+        // std::cout<<"corners2: "<<corners2<<std::endl;
+        
         // resize corners2 to forw_pts
         forw_pts.resize(corners2.size());
         for (int i = 0; i < int(corners2.size()); i++)
@@ -163,9 +169,13 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
 #else
         cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_pts, forw_pts, status, err, cv::Size(21, 21), 3);
 #endif
-        for (int i = 0; i < int(forw_pts.size()); i++)
+        for (int i = 0; i < int(forw_pts.size()); i++){
+            // std::cout<<" status: "<<status[i] <<"\n";
             if (status[i] && !inBorder(forw_pts[i]))
                 status[i] = 0;
+        }
+
+
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
         reduceVector(forw_pts, status);
@@ -174,7 +184,7 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
         reduceVector(track_cnt, status);
         RCUTILS_LOG_DEBUG("temporal optical flow costs: %fms", t_o.toc());
     }
-
+    // std::cout<< "track_cnt.size() "<< track_cnt.size()<< "\n";
     for (auto &n : track_cnt)
         n++;
 
@@ -560,6 +570,6 @@ void FeatureTracker::let_net(const cv::Mat& image_bgr) {
     memcpy((uchar*)score.data, out1.data, LET_HEIGHT*LET_WIDTH*sizeof(float));
     cv::Mat desc_tmp(LET_HEIGHT, LET_WIDTH, CV_8UC3);
     out2.to_pixels(desc_tmp.data, ncnn::Mat::PIXEL_BGR);
-    // desc = desc_tmp.clone();
+    desc = desc_tmp.clone();
     // cv::imwrite("desc.png", desc);
 }
