@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Image1
+        - /Path1
       Splitter Ratio: 0.5
     Tree Height: 355
   - Class: rviz_common/Selection
@@ -127,12 +128,12 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /vins_estimator/path
+        Value: /pose_graph/pose_graph_path
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: map
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -175,25 +176,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 10
+      Distance: 0.0010000000474974513
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: 85.53492736816406
+        Y: 16.176166534423828
+        Z: 99.54653930664062
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.785398006439209
+      Pitch: 0.5507382154464722
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.785398006439209
+      Yaw: 0.02239741012454033
     Saved: ~
 Window Geometry:
   Displays:

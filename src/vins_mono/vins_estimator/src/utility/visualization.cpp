@@ -74,14 +74,14 @@ void printStatistics(const Estimator &estimator, double t)
 {
     if (estimator.solver_flag != Estimator::SolverFlag::NON_LINEAR)
         return;
-    printf("position: %f, %f, %f\r", estimator.Ps[WINDOW_SIZE].x(), estimator.Ps[WINDOW_SIZE].y(), estimator.Ps[WINDOW_SIZE].z());
-    std::cout << "position: " << estimator.Ps[WINDOW_SIZE].transpose() << std::endl;
-    std::cout << "orientation: " << estimator.Vs[WINDOW_SIZE].transpose() << std::endl;
+    // printf("position: %f, %f, %f\r", estimator.Ps[WINDOW_SIZE].x(), estimator.Ps[WINDOW_SIZE].y(), estimator.Ps[WINDOW_SIZE].z());
+    // std::cout << "position: " << estimator.Ps[WINDOW_SIZE].transpose() << std::endl;
+    // std::cout << "orientation: " << estimator.Vs[WINDOW_SIZE].transpose() << std::endl;
     for (int i = 0; i < NUM_OF_CAM; i++)
     {
         //ROS_DEBUG("calibration result for camera %d", i);
-        std::cout << "extirnsic tic: " << estimator.tic[i].transpose() << std::endl;
-        std::cout << "extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose() << std::endl;
+        // std::cout << "extirnsic tic: " << estimator.tic[i].transpose() << std::endl;
+        // std::cout << "extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose() << std::endl;
         if (ESTIMATE_EXTRINSIC)
         {
             cv::FileStorage fs(EX_CALIB_RESULT_PATH, cv::FileStorage::WRITE);

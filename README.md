@@ -65,7 +65,7 @@ ros2 run ov2slam ov2slam_node config_file_path
 # ov2slam
 ros2 launch ov2slam kitti.py
 
-# vins_mono
+# vins_mono 跑uma数据集
 ros2 launch vins_mono uma_vi.py    
 ```
 ## colcon配置
