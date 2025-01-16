@@ -26,19 +26,24 @@
 | [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
 
 ## 依赖
-```
-vcs import < dependencies.yaml --shallow
-
+```sh
 # 安装ROS2
 sudo apt install ros-jazzy-desktop
+sudo apt install python3-vcstool libceres-dev
+
+vcs import < dependencies.yaml --shallow
+
 
 # pangolin依赖
 sudo apt install libepoxy-dev 
 ```
 
 ## 编译
-```
+```sh
 colcon build
+
+# 如果内存不够，可以使用单线程编译，但是内存可能还是会爆，建议加大虚拟内存
+colcon build --executor sequential
 
 # 如果显示找不到某个包, 可以先source工作空间, 注意区分.zsh和.bash
 source ./install/setup.zsh
@@ -49,19 +54,19 @@ colcon build
 
 ## SLAM运行
 1. 在build目录中运行
-```
+```sh
 # ov2slam
 ./build/ov2slam/ov2slam_node config_file_path
 ```
 
 2. 通过ros2 run运行
-```
+```sh
 # ov2slam
 ros2 run ov2slam ov2slam_node config_file_path
 ```
 
 3. 通过ros2 launch运行
-```
+```sh
 # ov2slam
 ros2 launch ov2slam kitti.py
 
