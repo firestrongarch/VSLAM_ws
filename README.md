@@ -31,11 +31,14 @@
 sudo apt install ros-jazzy-desktop
 sudo apt install python3-vcstool libceres-dev
 
-vcs import < dependencies.yaml --shallow
-
-
 # pangolin依赖
 sudo apt install libepoxy-dev 
+
+# g2o依赖
+sudo apt install libsuitesparse-dev
+
+vcs import < dependencies.yaml --shallow
+
 ```
 
 ## 编译
@@ -45,27 +48,31 @@ colcon build
 # 如果内存不够，可以使用单线程编译，但是内存可能还是会爆，建议加大虚拟内存
 colcon build --executor sequential
 
-# 如果显示找不到某个包, 可以先source工作空间, 注意区分.zsh和.bash
+# 如果显示找不到工作空间的某个包, 可以先source工作空间, 注意区分.zsh和.bash
 source ./install/setup.zsh
 colcon build
 
+# 解压orbvoc
+cd ./src/config_pkg/voc
+tar -xzvf ./ORBvoc.txt.tar.gz
 ```
 💡 build完成后也可以把 ```source (path)/install/setup.zsh(bash)``` 添加到环境变量中, 这样可以在对应包目录中单独利用cmake编译包, 运行和调试
 
 ## SLAM运行
+⚠ 若提示缺失动态库，需要先source工作空间
 1. 在build目录中运行
 ```sh
 # ov2slam
 ./build/ov2slam/ov2slam_node config_file_path
 ```
 
-2. 通过ros2 run运行
+1. 通过ros2 run运行
 ```sh
 # ov2slam
 ros2 run ov2slam ov2slam_node config_file_path
 ```
 
-3. 通过ros2 launch运行
+1. 通过ros2 launch运行
 ```sh
 # ov2slam
 ros2 launch ov2slam kitti.py
