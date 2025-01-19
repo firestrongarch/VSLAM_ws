@@ -7,7 +7,7 @@ repositories:
   src/3rdParty/g2o:
     type: git
     url: https://github.com/RainerKuemmerle/g2o
-    version: 20230223_git
+    version: 20241228_git
   src/3rdParty/Pangolin:
     type: git
     url: https://github.com/stevenlovegrove/Pangolin

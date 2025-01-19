@@ -43,6 +43,7 @@
 
 #include "orbslam2/Converter.h"
 
+#include <memory>
 #include<mutex>
 
 namespace ORB_SLAM2
@@ -98,7 +99,7 @@ void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<M
     g2o::SparseOptimizer optimizer;
     using BlockSolver = g2o::BlockSolver_6_3;
     using LinearSolver = g2o::LinearSolverEigen<BlockSolver::PoseMatrixType>;
-    auto solver = g2o::make_unique<BlockSolver>(g2o::make_unique<LinearSolver>());
+    auto solver = std::make_unique<BlockSolver>(std::make_unique<LinearSolver>());
     auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     optimizer.setAlgorithm(algorithm);
 
@@ -367,7 +368,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     g2o::SparseOptimizer optimizer;
     using BlockSolver = g2o::BlockSolver_6_3;
     using LinearSolver = g2o::LinearSolverDense<BlockSolver::PoseMatrixType>;
-    auto solver = g2o::make_unique<BlockSolver>(g2o::make_unique<LinearSolver>());
+    auto solver = std::make_unique<BlockSolver>(std::make_unique<LinearSolver>());
     auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     optimizer.setAlgorithm(algorithm);
 
@@ -706,7 +707,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool* pbStopFlag, Map* pMap
     g2o::SparseOptimizer optimizer;
     using BlockSolver = g2o::BlockSolver_6_3;
     using LinearSolver = g2o::LinearSolverEigen<BlockSolver::PoseMatrixType>;
-    auto solver = g2o::make_unique<BlockSolver>(g2o::make_unique<LinearSolver>());
+    auto solver = std::make_unique<BlockSolver>(std::make_unique<LinearSolver>());
     auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     optimizer.setAlgorithm(algorithm);
 
@@ -1050,7 +1051,7 @@ void Optimizer::OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* p
     g2o::SparseOptimizer optimizer;
     using BlockSolver = g2o::BlockSolver_7_3;
     using LinearSolver = g2o::LinearSolverEigen<BlockSolver::PoseMatrixType>;
-    auto solver = g2o::make_unique<BlockSolver>(g2o::make_unique<LinearSolver>());
+    auto solver = std::make_unique<BlockSolver>(std::make_unique<LinearSolver>());
     solver->setLambda(1e-16);
     auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     // 第一次迭代的初始lambda值，如未指定会自动计算一个合适的值
@@ -1394,7 +1395,7 @@ int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &
     g2o::SparseOptimizer optimizer;
     using BlockSolver = g2o::BlockSolverX;
     using LinearSolver = g2o::LinearSolverDense<BlockSolver::PoseMatrixType>;
-    auto solver = g2o::make_unique<BlockSolver>(g2o::make_unique<LinearSolver>());
+    auto solver = std::make_unique<BlockSolver>(std::make_unique<LinearSolver>());
     auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     optimizer.setAlgorithm(algorithm);
     

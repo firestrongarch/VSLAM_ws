@@ -248,7 +248,7 @@ int LoopClosing::OptimizeCurrentPose()
   typedef g2o::BlockSolver_6_3 BlockerSolverType;
   typedef g2o::LinearSolverDense<BlockerSolverType::PoseMatrixType> LinerrSolverType;
   auto solver = new g2o::OptimizationAlgorithmLevenberg(
-      g2o::make_unique<BlockerSolverType>(g2o::make_unique<LinerrSolverType>()));
+      std::make_unique<BlockerSolverType>(std::make_unique<LinerrSolverType>()));
   g2o::SparseOptimizer optimizer;
   optimizer.setAlgorithm(solver);
 
@@ -460,7 +460,7 @@ void LoopClosing::PoseGraphOptimization()
   typedef g2o::BlockSolver<g2o::BlockSolverTraits<6, 6>> BlockSolverType;
   typedef g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType> LinearSolverType;
   auto solver = new g2o::OptimizationAlgorithmLevenberg(
-      g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+      std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
   g2o::SparseOptimizer optimizer;
   optimizer.setAlgorithm(solver);
 

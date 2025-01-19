@@ -196,7 +196,7 @@ int FrontEnd::EstimateCurrentPose()
   typedef g2o::BlockSolver_6_3 BlockSolverType;
   typedef g2o::LinearSolverDense<BlockSolverType::PoseMatrixType> LinearSolverType;
   auto solver = new g2o::OptimizationAlgorithmLevenberg(
-      g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+      std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
   g2o::SparseOptimizer optimizer;
   optimizer.setAlgorithm(solver);
 
