@@ -13,4 +13,7 @@ private:
     uint64_t total_frames_ = 0;
     // 其他数据集特定成员（如文件列表）
     std::vector<std::string> image_files_; 
+    std::vector<double> timestamps_;
+    std::vector<std::string> path_left_;
+    std::vector<std::string> path_right_;
 };

@@ -4,7 +4,9 @@
 struct Frame {
     using Timestamp = std::chrono::microseconds;
     
-    Timestamp timestamp;          // 时间戳
+    double timestamp;          // 时间戳
+    std::string left_image_path;
+    std::string right_image_path;
     // cv::Mat color_image;          // RGB图像
     // cv::Mat depth_image;          // 深度图像
     // std::vector<float> imu_data;  // IMU测量值
