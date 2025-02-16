@@ -1,17 +1,20 @@
 {
 	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "src/config_pkg"
-		},
-		{
-			"path": "src/ov2slam"
-		},
-		{
-			"path": "src/vins_mono"
-		}
-	],
+        {
+            "path": "."
+        },
+        {
+            "path": "src/config_pkg"
+        },
+        {
+            "path": "src/ov2slam"
+        },
+        {
+            "path": "src/vins_mono"
+        },
+        {
+            "path": ".."
+        }
+    ],
 	"settings": {}
 }

@@ -37,6 +37,9 @@ sudo apt install libepoxy-dev
 # g2o依赖
 sudo apt install libsuitesparse-dev
 
+# 其他依赖
+sudo apt install libpoco-dev
+
 vcs import < dependencies.yaml --shallow
 
 ```
