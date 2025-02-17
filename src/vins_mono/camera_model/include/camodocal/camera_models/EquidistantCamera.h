@@ -22,6 +22,8 @@ public:
     {
     public:
         Parameters();
+        // 新增：显示定义复制构造函数，避免隐式复制构造函数弃用警告
+        Parameters(const Parameters& other) = default;
         Parameters(const std::string& cameraName,
                    int w, int h,
                    double k2, double k3, double k4, double k5,

@@ -867,8 +867,8 @@ CataCamera::initUndistortRectifyMap(cv::Mat& map1, cv::Mat& map2,
 
     if (cx == -1.0f && cy == -1.0f)
     {
-        K_rect << fx, 0, imageSize.width / 2,
-                  0, fy, imageSize.height / 2,
+        K_rect << fx, 0, static_cast<float>(imageSize.width) / 2,
+                  0, fy, static_cast<float>(imageSize.height) / 2,
                   0, 0, 1;
     }
     else

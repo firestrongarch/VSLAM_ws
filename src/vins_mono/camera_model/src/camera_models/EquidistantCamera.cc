@@ -342,7 +342,7 @@ EquidistantCamera::estimateIntrinsics(const cv::Size& boardSize,
     for (size_t i = 0; i < imagePoints.size(); ++i)
     {
         std::vector<Eigen::Vector2d> center(boardSize.height);
-        double radius[boardSize.height];
+        std::vector<double> radius(boardSize.height, 0.0);
         for (int r = 0; r < boardSize.height; ++r)
         {
             std::vector<cv::Point2d> circle;
@@ -634,7 +634,7 @@ EquidistantCamera::setParameters(const EquidistantCamera::Parameters& parameters
 void
 EquidistantCamera::readParameters(const std::vector<double>& parameterVec)
 {
-    if (parameterVec.size() != parameterCount())
+    if (parameterVec.size() != static_cast<size_t>(parameterCount()))
     {
         return;
     }

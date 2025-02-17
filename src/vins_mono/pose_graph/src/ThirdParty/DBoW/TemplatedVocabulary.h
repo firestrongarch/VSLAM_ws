@@ -679,12 +679,10 @@ void TemplatedVocabulary<TDescriptor,F>::HKmeansStep(NodeId parent_id,
     {
       // 1. Calculate clusters
 
-			if(first_time)
-			{
+		if(first_time){
         // random sample 
         initiateClusters(descriptors, clusters);
-      }
-      else
+      } else
       {
         // calculate cluster centres
 
@@ -1526,7 +1524,7 @@ void TemplatedVocabulary<TDescriptor,F>::loadBin(const std::string &filename) {
   m_nodes.resize(voc.nNodes + 1); // +1 to include root
   m_nodes[0].id = 0;
 
-  for(unsigned int i = 0; i < voc.nNodes; ++i)
+  for (unsigned int i = 0; i < static_cast<unsigned int>(voc.nNodes); ++i)
   {
     NodeId nid = voc.nodes[i].nodeId;
     NodeId pid = voc.nodes[i].parentId;
@@ -1550,7 +1548,7 @@ void TemplatedVocabulary<TDescriptor,F>::loadBin(const std::string &filename) {
   // words
   m_words.resize(voc.nWords);
 
-  for(unsigned int i = 0; i < voc.nWords; ++i)
+  for (unsigned int i = 0; i < static_cast<unsigned int>(voc.nWords); ++i)
   {
     NodeId wid = (int)voc.words[i].wordId;
     NodeId nid = (int)voc.words[i].nodeId;

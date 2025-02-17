@@ -22,6 +22,9 @@ public:
                    double k1, double k2, double p1, double p2,
                    double fx, double fy, double cx, double cy);
 
+        // 新增：添加复制构造函数定义
+        Parameters(const Parameters& other) = default;
+
         double& k1(void);
         double& k2(void);
         double& p1(void);

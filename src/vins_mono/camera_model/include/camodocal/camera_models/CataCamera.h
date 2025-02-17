@@ -27,6 +27,8 @@ public:
                    double xi,
                    double k1, double k2, double p1, double p2,
                    double gamma1, double gamma2, double u0, double v0);
+        // 新增：显示定义复制构造函数，避免隐式生成的复制构造函数弃用警告
+        Parameters(const Parameters& other) = default;
 
         double& xi(void);
         double& k1(void);

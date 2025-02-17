@@ -27,6 +27,8 @@ public:
     {
     public:
         Parameters();
+        // 新增：添加复制构造函数定义
+        Parameters(const Parameters& other) = default;
 
         double& C(void) { return m_C; }
         double& D(void) { return m_D; }
