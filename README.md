@@ -67,6 +67,9 @@ tar -xzvf ./ORBvoc.txt.tar.gz
 ```sh
 # ov2slam
 ./build/ov2slam/ov2slam_node config_file_path
+
+# orbslam2
+./build/ORB_SLAM2/stereo_kitti  ./src/config_pkg/voc/ORBvoc.txt ./src/config_pkg/config/ORB_SLAM2/KITTI00-02.yaml ~/datasets/KITTI/00
 ```
 
 1. 通过ros2 run运行
