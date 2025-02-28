@@ -1,1 +1,2 @@
-include("${CMAKE_CURRENT_LIST_DIR}/dataset_readerTargets.cmake")
+find_package(Poco REQUIRED COMPONENTS Foundation)
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")

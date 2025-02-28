@@ -51,6 +51,8 @@ find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
 # find_package(backward_ros REQUIRED)
 
+find_package(dataset_reader REQUIRED)
+
 ##################################################
 
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp)
@@ -137,6 +139,22 @@ ament_target_dependencies(${PROJECT_NAME}_datasets
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_datasets
   ${PROJECT_NAME}
+)
+
+add_executable(${PROJECT_NAME}_kitti test/ov2slam_kitti.cpp)
+
+ament_target_dependencies(${PROJECT_NAME}_kitti
+  rclcpp
+  image_transport
+  std_msgs
+  sensor_msgs
+  cv_bridge
+)
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(${PROJECT_NAME}_kitti
+  ${PROJECT_NAME}
+  dataset_reader::dataset_reader
 )
 
 install(TARGETS
