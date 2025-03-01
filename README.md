@@ -70,6 +70,9 @@ tar -xzvf ./ORBvoc.txt.tar.gz
 
 # orbslam2
 ./build/ORB_SLAM2/stereo_kitti  ./src/config_pkg/voc/ORBvoc.txt ./src/config_pkg/config/ORB_SLAM2/KITTI00-02.yaml ~/datasets/KITTI/00
+
+# ssvio 
+./build/ssvio/test/test_ssvio --config_yaml_path=/home/fu/VSLAM_ws/src/config_pkg/config/ssvio/kitti_04-12.yaml --kitti_dataset_path=/home/fu/datasets/KITTI/09
 ```
 
 1. 通过ros2 run运行
