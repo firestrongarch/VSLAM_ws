@@ -1,3 +1,5 @@
+#include <iostream>
+#include <locale>
 #include <rclcpp/node.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
@@ -236,7 +238,7 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
 }
 
 void readImage(rclcpp::Node::SharedPtr n) {
-    const std::string path = "/data/datasets/lab-module-csc/";
+    const std::string path = "/home/fu/datasets/lab-module-csc/";
     const std::string timestamp_path = path + "cam0/data.csv";
     const std::string imu_path = path + "imu0/data.csv";
     // read timestamp
@@ -337,7 +339,6 @@ void readImage(rclcpp::Node::SharedPtr n) {
         if (d_ns < imu_timestamp[imu_index]) {
             continue;
         }else {
-
             imu_data[imu_index].header.stamp = start + rclcpp::Duration::from_nanoseconds((int64)imu_timestamp[imu_index]);
             pub_imu->publish(imu_data[imu_index]);
             imu_index++;
@@ -415,6 +416,8 @@ int main(int argc, char **argv)
 
     RCUTILS_LOG_INFO("readimage thread launch");
     // new thread for read image
+    std::cout<<"n->now().seconds()\n";
+    std::cout<<n->now().seconds()<<"\n";
     std::thread read_img_thread(readImage,n);
     /*
     if (SHOW_TRACK)

@@ -39,6 +39,8 @@ install
 poses.txt
 poses_kf.txt
 desc.png
-*.bin
+brief_k10L6.bin
 ORBvoc.txt
 ORBvoc.txt.tar.gz
+
+output

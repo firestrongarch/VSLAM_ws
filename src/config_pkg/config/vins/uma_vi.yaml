@@ -1,9 +1,9 @@
 %YAML:1.0
-
+---
 #common parameters
 imu_topic: "/imu0"
 image_topic: "/cam0/image_raw"
-output_path: "/data/datasets/config/VINS_Mono/output"
+output_path: "/home/fu/VSLAM_ws/output"
 
 #camera calibration 
 model_type: PINHOLE
@@ -66,7 +66,7 @@ g_norm: 9.81007     # gravity magnitude
 loop_closure: 1                    # start loop closure
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
 fast_relocalization: 0             # useful in real-time and large project
-pose_graph_save_path: "/data/datasets/config/VINS_Mono/output" # save and load path
+pose_graph_save_path: "/home/fu/VSLAM_ws/output" # save and load path
 
 #unsynchronization parameters
 estimate_td: 0                      # online estimate time offset between camera and imu

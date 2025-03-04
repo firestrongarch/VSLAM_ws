@@ -545,8 +545,8 @@ void FeatureTracker::let_init(){
     score = cv::Mat(LET_HEIGHT, LET_WIDTH, CV_32FC1);
     desc = cv::Mat(LET_HEIGHT, LET_WIDTH, CV_8UC3);
     last_desc = cv::Mat(LET_HEIGHT, LET_WIDTH, CV_8UC3);
-    net.load_param("/data/datasets/config/model/model.param");
-    net.load_model("/data/datasets/config/model/model.bin");
+    net.load_param("/home/fu/VSLAM_ws/src/config_pkg/model/model.param");
+    net.load_model("/home/fu/VSLAM_ws/src/config_pkg/model/model.bin");
 }
 
 void FeatureTracker::let_net(const cv::Mat& image_bgr) {
