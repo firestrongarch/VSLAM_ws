@@ -31,6 +31,7 @@
 
 
 #include "orbslam2/Map.h"
+#include "orbslam2/MapPoint.h"
 
 #include<mutex>
 
