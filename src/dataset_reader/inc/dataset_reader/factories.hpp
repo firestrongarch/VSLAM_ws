@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include <functional>
 #include "dataset_reader/dataset.hpp"
+
+namespace fsa {
+
 class DatasetFactory {
 public:
     using Creator = std::function<std::unique_ptr<Dataset>(const std::string&)>;
@@ -24,3 +27,5 @@ public:
 private:
     static inline std::unordered_map<std::string, Creator> creators_;
 };
+
+}

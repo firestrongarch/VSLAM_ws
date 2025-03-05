@@ -1,5 +1,7 @@
 #include "dataset_reader/dataset.hpp"
 
+namespace fsa {
+
 // kitti_dataset.hpp
 class KittiDataset : public Dataset {
 public:
@@ -17,3 +19,5 @@ private:
     std::vector<std::string> path_left_;
     std::vector<std::string> path_right_;
 };
+
+}

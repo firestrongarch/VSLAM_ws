@@ -1,5 +1,8 @@
 #pragma once
 #include <chrono>
+#include <string>
+
+namespace fsa {
 
 struct Frame {
     using Timestamp = std::chrono::microseconds;
@@ -15,3 +18,6 @@ struct Frame {
     // 可扩展字段
     // std::unordered_map<std::string, cv::Mat> custom_data;
 };
+
+}
+

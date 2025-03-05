@@ -3,6 +3,8 @@
 #include <optional>
 #include "dataset_reader/frame.hpp"
 
+
+namespace fsa {
 // C++20概念：约束数据集必须实现的方法
 template <typename T>
 concept DatasetConcept = requires(T ds) {
@@ -20,3 +22,4 @@ public:
     virtual void seek_to(uint64_t index) { /* 默认实现 */ }
     virtual void set_playback_speed(double speed) { /* ... */ }
 };
+}

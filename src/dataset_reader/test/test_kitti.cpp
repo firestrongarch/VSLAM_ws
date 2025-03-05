@@ -7,9 +7,9 @@
 
 int main() {
     // 注册 KittiDataset 类型
-    DatasetFactory::register_type<KittiDataset>("kitti");
+    fsa::DatasetFactory::register_type<fsa::KittiDataset>("kitti");
 
-    auto dataset = DatasetFactory::create("kitti", "~/data/kitti/00");
+    auto dataset = fsa::DatasetFactory::create("kitti", "~/data/kitti/00");
     while (dataset->has_next()) {
         auto frame = dataset->load_next();
         std::cout<< frame->left_image_path <<"\n";

@@ -6,6 +6,8 @@
 #include <Poco/StringTokenizer.h>  // 引入Poco库的字符串分割工具
 #include <Poco/Path.h>             // 引入Poco库的路径操作
 
+namespace fsa {
+
 KittiDataset::KittiDataset(const std::string& path): dataset_path_(Poco::Path::expand(path)) {
     std::string strPathTimeFile = dataset_path_ + "/times.txt";
 
@@ -67,3 +69,6 @@ std::optional<Frame> KittiDataset::load_next() {
 bool KittiDataset::has_next() const{ 
     return current_index_ < total_frames_; 
 }
+
+}
+
