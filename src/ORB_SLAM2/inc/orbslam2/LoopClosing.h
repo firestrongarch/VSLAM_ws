@@ -33,10 +33,8 @@
 #define LOOPCLOSING_H
 
 #include "orbslam2/KeyFrame.h"
-#include "orbslam2/LocalMapping.h"
 #include "orbslam2/Map.h"
 #include "orbslam2/ORBVocabulary.h"
-#include "orbslam2/Tracking.h"
 
 #include "orbslam2/KeyFrameDatabase.h"
 
@@ -65,6 +63,8 @@ public:
                 > KeyFrameAndPose;
 
 public:
+
+    std::ofstream mTimeLog;
 
     /**
      * @brief 构造函数

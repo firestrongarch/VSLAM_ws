@@ -31,6 +31,7 @@
 
 #include "orbslam2/LoopClosing.h"
 
+#include "orbslam2/LocalMapping.h"
 #include "orbslam2/Sim3Solver.h"
 
 #include "orbslam2/Converter.h"
@@ -54,6 +55,13 @@ LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, 
 {
     // 连续性阈值
     mnCovisibilityConsistencyTh = 3;
+
+    // 打开时间记录文件
+    mTimeLog.open("loop_detection_time.txt");
+    if(!mTimeLog.is_open()) {
+        cerr << "无法打开回环检测时间记录文件" << endl;
+    }
+    mTimeLog << "# KF_ID Detection_Time(ms)" << endl;
 }
 
 // 设置追踪线程句柄
@@ -81,8 +89,25 @@ void LoopClosing::Run()
         // Step 1 查看闭环检测队列mlpLoopKeyFrameQueue中有没有关键帧进来
         if(CheckNewKeyFrames())
         {
+            // 记录开始时间
+            std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
+
+            // 检测回环
+            bool loopDetected = DetectLoop();
+            
+            // 记录结束时间
+            std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+            
+            // 计算时间差(毫秒)
+            double detection_time = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(t2 - t1).count();
+            
+            // 将结果写入文件
+            if(mTimeLog.is_open()) {
+                mTimeLog << mpCurrentKF->mnFrameId << " " << detection_time << endl;
+            }
+
             // Detect loop candidates and check covisibility consistency
-            if(DetectLoop())
+            if(loopDetected)
             {
                // Compute similarity transformation [sR|t]
                // In the stereo/RGBD case s=1

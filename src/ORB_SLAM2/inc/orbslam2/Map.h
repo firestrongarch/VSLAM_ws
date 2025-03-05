@@ -21,7 +21,7 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "orbslam2/MapPoint.h"
+// #include "orbslam2/MapPoint.h"
 #include "orbslam2/KeyFrame.h"
 #include <set>
 
@@ -133,7 +133,7 @@ public:
     void clear();
 
     // 保存了最初始的关键帧
-    vector<KeyFrame*> mvpKeyFrameOrigins;
+    std::vector<KeyFrame*> mvpKeyFrameOrigins;
 
     ///当更新地图时的互斥量.回环检测中和局部BA后更新全局地图的时候会用到这个
     std::mutex mMutexMapUpdate;

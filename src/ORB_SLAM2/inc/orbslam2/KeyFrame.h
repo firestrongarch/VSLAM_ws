@@ -33,15 +33,18 @@
 #ifndef KEYFRAME_H
 #define KEYFRAME_H
 
-#include "orbslam2/MapPoint.h"
+
 #include "DBoW2/BowVector.h"
 #include "DBoW2/FeatureVector.h"
 #include "orbslam2/ORBVocabulary.h"
-#include "orbslam2/ORBextractor.h"
-#include "orbslam2/Frame.h"
-#include "orbslam2/KeyFrameDatabase.h"
+// #include "orbslam2/ORBextractor.h"
+
+// #include "orbslam2/MapPoint.h"
+// #include "orbslam2/Frame.h"
+// #include "orbslam2/KeyFrameDatabase.h"
 
 #include <mutex>
+#include <set>
 
 namespace ORB_SLAM2
 {

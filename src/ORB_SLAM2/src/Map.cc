@@ -49,7 +49,7 @@ Map::Map():mnMaxKFid(0)
 //在地图中插入关键帧,同时更新关键帧的最大id
 void Map::AddKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mspKeyFrames.insert(pKF);
     if(pKF->mnId>mnMaxKFid)
         mnMaxKFid=pKF->mnId;
@@ -62,7 +62,7 @@ void Map::AddKeyFrame(KeyFrame *pKF)
 //向地图中插入地图点
 void Map::AddMapPoint(MapPoint *pMP)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mspMapPoints.insert(pMP);
 }
 
@@ -73,7 +73,7 @@ void Map::AddMapPoint(MapPoint *pMP)
  */
 void Map::EraseMapPoint(MapPoint *pMP)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mspMapPoints.erase(pMP);
 
     //下面是作者加入的注释. 实际上只是从std::set中删除了地图点的指针, 原先地图点
@@ -88,7 +88,7 @@ void Map::EraseMapPoint(MapPoint *pMP)
  */
 void Map::EraseKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     //是的,根据值来删除地图点
     mspKeyFrames.erase(pKF);
 
@@ -101,16 +101,16 @@ void Map::EraseKeyFrame(KeyFrame *pKF)
  * @param vpMPs Local MapPoints
  */
 // 设置参考地图点用于绘图显示局部地图点（红色）
-void Map::SetReferenceMapPoints(const vector<MapPoint *> &vpMPs)
+void Map::SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs)
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mvpReferenceMapPoints = vpMPs;
 }
 
 //REVIEW 这个好像没有用到
 void Map::InformNewBigChange()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     mnBigChangeIdx++;
 }
 
@@ -118,59 +118,59 @@ void Map::InformNewBigChange()
 //REVIEW 目测也是当前在程序中没有被被用到过
 int Map::GetLastBigChangeIdx()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mnBigChangeIdx;
 }
 
 //获取地图中的所有关键帧
-vector<KeyFrame*> Map::GetAllKeyFrames()
+std::vector<KeyFrame*> Map::GetAllKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexMap);
-    return vector<KeyFrame*>(mspKeyFrames.begin(),mspKeyFrames.end());
+    std::unique_lock<std::mutex> lock(mMutexMap);
+    return std::vector<KeyFrame*>(mspKeyFrames.begin(),mspKeyFrames.end());
 }
 
 //获取地图中的所有地图点
-vector<MapPoint*> Map::GetAllMapPoints()
+std::vector<MapPoint*> Map::GetAllMapPoints()
 {
-    unique_lock<mutex> lock(mMutexMap);
-    return vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
+    std::unique_lock<std::mutex> lock(mMutexMap);
+    return std::vector<MapPoint*>(mspMapPoints.begin(),mspMapPoints.end());
 }
 
 //获取地图点数目
 long unsigned int Map::MapPointsInMap()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mspMapPoints.size();
 }
 
 //获取地图中的关键帧数目
 long unsigned int Map::KeyFramesInMap()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mspKeyFrames.size();
 }
 
 //获取参考地图点
-vector<MapPoint*> Map::GetReferenceMapPoints()
+std::vector<MapPoint*> Map::GetReferenceMapPoints()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mvpReferenceMapPoints;
 }
 
 //获取地图中最大的关键帧id
 long unsigned int Map::GetMaxKFid()
 {
-    unique_lock<mutex> lock(mMutexMap);
+    std::unique_lock<std::mutex> lock(mMutexMap);
     return mnMaxKFid;
 }
 
 //清空地图中的数据
 void Map::clear()
 {
-    for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
+    for(std::set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
         delete *sit;
 
-    for(set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
+    for(std::set<KeyFrame*>::iterator sit=mspKeyFrames.begin(), send=mspKeyFrames.end(); sit!=send; sit++)
         delete *sit;
 
     mspMapPoints.clear();
