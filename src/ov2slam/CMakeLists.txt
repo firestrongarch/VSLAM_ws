@@ -37,6 +37,7 @@ if (ibow_lcd_FOUND)
   message(STATUS "iBoW-LCD found!  Going to use Loop Closer! : ${lcdetector_VERSION} - ${lcdetector_DIR}")
 endif (ibow_lcd_FOUND)
 
+find_package(ament_index_cpp REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -74,6 +75,7 @@ target_link_libraries(${PROJECT_NAME}
   Sophus::Sophus
   Ceres::ceres
   ${OpenCV_LIBRARIES}
+  ament_index_cpp::ament_index_cpp
 )
 
 if (ibow_lcd_FOUND)
@@ -127,7 +129,6 @@ target_link_libraries(${PROJECT_NAME}_node
 )
 
 add_executable(${PROJECT_NAME}_datasets test/ov2slam_datasets.cpp)
-
 ament_target_dependencies(${PROJECT_NAME}_datasets
   rclcpp
   image_transport
@@ -135,14 +136,12 @@ ament_target_dependencies(${PROJECT_NAME}_datasets
   sensor_msgs
   cv_bridge
 )
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_datasets
   ${PROJECT_NAME}
 )
 
 add_executable(kitti test/ov2slam_kitti.cpp)
-
 ament_target_dependencies(kitti
   rclcpp
   image_transport
@@ -150,7 +149,6 @@ ament_target_dependencies(kitti
   sensor_msgs
   cv_bridge
 )
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(kitti
   ${PROJECT_NAME}

@@ -28,6 +28,7 @@
 #include "dataset_reader/kitti_dataset.hpp"
 #include <Poco/Environment.h>
 #include <Poco/Path.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 class SensorsGrabber {
 
@@ -160,6 +161,8 @@ int main(int argc, char** argv)
 
     // Load the parameters
     std::string parameters_file = Poco::Path::expand(argv[2]);
+
+    std::string config_pkg_path = ament_index_cpp::get_package_share_directory("config_pkg");
 
     std::cout << "\nLoading parameters file : " << parameters_file << "...\n";
 
