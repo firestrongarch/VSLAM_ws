@@ -71,7 +71,7 @@ public:
     virtual bool Minus(const double* y,
                      const double* x,
                      double* y_minus_x) const override{
-
+                        return false;
                      };
 
     // Compute the derivative of Minus(y, x) w.r.t y at y = x, i.e
@@ -82,7 +82,7 @@ public:
     //
     // Return value indicates whether the operation was successful or not.
     virtual bool MinusJacobian(const double* x, double* jacobian) const override {
-        
+        return false;
     };
 
     virtual int AmbientSize() const override{ return 7; }

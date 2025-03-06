@@ -16,8 +16,8 @@ def generate_launch_description():
     # Define the node
     ov2slam = Node(
         package='ov2slam',
-        executable='ov2slam_node',
-        name='ov2slam_node',
+        executable='kitti',
+        name='kitti',
         output='screen',
         parameters=[{
             'config_file': config_path,

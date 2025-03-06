@@ -141,9 +141,9 @@ target_link_libraries(${PROJECT_NAME}_datasets
   ${PROJECT_NAME}
 )
 
-add_executable(${PROJECT_NAME}_kitti test/ov2slam_kitti.cpp)
+add_executable(kitti test/ov2slam_kitti.cpp)
 
-ament_target_dependencies(${PROJECT_NAME}_kitti
+ament_target_dependencies(kitti
   rclcpp
   image_transport
   std_msgs
@@ -152,13 +152,14 @@ ament_target_dependencies(${PROJECT_NAME}_kitti
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_kitti
+target_link_libraries(kitti
   ${PROJECT_NAME}
   dataset_reader::dataset_reader
 )
 
 install(TARGETS
   ${PROJECT_NAME}_node
+  kitti
   DESTINATION lib/${PROJECT_NAME}
   INCLUDES DESTINATION include
 )

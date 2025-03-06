@@ -27,9 +27,7 @@
 #include "optimizer.hpp"
 
 #include "ceres_parametrization.hpp"
-
 #include <ceres/manifold.h>
-#include <thread>
 
 
 void Optimizer::localBA(Frame &newframe, const bool buse_robust_cost)
@@ -2834,7 +2832,7 @@ bool Optimizer::fullPoseGraph(std::vector<Sophus::SE3d, Eigen::aligned_allocator
         std::cout << summary.FullReport() << std::endl;
     
     std::ofstream f;
-    std::string filename = "ov2slam_full_traj_wlc_opt.txt";
+    std::string filename = "output/ov2slam_full_traj_wlc_opt.txt";
 
     if( pslamstate_->debug_ )
         std::cout << "\n Going to write the full Pose Graph trajectory into : " 

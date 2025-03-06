@@ -63,6 +63,7 @@ tar -xzvf ./ORBvoc.txt.tar.gz
 
 ## SLAM运行
 ⚠ 若提示缺失动态库，需要先source工作空间
+⚠ 在WSL2运行时记得打开 ROS2 daemon：```ros2 daemon start```，否则相关可视化功能无法使用
 1. 在build目录中运行
 ```sh
 # ov2slam
@@ -79,6 +80,7 @@ tar -xzvf ./ORBvoc.txt.tar.gz
 ```sh
 # ov2slam
 ros2 run ov2slam ov2slam_node config_file_path
+ros2 run ov2slam kitti 00 ~/VSLAM_ws/src/config_pkg/config/ov2slam/accurate/kitti/kitti_00-02.yaml
 ```
 
 1. 通过ros2 launch运行

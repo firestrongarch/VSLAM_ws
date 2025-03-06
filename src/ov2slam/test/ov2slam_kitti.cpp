@@ -24,7 +24,10 @@
 #include "ov2slam.hpp"
 #include "slam_params.hpp"
 
-// #include "dataset_reader/kitti_dataset.hpp"
+#include "dataset_reader/factories.hpp"
+#include "dataset_reader/kitti_dataset.hpp"
+#include <Poco/Environment.h>
+#include <Poco/Path.h>
 
 class SensorsGrabber {
 
@@ -52,7 +55,13 @@ public:
         } 
         catch(cv_bridge::Exception &e)
         {
-            RCLCPP_ERROR(rclcpp::get_logger("cv_bridge_logger"), "\n\n\ncv_bridge exeception: %s\n\n\n", e.what());
+            RCLCPP_ERROR(rclcpp::get_logger("cv_bridge_logger"), "cv_bridge exception: %s", e.what());
+            return cv::Mat();
+        }
+
+        if (ptr->image.empty()) {
+            RCLCPP_ERROR(rclcpp::get_logger("cv_bridge_logger"), "Empty image received");
+            return cv::Mat();
         }
 
         return ptr->image;
@@ -141,7 +150,7 @@ int main(int argc, char** argv)
 
     if(argc < 2)
     {
-       std::cout << "\nUsage: rosrun ov2slam ov2slam_node parameters_files/params.yaml\n";
+       std::cout << "\nUsage: ros2 run ov2slam 00 kitti params.yaml\n";
        return 1;
     }
 
@@ -150,7 +159,7 @@ int main(int argc, char** argv)
     auto node = rclcpp::Node::make_shared("ov2slam_node");
 
     // Load the parameters
-    std::string parameters_file = argv[1];
+    std::string parameters_file = Poco::Path::expand(argv[2]);
 
     std::cout << "\nLoading parameters file : " << parameters_file << "...\n";
 
@@ -185,43 +194,37 @@ int main(int argc, char** argv)
     // Start a thread for providing new measurements to the SLAM
     std::thread sync_thread(&SensorsGrabber::sync_process, &sb);
 
-    // for(int ni=0; ni<nImages; ni++)
-    // {
-    //     // Read left and right images from file
-    //     // step 4.1 读取原始图像
-    //     imLeft = cv::imread(vstrImageLeft[ni]);
-    //     imRight = cv::imread(vstrImageRight[ni]);
-    //     long tframe = vTimeStamp[ni];
+    auto readImage = [&](){
+        // 注册 KittiDataset 类型
+        fsa::DatasetFactory::register_type<fsa::KittiDataset>("kitti");
+        auto dataset = fsa::DatasetFactory::create("kitti", "~/datasets/KITTI/"+std::string(argv[1]));
+        cv::Mat imLeft, imRight;
+        // sensor_msgs::msg::Image::SharedPtr imLeft_msg, imRight_msg;
+        while (dataset->has_next()) {
+            auto frame = dataset->load_next();
+            imLeft = cv::imread(frame->left_image_path, cv::IMREAD_GRAYSCALE);  // 直接读取为灰度图
+            imRight = cv::imread(frame->right_image_path, cv::IMREAD_GRAYSCALE);  // 直接读取为灰度图
+            
+            auto imLeft_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", imLeft).toImageMsg();
+            auto imRight_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", imRight).toImageMsg();
 
-    //     // auto time = node->now();
-    //     auto imLeft_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", imLeft).toImageMsg();
-    //     auto imRight_msg = cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", imRight).toImageMsg();
-    //     imLeft_msg->header.stamp.nanosec = tframe % 1000000000;
-    //     imRight_msg->header.stamp.nanosec = tframe % 1000000000;
-    //     imLeft_msg->header.stamp.sec = tframe / 1000000000;
-    //     imRight_msg->header.stamp.sec = tframe / 1000000000;
+            double timestamp_sec = frame->timestamp;
+            uint32_t sec = static_cast<uint32_t>(timestamp_sec);
+            uint32_t nanosec = static_cast<uint32_t>((timestamp_sec - sec) * 1e9);
+            
+            imLeft_msg->header.stamp.sec = sec;
+            imRight_msg->header.stamp.sec = sec;
+            imLeft_msg->header.stamp.nanosec = nanosec;
+            imRight_msg->header.stamp.nanosec = nanosec;
 
-    //     std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-    //     // Pass the images to the SLAM system
-    //     // step 4.5 开始追踪
-    //     // cv::Mat left(IMG_H, IMG_W, CV_8UC3),right(IMG_H, IMG_W, CV_8UC3);
-    //     // net.extract(imLeftRect, left);
-    //     // net.extract(imRightRect, right);
+            sb.subLeftImage(*imLeft_msg);
+            sb.subRightImage(*imRight_msg);
+            using namespace std::chrono;
+            std::this_thread::sleep_for(30ms);
+        }
+    };
 
-    //     sb.subLeftImage(*imLeft_msg);
-    //     sb.subRightImage(*imRight_msg);
-    //     // slam.addNewStereoImages(tframe, imLeftRect,imRightRect);
-
-    //     // step 4.6 追踪完成，停止计时，计算追踪时间
-    //     std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-    //     double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
-
-    //     static std::vector<float> vTimesTrack(nImages);
-    //     vTimesTrack[ni]=ttrack;
-
-    // }
-
-    // Create callbacks according to the topics set in the parameters file
+    std::thread read_img_thread(readImage);
 
     // ROS Spin
     rclcpp::spin(node);
