@@ -57,7 +57,7 @@ LoopClosing::LoopClosing(Map *pMap, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, 
     mnCovisibilityConsistencyTh = 3;
 
     // 打开时间记录文件
-    mTimeLog.open("loop_detection_time.txt");
+    mTimeLog.open("output/loop_detection_time.txt");
     if(!mTimeLog.is_open()) {
         cerr << "无法打开回环检测时间记录文件" << endl;
     }
