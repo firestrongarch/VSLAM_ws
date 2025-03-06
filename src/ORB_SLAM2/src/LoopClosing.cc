@@ -87,35 +87,36 @@ void LoopClosing::Run()
         // Loopclosing中的关键帧是LocalMapping发送过来的，LocalMapping是Tracking中发过来的
         // 在LocalMapping中通过 InsertKeyFrame 将关键帧插入闭环检测队列mlpLoopKeyFrameQueue
         // Step 1 查看闭环检测队列mlpLoopKeyFrameQueue中有没有关键帧进来
-        if(CheckNewKeyFrames())
-        {
-            // 记录开始时间
+        if(CheckNewKeyFrames()) {
+            // 记录整个回环检测和计算Sim3的开始时间
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
             // 检测回环
             bool loopDetected = DetectLoop();
             
+            // Detect loop candidates and check covisibility consistency
+            bool sim3Success = false;
+            if(loopDetected) {
+                // Compute similarity transformation [sR|t]
+                // In the stereo/RGBD case s=1
+                sim3Success = ComputeSim3();
+            }
+            
             // 记录结束时间
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
             
-            // 计算时间差(毫秒)
-            double detection_time = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(t2 - t1).count();
+            // 计算整个过程的时间差(毫秒)
+            double total_time = std::chrono::duration_cast<std::chrono::duration<double,std::milli>>(t2 - t1).count();
             
             // 将结果写入文件
             if(mTimeLog.is_open()) {
-                mTimeLog << mpCurrentKF->mnFrameId << " " << detection_time << endl;
+                mTimeLog << mpCurrentKF->mnFrameId << " " << total_time << endl;
             }
 
-            // Detect loop candidates and check covisibility consistency
-            if(loopDetected)
-            {
-               // Compute similarity transformation [sR|t]
-               // In the stereo/RGBD case s=1
-               if(ComputeSim3())
-               {
-                   // Perform loop fusion and pose graph optimization
-                   CorrectLoop();
-               }
+            // 如果检测到回环且Sim3计算成功，则进行回环矫正
+            if(loopDetected && sim3Success){
+                // Perform loop fusion and pose graph optimization
+                CorrectLoop();
             }
         }
 
