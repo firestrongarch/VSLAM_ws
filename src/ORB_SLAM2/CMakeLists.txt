@@ -46,6 +46,11 @@ add_executable(stereo_uma
 Examples/Stereo/stereo_uma.cc)
 target_link_libraries(stereo_uma ${PROJECT_NAME} LetNet::LetNet)
 
+add_executable(rgbd
+Examples/rgbd_tum.cc)
+target_link_libraries(rgbd ${PROJECT_NAME})
+
+
 install(
     TARGETS stereo_kitti stereo_uma
     # LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

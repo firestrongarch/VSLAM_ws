@@ -155,9 +155,24 @@ target_link_libraries(kitti
   dataset_reader::dataset_reader
 )
 
+add_executable(ov2slam_111 test/ov2slam_111.cpp)
+ament_target_dependencies(ov2slam_111
+  rclcpp
+  image_transport
+  std_msgs
+  sensor_msgs
+  cv_bridge
+)
+## Specify libraries to link a library or executable target against
+target_link_libraries(ov2slam_111
+  ${PROJECT_NAME}
+  dataset_reader::dataset_reader
+)
+
 install(TARGETS
   ${PROJECT_NAME}_node
   kitti
+  ov2slam_111
   DESTINATION lib/${PROJECT_NAME}
   INCLUDES DESTINATION include
 )
