@@ -151,7 +151,7 @@ int main(int argc, char** argv)
 
     if(argc < 2)
     {
-       std::cout << "\nUsage: ros2 run ov2slam 00 kitti params.yaml\n";
+       std::cout << "\nUsage: ros2 run ov2slam kitti 00 params.yaml\n";
        return 1;
     }
 

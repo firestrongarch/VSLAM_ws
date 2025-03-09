@@ -14,11 +14,11 @@ public:
     const float norm_vals_inv[3] = {255.f, 255.f, 255.f};
     ncnn::Net net;
 
-    bool extract(const cv::Mat& src, cv::Mat& out);
+    bool extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score);
 
-    // std::vector<cv::Point2f> extractFeature(
-    //     const cv::Mat& score,
-    //     int ncellsize = 20,
-    //     const std::vector<cv::Point2f>& vcurkps = std::vector<cv::Point2f>()
-    // );
+    std::vector<cv::Point2f> extractFeature(
+        const cv::Mat& score,
+        int ncellsize = 20,
+        const std::vector<cv::Point2f>& vcurkps = std::vector<cv::Point2f>()
+    );
 };

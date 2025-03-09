@@ -4,6 +4,7 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CXX_STANDARD 20)
 
 project(LetNet)
@@ -26,6 +27,12 @@ target_include_directories(${PROJECT_NAME}  PUBLIC
 target_link_libraries(${PROJECT_NAME} PUBLIC
     ${OpenCV_LIBS}
     ncnn
+)
+
+add_executable(test test/test.cpp)
+target_link_libraries(test PUBLIC
+    ${OpenCV_LIBS}
+    ${PROJECT_NAME}
 )
 
 # install
