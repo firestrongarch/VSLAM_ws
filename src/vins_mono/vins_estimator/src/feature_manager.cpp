@@ -42,7 +42,7 @@ int FeatureManager::getFeatureCount()
 }
 
 
-bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double td)
+bool FeatureManager::addFeatureCheckParallax(int frame_count, const std::map<int, std::vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double td)
 {
     RCUTILS_LOG_DEBUG("input feature: %d", (int)image.size());
     RCUTILS_LOG_DEBUG("num of feature: %d", getFeatureCount());
@@ -117,9 +117,9 @@ void FeatureManager::debugShow()
     }
 }
 
-vector<pair<Vector3d, Vector3d>> FeatureManager::getCorresponding(int frame_count_l, int frame_count_r)
+std::vector<pair<Vector3d, Vector3d>> FeatureManager::getCorresponding(int frame_count_l, int frame_count_r)
 {
-    vector<pair<Vector3d, Vector3d>> corres;
+    std::vector<pair<Vector3d, Vector3d>> corres;
     for (auto &it : feature)
     {
         if (it.start_frame <= frame_count_l && it.endFrame() >= frame_count_r)

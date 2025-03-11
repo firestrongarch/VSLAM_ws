@@ -173,7 +173,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, 		//左侧图像
     // Check mode change
     {
     	// TODO 锁住这个变量？防止其他的线程对它的更改？
-        unique_lock<mutex> lock(mMutexMode);
+        std::unique_lock<std::mutex> lock(mMutexMode);
         //如果激活定位模式
         if(mbActivateLocalizationMode)
         {
@@ -206,7 +206,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, 		//左侧图像
     // Check reset，检查是否有复位的操作
     {
     	//上锁
-	    unique_lock<mutex> lock(mMutexReset);
+	    std::unique_lock<std::mutex> lock(mMutexReset);
 	    //是否有复位请求？
 	    if(mbReset)
 	    {
@@ -221,7 +221,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, 		//左侧图像
     cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
 
     //给运动追踪状态上锁
-    unique_lock<mutex> lock2(mMutexState);
+    std::unique_lock<std::mutex> lock2(mMutexState);
     //获取运动追踪状态
     mTrackingState = mpTracker->mState;
     //获取当前帧追踪到的地图点向量指针
@@ -245,7 +245,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     // Check mode change
     //检查模式改变
     {
-        unique_lock<mutex> lock(mMutexMode);
+        std::unique_lock<std::mutex> lock(mMutexMode);
         if(mbActivateLocalizationMode)
         {
             mpLocalMapper->RequestStop();
@@ -270,7 +270,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     // Check reset
     //检查是否有复位请求
     {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     if(mbReset)
     {
         mpTracker->Reset();
@@ -281,7 +281,7 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     //获得相机位姿的估计
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 
-    unique_lock<mutex> lock2(mMutexState);
+    std::unique_lock<std::mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
@@ -300,7 +300,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     // Check mode change
     {
         // 独占锁，主要是为了mbActivateLocalizationMode和mbDeactivateLocalizationMode不会发生混乱
-        unique_lock<mutex> lock(mMutexMode);
+        std::unique_lock<std::mutex> lock(mMutexMode);
         // mbActivateLocalizationMode为true会关闭局部地图线程
         if(mbActivateLocalizationMode)
         {
@@ -329,7 +329,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 
     // Check reset
     {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     if(mbReset)
     {
         mpTracker->Reset();
@@ -340,7 +340,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     //获取相机位姿的估计结果
     cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
 
-    unique_lock<mutex> lock2(mMutexState);
+    std::unique_lock<std::mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
     mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
     mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
@@ -352,7 +352,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
 void System::ActivateLocalizationMode()
 {
 	//上锁
-    unique_lock<mutex> lock(mMutexMode);
+    std::unique_lock<std::mutex> lock(mMutexMode);
     //设置标志
     mbActivateLocalizationMode = true;
 }
@@ -360,7 +360,7 @@ void System::ActivateLocalizationMode()
 //取消定位模式
 void System::DeactivateLocalizationMode()
 {
-    unique_lock<mutex> lock(mMutexMode);
+    std::unique_lock<std::mutex> lock(mMutexMode);
     mbDeactivateLocalizationMode = true;
 }
 
@@ -382,7 +382,7 @@ bool System::MapChanged()
 //准备执行复位
 void System::Reset()
 {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     mbReset = true;
 }
 
@@ -428,7 +428,7 @@ void System::SaveTrajectoryTUM(const string &filename)
     }
 
     //从地图中获取所有的关键帧
-    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     //根据关键帧生成的先后顺序（id）进行排序
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
@@ -495,7 +495,7 @@ void System::SaveTrajectoryTUM(const string &filename)
         cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
 
         //用四元数表示旋转
-        vector<float> q = Converter::toQuaternion(Rwc);
+        std::vector<float> q = Converter::toQuaternion(Rwc);
 
         //然后按照给定的格式输出到文件中
         f << setprecision(6) << *lT << " " <<  setprecision(9) << twc.at<float>(0) << " " << twc.at<float>(1) << " " << twc.at<float>(2) << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
@@ -513,7 +513,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
 
     //获取关键帧vector并按照生成时间对其进行排序
-    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     //本来这里需要进行原点校正，但是实际上没有做
@@ -541,7 +541,7 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 
         //抽取旋转部分和平移部分，前者使用四元数表示
         cv::Mat R = pKF->GetRotation().t();
-        vector<float> q = Converter::toQuaternion(R);
+        std::vector<float> q = Converter::toQuaternion(R);
         cv::Mat t = pKF->GetCameraCenter();
         //按照给定的格式输出到文件中
         f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
@@ -566,7 +566,7 @@ void System::SaveTrajectoryKITTI(const string &filename)
     }
 
     //下面的操作和前面TUM数据集格式的非常相似，因此不再添加注释
-    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
     sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
@@ -615,21 +615,21 @@ void System::SaveTrajectoryKITTI(const string &filename)
 //获取追踪器状态
 int System::GetTrackingState()
 {
-    unique_lock<mutex> lock(mMutexState);
+    std::unique_lock<std::mutex> lock(mMutexState);
     return mTrackingState;
 }
 
 //获取追踪到的地图点（其实实际上得到的是一个指针）
-vector<MapPoint*> System::GetTrackedMapPoints()
+std::vector<MapPoint*> System::GetTrackedMapPoints()
 {
-    unique_lock<mutex> lock(mMutexState);
+    std::unique_lock<std::mutex> lock(mMutexState);
     return mTrackedMapPoints;
 }
 
 //获取追踪到的关键帧的点
-vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
+std::vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
 {
-    unique_lock<mutex> lock(mMutexState);
+    std::unique_lock<std::mutex> lock(mMutexState);
     return mTrackedKeyPointsUn;
 }
 

@@ -292,7 +292,7 @@ void PoseGraph::loadKeyFrame(KeyFrame* cur_kf, bool flag_detect_loop)
 
 KeyFrame* PoseGraph::getKeyFrame(int index)
 {
-//    unique_lock<mutex> lock(m_keyframelist);
+//    std::unique_lock<std::mutex> lock(m_keyframelist);
     list<KeyFrame*>::iterator it = keyframelist.begin();
     for (; it != keyframelist.end(); it++)
     {
@@ -732,7 +732,7 @@ void PoseGraph::savePoseGraph()
                                     (*it)->loop_info(4), (*it)->loop_info(5), (*it)->loop_info(6), (*it)->loop_info(7),
                                     (int)(*it)->keypoints.size());
 
-        // write keypoints, brief_descriptors   vector<cv::KeyPoint> keypoints vector<BRIEF::bitset> brief_descriptors;
+        // write keypoints, brief_descriptors   std::vector<cv::KeyPoint> keypoints std::vector<BRIEF::bitset> brief_descriptors;
         assert((*it)->keypoints.size() == (*it)->brief_descriptors.size());
         brief_path = POSE_GRAPH_SAVE_PATH + to_string((*it)->index) + "_briefdes.dat";
         std::ofstream brief_file(brief_path, std::ios::binary);
@@ -837,9 +837,9 @@ void PoseGraph::loadPoseGraph()
         string keypoints_path = POSE_GRAPH_SAVE_PATH + to_string(index) + "_keypoints.txt";
         FILE *keypoints_file;
         keypoints_file = fopen(keypoints_path.c_str(), "r");
-        vector<cv::KeyPoint> keypoints;
-        vector<cv::KeyPoint> keypoints_norm;
-        vector<BRIEF::bitset> brief_descriptors;
+        std::vector<cv::KeyPoint> keypoints;
+        std::vector<cv::KeyPoint> keypoints_norm;
+        std::vector<BRIEF::bitset> brief_descriptors;
         for (int i = 0; i < keypoints_num; i++)
         {
             BRIEF::bitset tmp_des;

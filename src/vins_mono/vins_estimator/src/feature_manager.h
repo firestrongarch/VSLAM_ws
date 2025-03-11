@@ -44,7 +44,7 @@ class FeaturePerId
   public:
     const int feature_id;
     int start_frame;
-    vector<FeaturePerFrame> feature_per_frame;
+    std::vector<FeaturePerFrame> feature_per_frame;
 
     int used_num;
     bool is_outlier;
@@ -74,9 +74,9 @@ class FeatureManager
 
     int getFeatureCount();
 
-    bool addFeatureCheckParallax(int frame_count, const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double td);
+    bool addFeatureCheckParallax(int frame_count, const std::map<int, std::vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, double td);
     void debugShow();
-    vector<pair<Vector3d, Vector3d>> getCorresponding(int frame_count_l, int frame_count_r);
+    std::vector<pair<Vector3d, Vector3d>> getCorresponding(int frame_count_l, int frame_count_r);
 
     //void updateDepth(const VectorXd &x);
     void setDepth(const VectorXd &x);

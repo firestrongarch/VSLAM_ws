@@ -11,8 +11,8 @@
 
 #define SHOW_UNDISTORTION 0
 
-vector<uchar> r_status;
-vector<float> r_err;
+std::vector<uchar> r_status;
+std::vector<float> r_err;
 queue<sensor_msgs::msg::Image::ConstSharedPtr> img_buf;
 
 rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr pub_img;
@@ -128,7 +128,7 @@ void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
         feature_points->header = img_msg->header;
         feature_points->header.frame_id = "world";
 
-        vector<set<int>> hash_ids(NUM_OF_CAM);
+        std::vector<std::set<int>> hash_ids(NUM_OF_CAM);
         for (int i = 0; i < NUM_OF_CAM; i++)
         {
             auto &un_pts = trackerData[i].cur_un_pts;

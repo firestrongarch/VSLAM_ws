@@ -33,8 +33,8 @@ class Estimator
 
     // interface
     void processIMU(double t, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
-    void processImage(const map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const std_msgs::msg::Header &header);
-    void setReloFrame(double _frame_stamp, int _frame_index, vector<Vector3d> &_match_points, Vector3d _relo_t, Matrix3d _relo_r);
+    void processImage(const std::map<int, std::vector<pair<int, Eigen::Matrix<double, 7, 1>>>> &image, const std_msgs::msg::Header &header);
+    void setReloFrame(double _frame_stamp, int _frame_index, std::vector<Vector3d> &_match_points, Vector3d _relo_t, Matrix3d _relo_r);
 
     // internal
     void clearState();
@@ -86,9 +86,9 @@ class Estimator
     IntegrationBase *pre_integrations[(WINDOW_SIZE + 1)];
     Vector3d acc_0, gyr_0;
 
-    vector<double> dt_buf[(WINDOW_SIZE + 1)];
-    vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
-    vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
+    std::vector<double> dt_buf[(WINDOW_SIZE + 1)];
+    std::vector<Vector3d> linear_acceleration_buf[(WINDOW_SIZE + 1)];
+    std::vector<Vector3d> angular_velocity_buf[(WINDOW_SIZE + 1)];
 
     int frame_count;
     int sum_of_outlier, sum_of_back, sum_of_front, sum_of_invalid;
@@ -101,9 +101,9 @@ class Estimator
     bool is_valid, is_key;
     bool failure_occur;
 
-    vector<Vector3d> point_cloud;
-    vector<Vector3d> margin_cloud;
-    vector<Vector3d> key_poses;
+    std::vector<Vector3d> point_cloud;
+    std::vector<Vector3d> margin_cloud;
+    std::vector<Vector3d> key_poses;
     double initial_timestamp;
 
 
@@ -118,9 +118,9 @@ class Estimator
     int loop_window_index;
 
     MarginalizationInfo *last_marginalization_info;
-    vector<double *> last_marginalization_parameter_blocks;
+    std::vector<double *> last_marginalization_parameter_blocks;
 
-    map<double, ImageFrame> all_image_frame;
+    std::map<double, ImageFrame> all_image_frame;
     IntegrationBase *tmp_pre_integration;
 
     //relocalization variable
@@ -128,7 +128,7 @@ class Estimator
     double relo_frame_stamp;
     double relo_frame_index;
     int relo_frame_local_index;
-    vector<Vector3d> match_points;
+    std::vector<Vector3d> match_points;
     double relo_Pose[SIZE_POSE];
     Matrix3d drift_correct_r;
     Vector3d drift_correct_t;

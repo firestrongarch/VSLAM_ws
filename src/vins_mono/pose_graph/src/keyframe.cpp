@@ -1,7 +1,7 @@
 #include "keyframe.h"
 
 template <typename Derived>
-static void reduceVector(vector<Derived> &v, vector<uchar> status)
+static void reduceVector(std::vector<Derived> &v, std::vector<uchar> status)
 {
     int j = 0;
     for (int i = 0; i < int(v.size()); i++)
@@ -12,8 +12,8 @@ static void reduceVector(vector<Derived> &v, vector<uchar> status)
 
 // create keyframe online
 KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, cv::Mat &_image,
-		           vector<cv::Point3f> &_point_3d, vector<cv::Point2f> &_point_2d_uv, vector<cv::Point2f> &_point_2d_norm,
-		           vector<double> &_point_id, int _sequence)
+		           std::vector<cv::Point3f> &_point_3d, std::vector<cv::Point2f> &_point_2d_uv, std::vector<cv::Point2f> &_point_2d_norm,
+		           std::vector<double> &_point_id, int _sequence)
 {
 	time_stamp = _time_stamp;
 	index = _index;
@@ -43,7 +43,7 @@ KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3
 // load previous keyframe
 KeyFrame::KeyFrame(double _time_stamp, int _index, Vector3d &_vio_T_w_i, Matrix3d &_vio_R_w_i, Vector3d &_T_w_i, Matrix3d &_R_w_i,
 					cv::Mat &_image, int _loop_index, Eigen::Matrix<double, 8, 1 > &_loop_info,
-					vector<cv::KeyPoint> &_keypoints, vector<cv::KeyPoint> &_keypoints_norm, vector<BRIEF::bitset> &_brief_descriptors)
+					std::vector<cv::KeyPoint> &_keypoints, std::vector<cv::KeyPoint> &_keypoints_norm, std::vector<BRIEF::bitset> &_brief_descriptors)
 {
 	time_stamp = _time_stamp;
 	index = _index;
@@ -92,7 +92,7 @@ void KeyFrame::computeBRIEFPoint()
 		cv::FAST(image, keypoints, fast_th, true);
 	else
 	{
-		vector<cv::Point2f> tmp_pts;
+		std::vector<cv::Point2f> tmp_pts;
 		cv::goodFeaturesToTrack(image, tmp_pts, 500, 0.01, 10);
 		for(int i = 0; i < (int)tmp_pts.size(); i++)
 		{
@@ -112,7 +112,7 @@ void KeyFrame::computeBRIEFPoint()
 	}
 }
 
-void BriefExtractor::operator() (const cv::Mat &im, vector<cv::KeyPoint> &keys, vector<BRIEF::bitset> &descriptors) const
+void BriefExtractor::operator() (const cv::Mat &im, std::vector<cv::KeyPoint> &keys, std::vector<BRIEF::bitset> &descriptors) const
 {
   m_brief.compute(im, keys, descriptors);
 }
@@ -173,14 +173,14 @@ void KeyFrame::searchByBRIEFDes(std::vector<cv::Point2f> &matched_2d_old,
 
 void KeyFrame::FundmantalMatrixRANSAC(const std::vector<cv::Point2f> &matched_2d_cur_norm,
                                       const std::vector<cv::Point2f> &matched_2d_old_norm,
-                                      vector<uchar> &status)
+                                      std::vector<uchar> &status)
 {
 	int n = (int)matched_2d_cur_norm.size();
 	for (int i = 0; i < n; i++)
 		status.push_back(0);
     if (n >= 8)
     {
-        vector<cv::Point2f> tmp_cur(n), tmp_old(n);
+        std::vector<cv::Point2f> tmp_cur(n), tmp_old(n);
         for (int i = 0; i < (int)matched_2d_cur_norm.size(); i++)
         {
             double FOCAL_LENGTH = 460.0;
@@ -197,7 +197,7 @@ void KeyFrame::FundmantalMatrixRANSAC(const std::vector<cv::Point2f> &matched_2d
     }
 }
 
-void KeyFrame::PnPRANSAC(const vector<cv::Point2f> &matched_2d_old_norm,
+void KeyFrame::PnPRANSAC(const std::vector<cv::Point2f> &matched_2d_old_norm,
                          const std::vector<cv::Point3f> &matched_3d,
                          std::vector<uchar> &status,
                          Eigen::Vector3d &PnP_T_old, Eigen::Matrix3d &PnP_R_old)
@@ -260,11 +260,11 @@ bool KeyFrame::findConnection(KeyFrame* old_kf)
 {
 	TicToc tmp_t;
 	//printf("find Connection\n");
-	vector<cv::Point2f> matched_2d_cur, matched_2d_old;
-	vector<cv::Point2f> matched_2d_cur_norm, matched_2d_old_norm;
-	vector<cv::Point3f> matched_3d;
-	vector<double> matched_id;
-	vector<uchar> status;
+	std::vector<cv::Point2f> matched_2d_cur, matched_2d_old;
+	std::vector<cv::Point2f> matched_2d_cur_norm, matched_2d_old_norm;
+	std::vector<cv::Point3f> matched_3d;
+	std::vector<double> matched_id;
+	std::vector<uchar> status;
 
 	matched_3d = point_3d;
 	matched_2d_cur = point_2d_uv;
@@ -588,7 +588,7 @@ BriefExtractor::BriefExtractor(const std::string &pattern_file)
   cv::FileStorage fs(pattern_file.c_str(), cv::FileStorage::READ);
   if(!fs.isOpened()) throw string("Could not open file ") + pattern_file;
 
-  vector<int> x1, y1, x2, y2;
+  std::vector<int> x1, y1, x2, y2;
   fs["x1"] >> x1;
   fs["x2"] >> x2;
   fs["y1"] >> y1;

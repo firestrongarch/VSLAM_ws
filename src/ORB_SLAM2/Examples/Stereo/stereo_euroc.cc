@@ -41,7 +41,7 @@ using namespace std;
  * @param[out] vTimeStamps          图像序列中每张图像的时间戳(认为左目图像和右目图像的时间戳已经对齐)
  */
 void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
-                vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps);
+                std::vector<string> &vstrImageLeft, std::vector<string> &vstrImageRight, std::vector<double> &vTimeStamps);
 
 int main(int argc, char **argv)
 {
@@ -55,9 +55,9 @@ int main(int argc, char **argv)
     // step 1 获取图像的访问路径
     // Retrieve paths to images
     // 保存左右目图像每张图像路径和时间戳的向量
-    vector<string> vstrImageLeft;
-    vector<string> vstrImageRight;
-    vector<double> vTimeStamp;
+    std::vector<string> vstrImageLeft;
+    std::vector<string> vstrImageRight;
+    std::vector<double> vTimeStamp;
     //获得图像位置
     LoadImages(string(argv[3]), string(argv[4]), string(argv[5]), vstrImageLeft, vstrImageRight, vTimeStamp);
 
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
     ORB_SLAM2::System SLAM(argv[1],argv[2],ORB_SLAM2::System::STEREO,true);
 
     // Vector for tracking time statistics
-    vector<float> vTimesTrack;
+    std::vector<float> vTimesTrack;
     vTimesTrack.resize(nImages);
 
     cout << endl << "-------" << endl;
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 
 //加载图像，和单目中的做法一样
 void LoadImages(const string &strPathLeft, const string &strPathRight, const string &strPathTimes,
-                vector<string> &vstrImageLeft, vector<string> &vstrImageRight, vector<double> &vTimeStamps)
+                std::vector<string> &vstrImageLeft, std::vector<string> &vstrImageRight, std::vector<double> &vTimeStamps)
 {
     ifstream fTimes;
     fTimes.open(strPathTimes.c_str());

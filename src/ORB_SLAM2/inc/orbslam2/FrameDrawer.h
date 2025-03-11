@@ -93,18 +93,18 @@ protected:
     ///当前帧中特征点的数目
     int N;
     ///当前帧中的特征点
-    vector<cv::KeyPoint> mvCurrentKeys;
+    std::vector<cv::KeyPoint> mvCurrentKeys;
     ///当前帧中的特征点是否在地图中的标记
     ///当前帧的特征点在地图中是否出现;后者是表示地图中没有出现,但是在当前帧中是第一次被观测得到的点
-    vector<bool> mvbMap, mvbVO;
+    std::vector<bool> mvbMap, mvbVO;
     ///当前是否是只有追踪线程在工作;或者说,当前是处于定位模式还是处于SLAM模式
     bool mbOnlyTracking;
     ///当前帧中追踪到的特征点计数
     int mnTracked, mnTrackedVO;
     ///参考帧中的特征点
-    vector<cv::KeyPoint> mvIniKeys;
+    std::vector<cv::KeyPoint> mvIniKeys;
     ///当前帧特征点和参考帧特征点的匹配关系
-    vector<int> mvIniMatches;
+    std::vector<int> mvIniMatches;
     ///当前SLAM系统的工作状态
     int mState;
 

@@ -55,17 +55,17 @@ FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
 cv::Mat FrameDrawer::DrawFrame()
 {
     cv::Mat im;
-    vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
-    vector<int> vMatches; // Initialization: correspondeces with reference keypoints
-    vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
-    vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
+    std::vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
+    std::vector<int> vMatches; // Initialization: correspondeces with reference keypoints
+    std::vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
+    std::vector<bool> vbVO, vbMap; // Tracked MapPoints in current frame
     int state; // Tracking state
 
     //Copy variables within scoped mutex
     // step 1：将成员变量赋值给局部变量（包括图像、状态、其它的提示）
     //NOTICE 加互斥锁，避免与FrameDrawer::Update函数中图像拷贝发生冲突
     {
-        unique_lock<mutex> lock(mMutex);
+        std::unique_lock<std::mutex> lock(mMutex);
         state=mState;
         if(mState==Tracking::SYSTEM_NOT_READY)
             mState=Tracking::NO_IMAGES_YET;
@@ -228,14 +228,14 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
  */
 void FrameDrawer::Update(Tracking *pTracker)
 {
-    unique_lock<mutex> lock(mMutex);
+    std::unique_lock<std::mutex> lock(mMutex);
     //拷贝跟踪线程的图像
     pTracker->mImGray.copyTo(mIm);
     //拷贝跟踪线程的特征点
     mvCurrentKeys=pTracker->mCurrentFrame.mvKeys;
     N = mvCurrentKeys.size();
-    mvbVO = vector<bool>(N,false);
-    mvbMap = vector<bool>(N,false);
+    mvbVO = std::vector<bool>(N,false);
+    mvbMap = std::vector<bool>(N,false);
 
     mbOnlyTracking = pTracker->mbOnlyTracking;
 

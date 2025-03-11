@@ -8,7 +8,7 @@ InitialEXRotation::InitialEXRotation(){
     ric = Matrix3d::Identity();
 }
 
-bool InitialEXRotation::CalibrationExRotation(vector<pair<Vector3d, Vector3d>> corres, Quaterniond delta_q_imu, Matrix3d &calib_ric_result)
+bool InitialEXRotation::CalibrationExRotation(std::vector<pair<Vector3d, Vector3d>> corres, Quaterniond delta_q_imu, Matrix3d &calib_ric_result)
 {
     frame_count++;
     Rc.push_back(solveRelativeR(corres));
@@ -66,11 +66,11 @@ bool InitialEXRotation::CalibrationExRotation(vector<pair<Vector3d, Vector3d>> c
         return false;
 }
 
-Matrix3d InitialEXRotation::solveRelativeR(const vector<pair<Vector3d, Vector3d>> &corres)
+Matrix3d InitialEXRotation::solveRelativeR(const std::vector<pair<Vector3d, Vector3d>> &corres)
 {
     if (corres.size() >= 9)
     {
-        vector<cv::Point2f> ll, rr;
+        std::vector<cv::Point2f> ll, rr;
         for (int i = 0; i < int(corres.size()); i++)
         {
             ll.push_back(cv::Point2f(corres[i].first(0), corres[i].first(1)));
@@ -98,8 +98,8 @@ Matrix3d InitialEXRotation::solveRelativeR(const vector<pair<Vector3d, Vector3d>
     return Matrix3d::Identity();
 }
 
-double InitialEXRotation::testTriangulation(const vector<cv::Point2f> &l,
-                                          const vector<cv::Point2f> &r,
+double InitialEXRotation::testTriangulation(const std::vector<cv::Point2f> &l,
+                                          const std::vector<cv::Point2f> &r,
                                           cv::Mat_<double> R, cv::Mat_<double> t)
 {
     cv::Mat pointcloud;

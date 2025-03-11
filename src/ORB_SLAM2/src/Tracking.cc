@@ -446,7 +446,7 @@ void Tracking::Track()
     // 地图更新时加锁。保证地图不会发生变化
     // 疑问:这样子会不会影响地图的实时更新?
     // 回答：主要耗时在构造帧中特征点的提取和匹配部分,在那个时候地图是没有被上锁的,有足够的时间更新地图
-    unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
 
     // Step 1：初始化
     if(mState==NOT_INITIALIZED)
@@ -564,9 +564,9 @@ void Tracking::Track()
                     bool bOKReloc = false;
                     
                     //运动模型中构造的地图点
-                    vector<MapPoint*> vpMPsMM;
+                    std::vector<MapPoint*> vpMPsMM;
                     //在追踪运动模型后发现的外点
-                    vector<bool> vbOutMM;
+                    std::vector<bool> vbOutMM;
                     //运动模型得到的位姿
                     cv::Mat TcwMM;
 
@@ -943,7 +943,7 @@ void Tracking::MonocularInitialization()
 
         cv::Mat Rcw; // Current Camera Rotation
         cv::Mat tcw; // Current Camera Translation
-        vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
+        std::vector<bool> vbTriangulated; // Triangulated Correspondences (mvIniMatches)
 
         // Step 5 通过H模型或F模型进行单目初始化，得到两帧间相对运动、初始MapPoints
         if(mpInitializer->Initialize(
@@ -1084,7 +1084,7 @@ void Tracking::CreateInitialMapMonocular()
     // Scale points
     // Step 7 把3D点的尺度也归一化到1
     // 为什么是pKFini? 是不是就算是使用 pKFcur 得到的结果也是相同的? 答：是的，因为是同样的三维点
-    vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
+    std::vector<MapPoint*> vpAllMapPoints = pKFini->GetMapPointMatches();
     for(size_t iMP=0; iMP<vpAllMapPoints.size(); iMP++)
     {
         if(vpAllMapPoints[iMP])
@@ -1167,7 +1167,7 @@ bool Tracking::TrackReferenceKeyFrame()
     // We perform first an ORB matching with the reference keyframe
     // If enough matches are found we setup a PnP solver
     ORBmatcher matcher(0.7,true);
-    vector<MapPoint*> vpMapPointMatches;
+    std::vector<MapPoint*> vpMapPointMatches;
 
     // Step 2：通过词袋BoW加速当前帧与参考帧之间的特征点匹配
     int nmatches = matcher.SearchByBoW(
@@ -1244,7 +1244,7 @@ void Tracking::UpdateLastFrame()
     // Create "visual odometry" MapPoints
     // We sort points according to their measured depth by the stereo/RGB-D sensor
     // Step 2.1：得到上一帧中具有有效深度值的特征点（不一定是地图点）
-    vector<pair<float,int> > vDepthIdx;
+    std::vector<pair<float,int> > vDepthIdx;
     vDepthIdx.reserve(mLastFrame.N);
 
     for(int i=0; i<mLastFrame.N;i++)
@@ -1654,7 +1654,7 @@ void Tracking::CreateNewKeyFrame()
         // We create all those MapPoints whose depth < mThDepth.
         // If there are less than 100 close points we create the 100 closest.
         // Step 3.1：得到当前帧有深度值的特征点（不一定是地图点）
-        vector<pair<float,int> > vDepthIdx;
+        std::vector<pair<float,int> > vDepthIdx;
         vDepthIdx.reserve(mCurrentFrame.N);
         for(int i=0; i<mCurrentFrame.N; i++)
         {
@@ -1741,7 +1741,7 @@ void Tracking::SearchLocalPoints()
 {
     // Do not search map points already matched
     // Step 1：遍历当前帧的地图点，标记这些地图点不参与之后的投影搜索匹配
-    for(vector<MapPoint*>::iterator vit=mCurrentFrame.mvpMapPoints.begin(), vend=mCurrentFrame.mvpMapPoints.end(); vit!=vend; vit++)
+    for(std::vector<MapPoint*>::iterator vit=mCurrentFrame.mvpMapPoints.begin(), vend=mCurrentFrame.mvpMapPoints.end(); vit!=vend; vit++)
     {
         MapPoint* pMP = *vit;
         if(pMP)
@@ -1767,7 +1767,7 @@ void Tracking::SearchLocalPoints()
 
     // Project points in frame and check its visibility
     // Step 2：判断所有局部地图点中除当前帧地图点外的点，是否在当前帧视野范围内
-    for(vector<MapPoint*>::iterator vit=mvpLocalMapPoints.begin(), vend=mvpLocalMapPoints.end(); vit!=vend; vit++)
+    for(std::vector<MapPoint*>::iterator vit=mvpLocalMapPoints.begin(), vend=mvpLocalMapPoints.end(); vit!=vend; vit++)
     {
         MapPoint* pMP = *vit;
 
@@ -1835,13 +1835,13 @@ void Tracking::UpdateLocalPoints()
     mvpLocalMapPoints.clear();
 
     // Step 2：遍历局部关键帧 mvpLocalKeyFrames
-    for(vector<KeyFrame*>::const_iterator itKF=mvpLocalKeyFrames.begin(), itEndKF=mvpLocalKeyFrames.end(); itKF!=itEndKF; itKF++)
+    for(std::vector<KeyFrame*>::const_iterator itKF=mvpLocalKeyFrames.begin(), itEndKF=mvpLocalKeyFrames.end(); itKF!=itEndKF; itKF++)
     {
         KeyFrame* pKF = *itKF;
-        const vector<MapPoint*> vpMPs = pKF->GetMapPointMatches();
+        const std::vector<MapPoint*> vpMPs = pKF->GetMapPointMatches();
 
         // step 2：将局部关键帧的地图点添加到mvpLocalMapPoints
-        for(vector<MapPoint*>::const_iterator itMP=vpMPs.begin(), itEndMP=vpMPs.end(); itMP!=itEndMP; itMP++)
+        for(std::vector<MapPoint*>::const_iterator itMP=vpMPs.begin(), itEndMP=vpMPs.end(); itMP!=itEndMP; itMP++)
         {
             MapPoint* pMP = *itMP;
             if(!pMP)
@@ -1873,7 +1873,7 @@ void Tracking::UpdateLocalKeyFrames()
 {
     // Each map point vote for the keyframes in which it has been observed
     // Step 1：遍历当前帧的地图点，记录所有能观测到当前帧地图点的关键帧
-    map<KeyFrame*,int> keyframeCounter;
+    std::map<KeyFrame*,int> keyframeCounter;
     for(int i=0; i<mCurrentFrame.N; i++)
     {
         if(mCurrentFrame.mvpMapPoints[i])
@@ -1882,9 +1882,9 @@ void Tracking::UpdateLocalKeyFrames()
             if(!pMP->isBad())
             {
                 // 得到观测到该地图点的关键帧和该地图点在关键帧中的索引
-                const map<KeyFrame*,size_t> observations = pMP->GetObservations();
+                const std::map<KeyFrame*,size_t> observations = pMP->GetObservations();
                 // 由于一个地图点可以被多个关键帧观测到,因此对于每一次观测,都对观测到这个地图点的关键帧进行累计投票
-                for(map<KeyFrame*,size_t>::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
+                for(std::map<KeyFrame*,size_t>::const_iterator it=observations.begin(), itend=observations.end(); it!=itend; it++)
                     // 这里的操作非常精彩！
                     // map[key] = value，当要插入的键存在时，会覆盖键对应的原来的值。如果键不存在，则添加一组键值对
                     // it->first 是地图点看到的关键帧，同一个关键帧看到的地图点会累加到该关键帧计数
@@ -1914,7 +1914,7 @@ void Tracking::UpdateLocalKeyFrames()
 
     // All keyframes that observe a map point are included in the local map. Also check which keyframe shares most points
     // Step 2.1 类型1：能观测到当前帧地图点的关键帧作为局部关键帧 （将邻居拉拢入伙）（一级共视关键帧） 
-    for(map<KeyFrame*,int>::const_iterator it=keyframeCounter.begin(), itEnd=keyframeCounter.end(); it!=itEnd; it++)
+    for(std::map<KeyFrame*,int>::const_iterator it=keyframeCounter.begin(), itEnd=keyframeCounter.end(); it!=itEnd; it++)
     {
         KeyFrame* pKF = it->first;
 
@@ -1940,7 +1940,7 @@ void Tracking::UpdateLocalKeyFrames()
 
     // Include also some not-already-included keyframes that are neighbors to already-included keyframes
     // Step 2.2 遍历一级共视关键帧，寻找更多的局部关键帧 
-    for(vector<KeyFrame*>::const_iterator itKF=mvpLocalKeyFrames.begin(), itEndKF=mvpLocalKeyFrames.end(); itKF!=itEndKF; itKF++)
+    for(std::vector<KeyFrame*>::const_iterator itKF=mvpLocalKeyFrames.begin(), itEndKF=mvpLocalKeyFrames.end(); itKF!=itEndKF; itKF++)
     {
         // Limit the number of keyframes
         // 处理的局部关键帧不超过80帧
@@ -1951,9 +1951,9 @@ void Tracking::UpdateLocalKeyFrames()
 
         // 类型2:一级共视关键帧的共视（前10个）关键帧，称为二级共视关键帧（将邻居的邻居拉拢入伙）
         // 如果共视帧不足10帧,那么就返回所有具有共视关系的关键帧
-        const vector<KeyFrame*> vNeighs = pKF->GetBestCovisibilityKeyFrames(10);
+        const std::vector<KeyFrame*> vNeighs = pKF->GetBestCovisibilityKeyFrames(10);
         // vNeighs 是按照共视程度从大到小排列
-        for(vector<KeyFrame*>::const_iterator itNeighKF=vNeighs.begin(), itEndNeighKF=vNeighs.end(); itNeighKF!=itEndNeighKF; itNeighKF++)
+        for(std::vector<KeyFrame*>::const_iterator itNeighKF=vNeighs.begin(), itEndNeighKF=vNeighs.end(); itNeighKF!=itEndNeighKF; itNeighKF++)
         {
             KeyFrame* pNeighKF = *itNeighKF;
             if(!pNeighKF->isBad())
@@ -1970,8 +1970,8 @@ void Tracking::UpdateLocalKeyFrames()
         }
 
         // 类型3:将一级共视关键帧的子关键帧作为局部关键帧（将邻居的孩子们拉拢入伙）
-        const set<KeyFrame*> spChilds = pKF->GetChilds();
-        for(set<KeyFrame*>::const_iterator sit=spChilds.begin(), send=spChilds.end(); sit!=send; sit++)
+        const std::set<KeyFrame*> spChilds = pKF->GetChilds();
+        for(std::set<KeyFrame*>::const_iterator sit=spChilds.begin(), send=spChilds.end(); sit!=send; sit++)
         {
             KeyFrame* pChildKF = *sit;
             if(!pChildKF->isBad())
@@ -2031,7 +2031,7 @@ bool Tracking::Relocalization()
     // Relocalization is performed when tracking is lost
     // Track Lost: Query KeyFrame Database for keyframe candidates for relocalisation
     // Step 2：用词袋找到与当前帧相似的候选关键帧
-    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
+    std::vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame);
     
     // 如果没有候选关键帧，则退出
     if(vpCandidateKFs.empty())
@@ -2043,15 +2043,15 @@ bool Tracking::Relocalization()
     // If enough matches are found we setup a PnP solver
     ORBmatcher matcher(0.75,true);
     //每个关键帧的解算器
-    vector<PnPsolver*> vpPnPsolvers;
+    std::vector<PnPsolver*> vpPnPsolvers;
     vpPnPsolvers.resize(nKFs);
 
     //每个关键帧和当前帧中特征点的匹配关系
-    vector<vector<MapPoint*> > vvpMapPointMatches;
+    std::vector<std::vector<MapPoint*> > vvpMapPointMatches;
     vvpMapPointMatches.resize(nKFs);
     
     //放弃某个关键帧的标记
-    vector<bool> vbDiscarded;
+    std::vector<bool> vbDiscarded;
     vbDiscarded.resize(nKFs);
 
     //有效的候选关键帧数目
@@ -2110,7 +2110,7 @@ bool Tracking::Relocalization()
                 continue;
     
             //内点标记
-            vector<bool> vbInliers;     
+            std::vector<bool> vbInliers;     
             
             //内点数
             int nInliers;
@@ -2137,7 +2137,7 @@ bool Tracking::Relocalization()
                 Tcw.copyTo(mCurrentFrame.mTcw);
                 
                 // EPnP 里RANSAC后的内点的集合
-                set<MapPoint*> sFound;
+                std::set<MapPoint*> sFound;
 
                 const int np = vbInliers.size();
                 //遍历所有内点

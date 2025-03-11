@@ -64,7 +64,7 @@ MapPoint::MapPoint(const cv::Mat &Pos,  //地图点的世界坐标
     mNormalVector = cv::Mat::zeros(3,1,CV_32F);
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
 
@@ -108,7 +108,7 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
 
     // MapPoints can be created from Tracking and Local Mapping. This mutex avoid conflicts with id.
     // TODO 不太懂,怎么个冲突法? 
-    unique_lock<mutex> lock(mpMap->mMutexPointCreation);
+    std::unique_lock<std::mutex> lock(mpMap->mMutexPointCreation);
     mnId=nNextId++;
 }
 
@@ -116,27 +116,27 @@ MapPoint::MapPoint(const cv::Mat &Pos, Map* pMap, Frame* pFrame, const int &idxF
 void MapPoint::SetWorldPos(const cv::Mat &Pos)
 {
     //TODO 为什么这里多了个线程锁
-    unique_lock<mutex> lock2(mGlobalMutex);
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock2(mGlobalMutex);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     Pos.copyTo(mWorldPos);
 }
 //获取地图点在世界坐标系下的坐标
 cv::Mat MapPoint::GetWorldPos()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mWorldPos.clone();
 }
 
 //世界坐标系下地图点被多个相机观测的平均观测方向
 cv::Mat MapPoint::GetNormal()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return mNormalVector.clone();
 }
 //获取地图点的参考关键帧
 KeyFrame* MapPoint::GetReferenceKeyFrame()
 {
-     unique_lock<mutex> lock(mMutexFeatures);
+     std::unique_lock<std::mutex> lock(mMutexFeatures);
      return mpRefKF;
 }
 
@@ -151,7 +151,7 @@ KeyFrame* MapPoint::GetReferenceKeyFrame()
  */
 void MapPoint::AddObservation(KeyFrame* pKF, size_t idx)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     // mObservations:观测到该MapPoint的关键帧KF和该MapPoint在KF中的索引
     // 如果已经添加过观测，返回
     if(mObservations.count(pKF)) 
@@ -171,7 +171,7 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 {
     bool bBad=false;
     {
-        unique_lock<mutex> lock(mMutexFeatures);
+        std::unique_lock<std::mutex> lock(mMutexFeatures);
         // 查找这个要删除的观测,根据单目和双目类型的不同从其中删除当前地图点的被观测次数
         if(mObservations.count(pKF))
         {
@@ -200,16 +200,16 @@ void MapPoint::EraseObservation(KeyFrame* pKF)
 }
 
 // 能够观测到当前地图点的所有关键帧及该地图点在KF中的索引
-map<KeyFrame*, size_t> MapPoint::GetObservations()
+std::map<KeyFrame*, size_t> MapPoint::GetObservations()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return mObservations;
 }
 
 // 被观测到的相机数目，单目+1，双目或RGB-D则+2
 int MapPoint::Observations()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return nObs;
 }
 
@@ -219,17 +219,17 @@ int MapPoint::Observations()
  */
 void MapPoint::SetBadFlag()
 {
-    map<KeyFrame*,size_t> obs;
+    std::map<KeyFrame*,size_t> obs;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         mbBad=true;
         // 把mObservations转存到obs，obs和mObservations里存的是指针，赋值过程为浅拷贝
         obs = mObservations;
         // 把mObservations指向的内存释放，obs作为局部变量之后自动删除
         mObservations.clear();
     }
-    for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
         // 告诉可以观测到该MapPoint的KeyFrame，该MapPoint被删了
@@ -241,8 +241,8 @@ void MapPoint::SetBadFlag()
 
 MapPoint* MapPoint::GetReplaced()
 {
-    unique_lock<mutex> lock1(mMutexFeatures);
-    unique_lock<mutex> lock2(mMutexPos);
+    std::unique_lock<std::mutex> lock1(mMutexFeatures);
+    std::unique_lock<std::mutex> lock2(mMutexPos);
     return mpReplaced;
 }
 
@@ -264,10 +264,10 @@ void MapPoint::Replace(MapPoint* pMP)
 
     // 清除当前地图点的信息，这一段和SetBadFlag函数相同
     int nvisible, nfound;
-    map<KeyFrame*,size_t> obs;
+    std::map<KeyFrame*,size_t> obs;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         obs=mObservations;
         //清除当前地图点的原有观测
         mObservations.clear();
@@ -282,7 +282,7 @@ void MapPoint::Replace(MapPoint* pMP)
 
     // 所有能观测到原地图点的关键帧都要复制到替换的地图点上
     //- 将观测到当前地图的的关键帧的信息进行更新
-    for(map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,size_t>::iterator mit=obs.begin(), mend=obs.end(); mit!=mend; mit++)
     {
         // Replace measurement in keyframe
         KeyFrame* pKF = mit->first;
@@ -316,8 +316,8 @@ void MapPoint::Replace(MapPoint* pMP)
 // 没有经过 MapPointCulling 检测的MapPoints, 认为是坏掉的点
 bool MapPoint::isBad()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
-    unique_lock<mutex> lock2(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock2(mMutexPos);
     return mbBad;
 }
 
@@ -333,7 +333,7 @@ bool MapPoint::isBad()
  */
 void MapPoint::IncreaseVisible(int n)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     mnVisible+=n;
 }
 
@@ -345,14 +345,14 @@ void MapPoint::IncreaseVisible(int n)
  */
 void MapPoint::IncreaseFound(int n)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     mnFound+=n;
 }
 
 // 计算被找到的比例
 float MapPoint::GetFoundRatio()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return static_cast<float>(mnFound)/mnVisible;
 }
 
@@ -365,13 +365,13 @@ float MapPoint::GetFoundRatio()
 void MapPoint::ComputeDistinctiveDescriptors()
 {
     // Retrieve all observed descriptors
-    vector<cv::Mat> vDescriptors;
+    std::vector<cv::Mat> vDescriptors;
 
-    map<KeyFrame*,size_t> observations;
+    std::map<KeyFrame*,size_t> observations;
 
     // Step 1 获取所有观测，跳过坏点
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
         if(mbBad)
             return;
         observations=mObservations;
@@ -383,7 +383,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
     vDescriptors.reserve(observations.size());
 
     // Step 2 遍历观测到3d点的所有关键帧，获得orb描述子，并插入到vDescriptors中
-    for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         // mit->first取观测到该地图点的关键帧
         // mit->second取该地图点在关键帧中的索引
@@ -404,7 +404,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
     // 将Distances表述成一个对称的矩阵
     // float Distances[N][N];
 	std::vector<std::vector<float> > Distances;
-	Distances.resize(N, vector<float>(N, 0));
+	Distances.resize(N, std::vector<float>(N, 0));
 	for (size_t i = 0; i<N; i++)
     {
         //和自己的距离当然是0
@@ -424,8 +424,8 @@ void MapPoint::ComputeDistinctiveDescriptors()
     for(size_t i=0;i<N;i++)
     {
         // 第i个描述子到其它所有所有描述子之间的距离
-        // vector<int> vDists(Distances[i],Distances[i]+N);
-		vector<int> vDists(Distances[i].begin(), Distances[i].end());
+        // std::vector<int> vDists(Distances[i],Distances[i]+N);
+		std::vector<int> vDists(Distances[i].begin(), Distances[i].end());
 		sort(vDists.begin(), vDists.end());
 
         // 获得中值
@@ -440,7 +440,7 @@ void MapPoint::ComputeDistinctiveDescriptors()
     }
 
     {
-        unique_lock<mutex> lock(mMutexFeatures);
+        std::unique_lock<std::mutex> lock(mMutexFeatures);
         mDescriptor = vDescriptors[BestIdx].clone();       
     }
 }
@@ -448,14 +448,14 @@ void MapPoint::ComputeDistinctiveDescriptors()
 //获取当前地图点的描述子
 cv::Mat MapPoint::GetDescriptor()
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     return mDescriptor.clone();
 }
 
 //获取当前地图点在某个关键帧的观测中，对应的特征点的ID
 int MapPoint::GetIndexInKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     if(mObservations.count(pKF))
         return mObservations[pKF];
     else
@@ -477,7 +477,7 @@ int MapPoint::GetIndexInKeyFrame(KeyFrame *pKF)
  */
 bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexFeatures);
+    std::unique_lock<std::mutex> lock(mMutexFeatures);
     // 存在返回true，不存在返回false
     // std::map.count 用法见：http://www.cplusplus.com/reference/map/map/count/
     return (mObservations.count(pKF));
@@ -492,12 +492,12 @@ bool MapPoint::IsInKeyFrame(KeyFrame *pKF)
 void MapPoint::UpdateNormalAndDepth()
 {
     // Step 1 获得该地图点的相关信息
-    map<KeyFrame*,size_t> observations;
+    std::map<KeyFrame*,size_t> observations;
     KeyFrame* pRefKF;
     cv::Mat Pos;
     {
-        unique_lock<mutex> lock1(mMutexFeatures);
-        unique_lock<mutex> lock2(mMutexPos);
+        std::unique_lock<std::mutex> lock1(mMutexFeatures);
+        std::unique_lock<std::mutex> lock2(mMutexPos);
         if(mbBad)
             return;
 
@@ -514,7 +514,7 @@ void MapPoint::UpdateNormalAndDepth()
     // 初始值为0向量，累加为归一化向量，最后除以总数n
     cv::Mat normal = cv::Mat::zeros(3,1,CV_32F);
     int n=0;
-    for(map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+    for(std::map<KeyFrame*,size_t>::iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKF = mit->first;
         cv::Mat Owi = pKF->GetCameraCenter();
@@ -530,7 +530,7 @@ void MapPoint::UpdateNormalAndDepth()
     const int nLevels = pRefKF->mnScaleLevels;                              // 金字塔层数
 
     {
-        unique_lock<mutex> lock3(mMutexPos);
+        std::unique_lock<std::mutex> lock3(mMutexPos);
         // 使用方法见PredictScale函数前的注释
         mfMaxDistance = dist*levelScaleFactor;                              // 观测到该点的距离上限
         mfMinDistance = mfMaxDistance/pRefKF->mvScaleFactors[nLevels-1];    // 观测到该点的距离下限
@@ -540,13 +540,13 @@ void MapPoint::UpdateNormalAndDepth()
 
 float MapPoint::GetMinDistanceInvariance()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return 0.8f*mfMinDistance;
 }
 
 float MapPoint::GetMaxDistanceInvariance()
 {
-    unique_lock<mutex> lock(mMutexPos);
+    std::unique_lock<std::mutex> lock(mMutexPos);
     return 1.2f*mfMaxDistance;
 }
 
@@ -569,7 +569,7 @@ int MapPoint::PredictScale(const float &currentDist, KeyFrame* pKF)
 {
     float ratio;
     {
-        unique_lock<mutex> lock(mMutexPos);
+        std::unique_lock<std::mutex> lock(mMutexPos);
         // mfMaxDistance = ref_dist*levelScaleFactor 为参考帧考虑上尺度后的距离
         // ratio = mfMaxDistance/currentDist = ref_dist/cur_dist
         ratio = mfMaxDistance/currentDist;
@@ -596,7 +596,7 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 {
     float ratio;
     {
-        unique_lock<mutex> lock(mMutexPos);
+        std::unique_lock<std::mutex> lock(mMutexPos);
         ratio = mfMaxDistance/currentDist;
     }
 

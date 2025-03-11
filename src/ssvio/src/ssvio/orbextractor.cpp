@@ -12,7 +12,7 @@ const int PATCH_SIZE = 31;
 const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
 
-static float IC_Angle(const Mat &image, Point2f pt, const vector<int> &u_max)
+static float IC_Angle(const Mat &image, Point2f pt, const std::vector<int> &u_max)
 {
   int m_01 = 0, m_10 = 0;
 
@@ -267,10 +267,10 @@ static bool isFastCorner(cv::Mat &img, cv::KeyPoint &keypoint, int threshold)
   return false;
 }
 
-static void computeOrientation(const Mat &image, vector<KeyPoint> &keypoints,
-                               const vector<int> &umax)
+static void computeOrientation(const Mat &image, std::vector<KeyPoint> &keypoints,
+                               const std::vector<int> &umax)
 {
-  for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+  for (std::vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                                   keypointEnd = keypoints.end();
        keypoint != keypointEnd;
        ++keypoint)
@@ -337,8 +337,8 @@ void ExtractorNode::DivideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNo
     n4.bNoMore = true;
 }
 
-vector<cv::KeyPoint>
-ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
+std::vector<cv::KeyPoint>
+ORBextractor::DistributeOctTree(const std::vector<cv::KeyPoint> &vToDistributeKeys,
                                 const int &minX, const int &maxX, const int &minY,
                                 const int &maxY, const int &N, const int &level)
 {
@@ -349,7 +349,7 @@ ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
 
   list<ExtractorNode> lNodes;
 
-  vector<ExtractorNode *> vpIniNodes;
+  std::vector<ExtractorNode *> vpIniNodes;
   vpIniNodes.resize(nIni);
 
   for (int i = 0; i < nIni; i++)
@@ -391,7 +391,7 @@ ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
 
   int iteration = 0;
 
-  vector<pair<int, ExtractorNode *>> vSizeAndPointerToNode;
+  std::vector<pair<int, ExtractorNode *>> vSizeAndPointerToNode;
   vSizeAndPointerToNode.reserve(lNodes.size() * 4);
 
   while (!bFinish)
@@ -479,7 +479,7 @@ ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
       {
         prevSize = lNodes.size();
 
-        vector<pair<int, ExtractorNode *>> vPrevSizeAndPointerToNode =
+        std::vector<pair<int, ExtractorNode *>> vPrevSizeAndPointerToNode =
             vSizeAndPointerToNode;
         vSizeAndPointerToNode.clear();
 
@@ -544,11 +544,11 @@ ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
   }
 
   // Retain the best point in each node
-  vector<cv::KeyPoint> vResultKeys;
+  std::vector<cv::KeyPoint> vResultKeys;
   vResultKeys.reserve(nfeatures);
   for (list<ExtractorNode>::iterator lit = lNodes.begin(); lit != lNodes.end(); lit++)
   {
-    vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
+    std::vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
     cv::KeyPoint *pKP = &vNodeKeys[0];
     float maxResponse = pKP->response;
 
@@ -569,7 +569,7 @@ ORBextractor::DistributeOctTree(const vector<cv::KeyPoint> &vToDistributeKeys,
 
 // -------------------------------------------------------------------------------------
 
-void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoints)
+void ORBextractor::ComputeKeyPointsOctTree(std::vector<std::vector<KeyPoint>> &allKeypoints)
 {
   allKeypoints.resize(nlevels);
 
@@ -582,7 +582,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
     const int maxBorderX = mvImagePyramid[level].cols - EDGE_THRESHOLD + 3;
     const int maxBorderY = mvImagePyramid[level].rows - EDGE_THRESHOLD + 3;
 
-    vector<cv::KeyPoint> vToDistributeKeys;
+    std::vector<cv::KeyPoint> vToDistributeKeys;
     vToDistributeKeys.reserve(nfeatures * 10);
 
     const float width = (maxBorderX - minBorderX);
@@ -612,7 +612,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
         if (maxX > maxBorderX)
           maxX = maxBorderX;
 
-        vector<cv::KeyPoint> vKeysCell;
+        std::vector<cv::KeyPoint> vKeysCell;
         FAST(mvImagePyramid[level].rowRange(iniY, maxY).colRange(iniX, maxX),
              vKeysCell,
              iniThFAST,
@@ -628,7 +628,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
 
         if (!vKeysCell.empty())
         {
-          for (vector<cv::KeyPoint>::iterator vit = vKeysCell.begin();
+          for (std::vector<cv::KeyPoint>::iterator vit = vKeysCell.begin();
                vit != vKeysCell.end();
                vit++)
           {
@@ -646,7 +646,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
       }
     }
 
-    vector<KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<KeyPoint> &keypoints = allKeypoints[level];
     keypoints.reserve(nfeatures);
 
     keypoints = DistributeOctTree(vToDistributeKeys,
@@ -675,8 +675,8 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>> &allKeypoint
     computeOrientation(mvImagePyramid[level], allKeypoints[level], umax);
 }
 
-static void computeDescriptors(const Mat &image, vector<KeyPoint> &keypoints,
-                               Mat &descriptors, const vector<Point> &pattern)
+static void computeDescriptors(const Mat &image, std::vector<KeyPoint> &keypoints,
+                               Mat &descriptors, const std::vector<Point> &pattern)
 {
   descriptors = Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
 
@@ -685,7 +685,7 @@ static void computeDescriptors(const Mat &image, vector<KeyPoint> &keypoints,
 }
 
 void ORBextractor::DetectAndCompute(InputArray _image, InputArray _mask,
-                                    vector<KeyPoint> &_keypoints,
+                                    std::vector<KeyPoint> &_keypoints,
                                     OutputArray _descriptors)
 {
   if (_image.empty())
@@ -699,7 +699,7 @@ void ORBextractor::DetectAndCompute(InputArray _image, InputArray _mask,
   // Pre-compute the scale pyramid
   ComputePyramid(image, mask);
 
-  vector<vector<KeyPoint>> allKeypoints;
+  std::vector<std::vector<KeyPoint>> allKeypoints;
   ComputeKeyPointsOctTree(allKeypoints);
 
   Mat descriptors;
@@ -721,7 +721,7 @@ void ORBextractor::DetectAndCompute(InputArray _image, InputArray _mask,
   int offset = 0;
   for (int level = 0; level < nlevels; ++level)
   {
-    vector<KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<KeyPoint> &keypoints = allKeypoints[level];
     int nkeypointsLevel = (int)keypoints.size();
 
     if (nkeypointsLevel == 0)
@@ -741,7 +741,7 @@ void ORBextractor::DetectAndCompute(InputArray _image, InputArray _mask,
     if (level != 0)
     {
       float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
-      for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+      for (std::vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                                       keypointEnd = keypoints.end();
            keypoint != keypointEnd;
            ++keypoint)
@@ -753,7 +753,7 @@ void ORBextractor::DetectAndCompute(InputArray _image, InputArray _mask,
 }
 
 void ORBextractor::Detect(InputArray _image, InputArray _mask,
-                          vector<KeyPoint> &_keypoints)
+                          std::vector<KeyPoint> &_keypoints)
 {
   if (_image.empty() || _mask.empty())
     return;
@@ -769,7 +769,7 @@ void ORBextractor::Detect(InputArray _image, InputArray _mask,
   const int maxBorderX = image.cols - EDGE_THRESHOLD + 3;
   const int maxBorderY = image.rows - EDGE_THRESHOLD + 3;
 
-  vector<cv::KeyPoint> vToDistributeKeys;
+  std::vector<cv::KeyPoint> vToDistributeKeys;
   vToDistributeKeys.reserve(nfeatures * 10);
 
   const float width = (maxBorderX - minBorderX);
@@ -799,7 +799,7 @@ void ORBextractor::Detect(InputArray _image, InputArray _mask,
       if (maxX > maxBorderX)
         maxX = maxBorderX;
 
-      vector<cv::KeyPoint> vKeysCell;
+      std::vector<cv::KeyPoint> vKeysCell;
       FAST(image.rowRange(iniY, maxY).colRange(iniX, maxX), vKeysCell, iniThFAST, true);
 
       if (vKeysCell.empty())
@@ -809,7 +809,7 @@ void ORBextractor::Detect(InputArray _image, InputArray _mask,
 
       if (!vKeysCell.empty())
       {
-        for (vector<cv::KeyPoint>::iterator vit = vKeysCell.begin();
+        for (std::vector<cv::KeyPoint>::iterator vit = vKeysCell.begin();
              vit != vKeysCell.end();
              vit++)
         {
@@ -842,7 +842,7 @@ void ORBextractor::Detect(InputArray _image, InputArray _mask,
 }
 
 void ORBextractor::ScreenAndComputeKPsParams(InputArray _image,
-                                             vector<KeyPoint> &_keypoints,
+                                             std::vector<KeyPoint> &_keypoints,
                                              std::vector<cv::KeyPoint> &out_keypoints)
 {
   if (_image.empty() || _keypoints.empty())
@@ -894,7 +894,7 @@ void ORBextractor::ScreenAndComputeKPsParams(InputArray _image,
 }
 
 void ORBextractor::DetectWithPyramid(InputArray _image, InputArray _mask,
-                                     vector<KeyPoint> &_keypoints)
+                                     std::vector<KeyPoint> &_keypoints)
 {
   if (_image.empty() || _mask.empty())
     return;
@@ -907,7 +907,7 @@ void ORBextractor::DetectWithPyramid(InputArray _image, InputArray _mask,
   // Pre-compute the scale pyramid
   ComputePyramid(image, mask);
 
-  vector<vector<KeyPoint>> allKeypoints;
+  std::vector<std::vector<KeyPoint>> allKeypoints;
   ComputeKeyPointsOctTree(allKeypoints);
 
   int nkeypoints = 0;
@@ -919,7 +919,7 @@ void ORBextractor::DetectWithPyramid(InputArray _image, InputArray _mask,
 
   for (int level = 0; level < nlevels; ++level)
   {
-    vector<KeyPoint> &keypoints = allKeypoints[level];
+    std::vector<KeyPoint> &keypoints = allKeypoints[level];
     int nkeypointsLevel = (int)keypoints.size();
 
     if (nkeypointsLevel == 0)
@@ -929,7 +929,7 @@ void ORBextractor::DetectWithPyramid(InputArray _image, InputArray _mask,
     if (level != 0)
     {
       float scale = mvScaleFactor[level]; //getScale(level, firstLevel, scaleFactor);
-      for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+      for (std::vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                                       keypointEnd = keypoints.end();
            keypoint != keypointEnd;
            ++keypoint)
@@ -940,7 +940,7 @@ void ORBextractor::DetectWithPyramid(InputArray _image, InputArray _mask,
   }
 }
 
-void ORBextractor::CalcDescriptors(InputArray _image, const vector<KeyPoint> &_keypoints,
+void ORBextractor::CalcDescriptors(InputArray _image, const std::vector<KeyPoint> &_keypoints,
                                    OutputArray _descriptors)
 {
   if (_image.empty() || _keypoints.empty())

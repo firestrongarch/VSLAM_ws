@@ -84,8 +84,8 @@ Initializer::Initializer(const Frame &ReferenceFrame, float sigma, int iteration
  * @return true                     该帧可以成功初始化，返回true
  * @return false                    该帧不满足初始化条件，返回false
  */
-bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatches12, cv::Mat &R21, cv::Mat &t21,
-                             vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated)
+bool Initializer::Initialize(const Frame &CurrentFrame, const std::vector<int> &vMatches12, cv::Mat &R21, cv::Mat &t21,
+                             std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated)
 {
     // Fill structures with current keypoints and matches with reference frame
     // Reference Frame: 1, Current Frame: 2
@@ -125,11 +125,11 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     const int N = mvMatches12.size();
     // Indices for minimum set selection
     // 新建一个容器vAllIndices存储特征点索引，并预分配空间
-    vector<size_t> vAllIndices;
+    std::vector<size_t> vAllIndices;
     vAllIndices.reserve(N);
 
 	//在RANSAC的某次迭代中，还可以被抽取来作为数据样本的特征点对的索引，所以这里起的名字叫做可用的索引
-    vector<size_t> vAvailableIndices;
+    std::vector<size_t> vAvailableIndices;
 	//初始化所有特征点对的索引，索引值0到N-1
     for(int i=0; i<N; i++)
     {
@@ -140,8 +140,8 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     // Step 2 在所有匹配特征点对中随机选择8对匹配特征点为一组，用于估计H矩阵和F矩阵
     // 共选择 mMaxIterations (默认200) 组
     //mvSets用于保存每次迭代时所使用的向量
-    mvSets = vector< vector<size_t> >(mMaxIterations,		//最大的RANSAC迭代次数
-									  vector<size_t>(8,0));	//这个则是第二维元素的初始值，也就是第一维。这里其实也是一个第一维的构造函数，第一维vector有8项，每项的初始值为0.
+    mvSets = std::vector< std::vector<size_t> >(mMaxIterations,		//最大的RANSAC迭代次数
+									  std::vector<size_t>(8,0));	//这个则是第二维元素的初始值，也就是第一维。这里其实也是一个第一维的构造函数，第一维vector有8项，每项的初始值为0.
 
 	// //用于进行随机数据样本采样，设置随机数种子
     // DUtils::Random::SeedRandOnce(0);
@@ -178,7 +178,7 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
     // Step 3 计算fundamental 矩阵 和homography 矩阵，为了加速分别开了线程计算 
  
     //这两个变量用于标记在H和F的计算中哪些特征点对被认为是Inlier
-    vector<bool> vbMatchesInliersH, vbMatchesInliersF;
+    std::vector<bool> vbMatchesInliersH, vbMatchesInliersF;
 	//计算出来的单应矩阵和基础矩阵的RANSAC评分，这里其实是采用重投影误差来计算的
     float SH, SF; //score for H and F
     //这两个是经过RANSAC算法后计算出来的单应矩阵和基础矩阵
@@ -237,7 +237,7 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const vector<int> &vMatc
  * @param[in & out] score                     计算单应矩阵的得分
  * @param[in & out] H21                       单应矩阵结果
  */
-void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21)
+void Initializer::FindHomography(std::vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21)
 {
     // Number of putative matches
 	//匹配的特征点对总数
@@ -251,7 +251,7 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
    
 
 	//归一化后的参考帧1和当前帧2中的特征点坐标
-    vector<cv::Point2f> vPn1, vPn2;
+    std::vector<cv::Point2f> vPn1, vPn2;
 	// 记录各自的归一化矩阵
     cv::Mat T1, T2;
     Normalize(mvKeys1,vPn1, T1);
@@ -264,18 +264,18 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
 	// 记录最佳评分
     score = 0.0;
 	// 取得历史最佳评分时,特征点对的inliers标记
-    vbMatchesInliers = vector<bool>(N,false);
+    vbMatchesInliers = std::vector<bool>(N,false);
 
     // Iteration variables
 	//某次迭代中，参考帧的特征点坐标
-    vector<cv::Point2f> vPn1i(8);
+    std::vector<cv::Point2f> vPn1i(8);
 	//某次迭代中，当前帧的特征点坐标
-    vector<cv::Point2f> vPn2i(8);
+    std::vector<cv::Point2f> vPn2i(8);
 	//以及计算出来的单应矩阵、及其逆矩阵
     cv::Mat H21i, H12i;
 
     // 每次RANSAC记录Inliers与得分
-    vector<bool> vbCurrentInliers(N,false);
+    std::vector<bool> vbCurrentInliers(N,false);
     float currentScore;
 
     // Perform all RANSAC iterations and save the solution with highest score
@@ -341,7 +341,7 @@ void Initializer::FindHomography(vector<bool> &vbMatchesInliers, float &score, c
  * @param[in & out] score                     计算基础矩阵得分
  * @param[in & out] F21                       从特征点1到2的基础矩阵
  */
-void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, cv::Mat &F21)
+void Initializer::FindFundamental(std::vector<bool> &vbMatchesInliers, float &score, cv::Mat &F21)
 {
     // 计算基础矩阵,其过程和上面的计算单应矩阵的过程十分相似.
 
@@ -355,7 +355,7 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
     // 这里所谓的一阶绝对矩其实就是随机变量到取值的中心的绝对值的平均值
     // 归一化矩阵就是把上述归一化的操作用矩阵来表示。这样特征点坐标乘归一化矩阵可以得到归一化后的坐标
 
-    vector<cv::Point2f> vPn1, vPn2;
+    std::vector<cv::Point2f> vPn1, vPn2;
     cv::Mat T1, T2;
     Normalize(mvKeys1,vPn1, T1);
     Normalize(mvKeys2,vPn2, T2);
@@ -365,18 +365,18 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
     // Best Results variables
 	//最优结果
     score = 0.0;
-    vbMatchesInliers = vector<bool>(N,false);
+    vbMatchesInliers = std::vector<bool>(N,false);
 
     // Iteration variables
 	// 某次迭代中，参考帧的特征点坐标
-    vector<cv::Point2f> vPn1i(8);
+    std::vector<cv::Point2f> vPn1i(8);
     // 某次迭代中，当前帧的特征点坐标
-    vector<cv::Point2f> vPn2i(8);
+    std::vector<cv::Point2f> vPn2i(8);
     // 某次迭代中，计算的基础矩阵
     cv::Mat F21i;
 
     // 每次RANSAC记录的Inliers与得分
-    vector<bool> vbCurrentInliers(N,false);
+    std::vector<bool> vbCurrentInliers(N,false);
     float currentScore;
 
     // Perform all RANSAC iterations and save the solution with highest score
@@ -428,8 +428,8 @@ void Initializer::FindFundamental(vector<bool> &vbMatchesInliers, float &score, 
  * @return cv::Mat              计算的单应矩阵H
  */
 cv::Mat Initializer::ComputeH21(
-    const vector<cv::Point2f> &vP1, //归一化后的点, in reference frame
-    const vector<cv::Point2f> &vP2) //归一化后的点, in current frame
+    const std::vector<cv::Point2f> &vP1, //归一化后的点, in reference frame
+    const std::vector<cv::Point2f> &vP2) //归一化后的点, in current frame
 {
     // 基本原理：见附件推导过程：
     // |x'|     | h1 h2 h3 ||x|
@@ -514,8 +514,8 @@ cv::Mat Initializer::ComputeH21(
  * @return cv::Mat          最后计算得到的基础矩阵F
  */
 cv::Mat Initializer::ComputeF21(
-    const vector<cv::Point2f> &vP1, //归一化后的点, in reference frame
-    const vector<cv::Point2f> &vP2) //归一化后的点, in current frame
+    const std::vector<cv::Point2f> &vP1, //归一化后的点, in reference frame
+    const std::vector<cv::Point2f> &vP2) //归一化后的点, in current frame
 {
     // 原理详见附件推导
     // x'Fx = 0 整理可得：Af = 0
@@ -579,7 +579,7 @@ cv::Mat Initializer::ComputeF21(
 float Initializer::CheckHomography(
     const cv::Mat &H21,                 //从参考帧到当前帧的单应矩阵
     const cv::Mat &H12,                 //从当前帧到参考帧的单应矩阵
-    vector<bool> &vbMatchesInliers,     //匹配好的特征点对的Inliers标记
+    std::vector<bool> &vbMatchesInliers,     //匹配好的特征点对的Inliers标记
     float sigma)                        //估计误差
 {
     // 说明：在已值n维观测数据误差服从N(0，sigma）的高斯分布时
@@ -731,7 +731,7 @@ float Initializer::CheckHomography(
  */
 float Initializer::CheckFundamental(
     const cv::Mat &F21,             //当前帧和参考帧之间的基础矩阵
-    vector<bool> &vbMatchesInliers, //匹配的特征点对属于inliers的标记
+    std::vector<bool> &vbMatchesInliers, //匹配的特征点对属于inliers的标记
     float sigma)                    //方差
 {
 
@@ -887,8 +887,8 @@ float Initializer::CheckFundamental(
  * @return true                         成功初始化
  * @return false                        初始化失败
  */
-bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv::Mat &K,
-                            cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
+bool Initializer::ReconstructF(std::vector<bool> &vbMatchesInliers, cv::Mat &F21, cv::Mat &K,
+                            cv::Mat &R21, cv::Mat &t21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
 {
     // Step 1 统计有效匹配点个数，并用 N 表示
     // vbMatchesInliers 中存储匹配点对是否是有效
@@ -922,10 +922,10 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
     // 原理：若某一组合使恢复得到的3D点位于相机正前方的数量最多，那么该组合就是最佳组合
     // 实现：根据计算的解组合成为四种情况,并依次调用 Initializer::CheckRT() 进行检查,得到可以进行三角化测量的点的数目
 	// 定义四组解分别在对同一匹配点集进行三角化测量之后的特征点空间坐标
-    vector<cv::Point3f> vP3D1, vP3D2, vP3D3, vP3D4;
+    std::vector<cv::Point3f> vP3D1, vP3D2, vP3D3, vP3D4;
 
 	// 定义四组解分别对同一匹配点集的有效三角化结果，True or False
-    vector<bool> vbTriangulated1,vbTriangulated2,vbTriangulated3, vbTriangulated4;
+    std::vector<bool> vbTriangulated1,vbTriangulated2,vbTriangulated3, vbTriangulated4;
 
 	// 定义四种解对应的比较大的特征点对视差角
     float parallax1,parallax2, parallax3, parallax4;
@@ -1055,8 +1055,8 @@ bool Initializer::ReconstructF(vector<bool> &vbMatchesInliers, cv::Mat &F21, cv:
  * @return true                         单应矩阵成功计算出位姿和三维点
  * @return false                        初始化失败
  */
-bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv::Mat &K,
-                      cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
+bool Initializer::ReconstructH(std::vector<bool> &vbMatchesInliers, cv::Mat &H21, cv::Mat &K,
+                      cv::Mat &R21, cv::Mat &t21, std::vector<cv::Point3f> &vP3D, std::vector<bool> &vbTriangulated, float minParallax, int minTriangulated)
 {
 
     // 目的 ：通过单应矩阵H恢复两帧图像之间的旋转矩阵R和平移向量T
@@ -1122,7 +1122,7 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
 
     // 在ORBSLAM中没有对奇异值 d1 d2 d3按照论文中描述的关系进行分类讨论, 而是直接进行了计算
     // 定义8中情况下的旋转矩阵、平移向量和空间向量
-    vector<cv::Mat> vR, vt, vn;
+    std::vector<cv::Mat> vR, vt, vn;
     vR.reserve(8);
     vt.reserve(8);
     vn.reserve(8);
@@ -1281,9 +1281,9 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
     // 最大的视差角
     float bestParallax = -1;
     // 存储最好解对应的，对特征点对进行三角化测量的结果
-    vector<cv::Point3f> bestP3D;
+    std::vector<cv::Point3f> bestP3D;
     // 最佳解所对应的，那些可以被三角化测量的点的标记
-    vector<bool> bestTriangulated;
+    std::vector<bool> bestTriangulated;
 
     // Instead of applying the visibility constraints proposed in the WFaugeras' paper (which could fail for points seen with low parallax)
     // We reconstruct all hypotheses and check in terms of triangulated points and parallax
@@ -1294,9 +1294,9 @@ bool Initializer::ReconstructH(vector<bool> &vbMatchesInliers, cv::Mat &H21, cv:
         // 第i组解对应的比较大的视差角
         float parallaxi;
         // 三角化测量之后的特征点的空间坐标
-        vector<cv::Point3f> vP3Di;
+        std::vector<cv::Point3f> vP3Di;
         // 特征点对是否被三角化的标记
-        vector<bool> vbTriangulatedi;
+        std::vector<bool> vbTriangulatedi;
     
         // 调用 Initializer::CheckRT(), 计算good点的数目
         int nGood = CheckRT(vR[i],vt[i],                    //当前组解的旋转矩阵和平移向量
@@ -1439,7 +1439,7 @@ void Initializer::Triangulate(
  * @param[in & out] vNormalizedPoints             特征点归一化后的坐标
  * @param[in & out] T                             归一化特征点的变换矩阵
  */
-void Initializer::Normalize(const vector<cv::KeyPoint> &vKeys, vector<cv::Point2f> &vNormalizedPoints, cv::Mat &T)                           //将特征点归一化的矩阵
+void Initializer::Normalize(const std::vector<cv::KeyPoint> &vKeys, std::vector<cv::Point2f> &vNormalizedPoints, cv::Mat &T)                           //将特征点归一化的矩阵
 {
     // 归一化的是这些点在x方向和在y方向上的一阶绝对矩（随机变量的期望）。
 
@@ -1522,9 +1522,9 @@ void Initializer::Normalize(const vector<cv::KeyPoint> &vKeys, vector<cv::Point2
  * @param[in & out] parallax                        计算出来的比较大的视差角（注意不是最大，具体看后面代码）
  * @return int 
  */
-int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::KeyPoint> &vKeys1, const vector<cv::KeyPoint> &vKeys2,
-                       const vector<Match> &vMatches12, vector<bool> &vbMatchesInliers,
-                       const cv::Mat &K, vector<cv::Point3f> &vP3D, float th2, vector<bool> &vbGood, float &parallax)
+int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const std::vector<cv::KeyPoint> &vKeys1, const std::vector<cv::KeyPoint> &vKeys2,
+                       const std::vector<Match> &vMatches12, std::vector<bool> &vbMatchesInliers,
+                       const cv::Mat &K, std::vector<cv::Point3f> &vP3D, float th2, std::vector<bool> &vbGood, float &parallax)
 {   
     // 对给出的特征点对及其R t , 通过三角化检查解的有效性，也称为 cheirality check
 
@@ -1536,12 +1536,12 @@ int Initializer::CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::Ke
     const float cy = K.at<float>(1,2);
 
 	//特征点是否是good点的标记，这里的特征点指的是参考帧中的特征点
-    vbGood = vector<bool>(vKeys1.size(),false);
+    vbGood = std::vector<bool>(vKeys1.size(),false);
 	//重设存储空间坐标的点的大小
     vP3D.resize(vKeys1.size());
 
 	//存储计算出来的每对特征点的视差
-    vector<float> vCosParallax;
+    std::vector<float> vCosParallax;
     vCosParallax.reserve(vKeys1.size());
 
     // Camera 1 Projection Matrix K[I|0]

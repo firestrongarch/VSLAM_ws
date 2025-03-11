@@ -139,7 +139,7 @@ void LoopClosing::Run()
 // 将某个关键帧加入到回环检测的过程中,由局部建图线程调用
 void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexLoopQueue);
+    std::unique_lock<std::mutex> lock(mMutexLoopQueue);
     // 注意：这里第0个关键帧不能够参与到回环检测的过程中,因为第0关键帧定义了整个地图的世界坐标系
     if(pKF->mnId!=0)
         mlpLoopKeyFrameQueue.push_back(pKF);
@@ -151,7 +151,7 @@ void LoopClosing::InsertKeyFrame(KeyFrame *pKF)
  */
 bool LoopClosing::CheckNewKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexLoopQueue);
+    std::unique_lock<std::mutex> lock(mMutexLoopQueue);
     return(!mlpLoopKeyFrameQueue.empty());
 }
 
@@ -165,7 +165,7 @@ bool LoopClosing::DetectLoop()
 {
     {
         // Step 1 从队列中取出一个关键帧,作为当前检测闭环关键帧
-        unique_lock<mutex> lock(mMutexLoopQueue);
+        std::unique_lock<std::mutex> lock(mMutexLoopQueue);
         // 从队列头开始取，也就是先取早进来的关键帧
         mpCurrentKF = mlpLoopKeyFrameQueue.front();
         // 取出关键帧后从队列里弹出该关键帧
@@ -189,7 +189,7 @@ bool LoopClosing::DetectLoop()
     // This is the lowest score to a connected keyframe in the covisibility graph
     // We will impose loop candidates to have a higher similarity than this
     // Step 3：遍历当前回环关键帧所有连接（>15个共视地图点）关键帧，计算当前关键帧与每个共视关键的bow相似度得分，并得到最低得分minScore
-    const vector<KeyFrame*> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
+    const std::vector<KeyFrame*> vpConnectedKeyFrames = mpCurrentKF->GetVectorCovisibleKeyFrames();
     const DBoW2::BowVector &CurrentBowVec = mpCurrentKF->mBowVec;
     float minScore = 1;
     for(size_t i=0; i<vpConnectedKeyFrames.size(); i++)
@@ -209,7 +209,7 @@ bool LoopClosing::DetectLoop()
     // Step 4：在所有关键帧中找出闭环候选帧（注意不和当前帧连接）
     // minScore的作用：认为和当前关键帧具有回环关系的关键帧,不应该低于当前关键帧的相邻关键帧的最低的相似度minScore
     // 得到的这些关键帧,和当前关键帧具有较多的共视单词,并且相似度评分都挺高
-    vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
+    std::vector<KeyFrame*> vpCandidateKFs = mpKeyFrameDB->DetectLoopCandidates(mpCurrentKF, minScore);
 
     // If there are no loop candidates, just add new keyframe and return false
     // 如果没有闭环候选帧，返回false
@@ -247,13 +247,13 @@ bool LoopClosing::DetectLoop()
     // 最终筛选后得到的闭环帧
     mvpEnoughConsistentCandidates.clear();
 
-    // ConsistentGroup数据类型为pair<set<KeyFrame*>,int>
+    // ConsistentGroup数据类型为pair<std::set<KeyFrame*>,int>
     // ConsistentGroup.first对应每个“连续组”中的关键帧，ConsistentGroup.second为每个“连续组”的已连续几个的序号
 
-    vector<ConsistentGroup> vCurrentConsistentGroups;
+    std::vector<ConsistentGroup> vCurrentConsistentGroups;
 
     // 这个下标是每个"子连续组"的下标,bool表示当前的候选组中是否有和该组相同的一个关键帧
-    vector<bool> vbConsistentGroup(mvConsistentGroups.size(),false);
+    std::vector<bool> vbConsistentGroup(mvConsistentGroups.size(),false);
 
     // Step 5.1：遍历刚才得到的每一个候选关键帧
     for(size_t i=0, iend=vpCandidateKFs.size(); i<iend; i++)
@@ -261,7 +261,7 @@ bool LoopClosing::DetectLoop()
         KeyFrame* pCandidateKF = vpCandidateKFs[i];
 
         // Step 5.2：将自己以及与自己相连的关键帧构成一个“子候选组”
-        set<KeyFrame*> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
+        std::set<KeyFrame*> spCandidateGroup = pCandidateKF->GetConnectedKeyFrames();
         // 把自己也加进去
         spCandidateGroup.insert(pCandidateKF);
 
@@ -270,17 +270,17 @@ bool LoopClosing::DetectLoop()
         bool bConsistentForSomeGroup = false;
         // Step 5.3：遍历前一次闭环检测到的“子连续组”
         // 上一次闭环的连续组 std::vector<ConsistentGroup> mvConsistentGroups
-        // 其中ConsistentGroup的定义：typedef pair<set<KeyFrame*>,int> ConsistentGroup
+        // 其中ConsistentGroup的定义：typedef pair<std::set<KeyFrame*>,int> ConsistentGroup
         // 其中 ConsistentGroup.first对应每个“连续组”中的关键帧，ConsistentGroup.second为每个“连续组”的已连续次数
         for(size_t iG=0, iendG=mvConsistentGroups.size(); iG<iendG; iG++)
         {
             // 取出之前的一个子连续组中的关键帧集合
-            set<KeyFrame*> sPreviousGroup = mvConsistentGroups[iG].first;
+            std::set<KeyFrame*> sPreviousGroup = mvConsistentGroups[iG].first;
 
             // Step 5.4：遍历每个“子候选组”，检测子候选组中每一个关键帧在“子连续组”中是否存在
             // 如果有一帧共同存在于“子候选组”与之前的“子连续组”，那么“子候选组”与该“子连续组”连续
             bool bConsistent = false;
-            for(set<KeyFrame*>::iterator sit=spCandidateGroup.begin(), send=spCandidateGroup.end(); sit!=send;sit++)
+            for(std::set<KeyFrame*>::iterator sit=spCandidateGroup.begin(), send=spCandidateGroup.end(); sit!=send;sit++)
             {
                 if(sPreviousGroup.count(*sit))
                 {
@@ -397,15 +397,15 @@ bool LoopClosing::ComputeSim3()
     ORBmatcher matcher(0.75,true);
 
     // 用 vector 存储每一个候选帧的Sim3Solver求解器
-    vector<Sim3Solver*> vpSim3Solvers;
+    std::vector<Sim3Solver*> vpSim3Solvers;
     vpSim3Solvers.resize(nInitialCandidates);
 
     // 用 vector 存储每个候选帧的匹配地图点信息
-    vector<vector<MapPoint*> > vvpMapPointMatches;
+    std::vector<std::vector<MapPoint*> > vvpMapPointMatches;
     vvpMapPointMatches.resize(nInitialCandidates);
 
     // 用 vector 存储每个候选帧应该被放弃(True）或者 保留(False)
-    vector<bool> vbDiscarded;
+    std::vector<bool> vbDiscarded;
     vbDiscarded.resize(nInitialCandidates);
 
     // 完成 Step 1 的匹配后，被保留的候选帧数量
@@ -470,7 +470,7 @@ bool LoopClosing::ComputeSim3()
 
             // 内点（Inliers）标志
             // 即标记经过RANSAC sim3 求解后,vvpMapPointMatches中的哪些作为内点
-            vector<bool> vbInliers; 
+            std::vector<bool> vbInliers; 
         
             // 内点（Inliers）数量
             int nInliers;
@@ -497,7 +497,7 @@ bool LoopClosing::ComputeSim3()
             if(!Scm.empty())
             {
                 // 取出经过Sim3Solver 后匹配点中的内点集合
-                vector<MapPoint*> vpMapPointMatches(vvpMapPointMatches[i].size(), static_cast<MapPoint*>(NULL));
+                std::vector<MapPoint*> vpMapPointMatches(vvpMapPointMatches[i].size(), static_cast<MapPoint*>(NULL));
                 for(size_t j=0, jend=vbInliers.size(); j<jend; j++)
                 {
                     // 保存内点
@@ -565,17 +565,17 @@ bool LoopClosing::ComputeSim3()
     // 注意是闭环检测出来与当前帧形成闭环的关键帧 mpMatchedKF
     // 将mpMatchedKF共视的关键帧全部取出来放入 vpLoopConnectedKFs
     // 将vpLoopConnectedKFs的地图点取出来放入mvpLoopMapPoints
-    vector<KeyFrame*> vpLoopConnectedKFs = mpMatchedKF->GetVectorCovisibleKeyFrames();
+    std::vector<KeyFrame*> vpLoopConnectedKFs = mpMatchedKF->GetVectorCovisibleKeyFrames();
 
     // 包含闭环匹配关键帧本身,形成一个“闭环关键帧小组“
     vpLoopConnectedKFs.push_back(mpMatchedKF);
     mvpLoopMapPoints.clear();
 
     // 遍历这个组中的每一个关键帧
-    for(vector<KeyFrame*>::iterator vit=vpLoopConnectedKFs.begin(); vit!=vpLoopConnectedKFs.end(); vit++)
+    for(std::vector<KeyFrame*>::iterator vit=vpLoopConnectedKFs.begin(); vit!=vpLoopConnectedKFs.end(); vit++)
     {
         KeyFrame* pKF = *vit;
-        vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
+        std::vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
 
         // 遍历其中一个关键帧的所有有效地图点
         for(size_t i=0, iend=vpMapPoints.size(); i<iend; i++)
@@ -664,7 +664,7 @@ void LoopClosing::CorrectLoop()
     if(isRunningGBA())
     {
         // 如果有全局BA在运行，终止掉，迎接新的全局BA
-        unique_lock<mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         mbStopGBA = true;
         // 记录全局BA次数
         mnFullBAIdx++;
@@ -709,11 +709,11 @@ void LoopClosing::CorrectLoop()
     {
         // Get Map Mutex
         // 锁定地图点
-        unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+        std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
 
         // Step 2.1：通过mg2oScw（认为是准的）来进行位姿传播，得到当前关键帧的共视关键帧的世界坐标系下Sim3 位姿（还没有修正）
         // 遍历"当前关键帧组""
-        for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
+        for(std::vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
         {
             KeyFrame* pKFi = *vit;
             cv::Mat Tiw = pKFi->GetPose();
@@ -753,7 +753,7 @@ void LoopClosing::CorrectLoop()
 
             g2o::Sim3 g2oSiw =NonCorrectedSim3[pKFi];
 
-            vector<MapPoint*> vpMPsi = pKFi->GetMapPointMatches();
+            std::vector<MapPoint*> vpMPsi = pKFi->GetMapPointMatches();
             // 遍历待矫正共视关键帧中的每一个地图点
             for(size_t iMP=0, endMPi = vpMPsi.size(); iMP<endMPi; iMP++)
             {
@@ -847,14 +847,14 @@ void LoopClosing::CorrectLoop()
     // After the MapPoint fusion, new links in the covisibility graph will appear attaching both sides of the loop
     // Step 5：更新当前关键帧之间的共视相连关系，得到因闭环时MapPoints融合而新得到的连接关系
     // LoopConnections：存储因为闭环地图点调整而新生成的连接关系
-    map<KeyFrame*, set<KeyFrame*> > LoopConnections;
+    std::map<KeyFrame*, std::set<KeyFrame*> > LoopConnections;
 
     // Step 5.1：遍历当前帧相连关键帧组（一级相连）
-    for(vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
+    for(std::vector<KeyFrame*>::iterator vit=mvpCurrentConnectedKFs.begin(), vend=mvpCurrentConnectedKFs.end(); vit!=vend; vit++)
     {
         KeyFrame* pKFi = *vit;
         // Step 5.2：得到与当前帧相连关键帧的相连关键帧（二级相连）
-        vector<KeyFrame*> vpPreviousNeighbors = pKFi->GetVectorCovisibleKeyFrames();
+        std::vector<KeyFrame*> vpPreviousNeighbors = pKFi->GetVectorCovisibleKeyFrames();
 
         // Update connections. Detect new links.
         // Step 5.3：更新一级相连关键帧的连接关系(会把当前关键帧添加进去,因为地图点已经更新和替换了)
@@ -862,12 +862,12 @@ void LoopClosing::CorrectLoop()
         // Step 5.4：取出该帧更新后的连接关系
         LoopConnections[pKFi]=pKFi->GetConnectedKeyFrames();
         // Step 5.5：从连接关系中去除闭环之前的二级连接关系，剩下的连接就是由闭环得到的连接关系
-        for(vector<KeyFrame*>::iterator vit_prev=vpPreviousNeighbors.begin(), vend_prev=vpPreviousNeighbors.end(); vit_prev!=vend_prev; vit_prev++)
+        for(std::vector<KeyFrame*>::iterator vit_prev=vpPreviousNeighbors.begin(), vend_prev=vpPreviousNeighbors.end(); vit_prev!=vend_prev; vit_prev++)
         {
             LoopConnections[pKFi].erase(*vit_prev);
         }
         // Step 5.6：从连接关系中去除闭环之前的一级连接关系，剩下的连接就是由闭环得到的连接关系
-        for(vector<KeyFrame*>::iterator vit2=mvpCurrentConnectedKFs.begin(), vend2=mvpCurrentConnectedKFs.end(); vit2!=vend2; vit2++)
+        for(std::vector<KeyFrame*>::iterator vit2=mvpCurrentConnectedKFs.begin(), vend2=mvpCurrentConnectedKFs.end(); vit2!=vend2; vit2++)
         {
             LoopConnections[pKFi].erase(*vit2);
         }
@@ -922,14 +922,14 @@ void LoopClosing::SearchAndFuse(const KeyFrameAndPose &CorrectedPosesMap)
 
         // Step 2 将mvpLoopMapPoints投影到pKF帧匹配，检查地图点冲突并融合
         // mvpLoopMapPoints：与当前关键帧闭环匹配上的关键帧及其共视关键帧组成的地图点
-        vector<MapPoint*> vpReplacePoints(mvpLoopMapPoints.size(),static_cast<MapPoint*>(NULL));
+        std::vector<MapPoint*> vpReplacePoints(mvpLoopMapPoints.size(),static_cast<MapPoint*>(NULL));
         // vpReplacePoints：存储mvpLoopMapPoints投影到pKF匹配后需要替换掉的新增地图点,索引和mvpLoopMapPoints一致，初始化为空
         // 搜索区域系数为4
         matcher.Fuse(pKF,cvScw,mvpLoopMapPoints,4,vpReplacePoints);
 
         // Get Map Mutex
         // 之所以不在上面 Fuse 函数中进行地图点融合更新的原因是需要对地图加锁
-        unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+        std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
         const int nLP = mvpLoopMapPoints.size();
         // Step 3 遍历闭环帧组的所有的地图点，替换掉需要替换的地图点
         for(int i=0; i<nLP;i++)
@@ -950,7 +950,7 @@ void LoopClosing::RequestReset()
 {
     // 标志置位
     {
-        unique_lock<mutex> lock(mMutexReset);
+        std::unique_lock<std::mutex> lock(mMutexReset);
         mbResetRequested = true;
     }
 
@@ -958,7 +958,7 @@ void LoopClosing::RequestReset()
     while(1)
     {
         {
-        unique_lock<mutex> lock2(mMutexReset);
+        std::unique_lock<std::mutex> lock2(mMutexReset);
         if(!mbResetRequested)
             break;
         }
@@ -971,7 +971,7 @@ void LoopClosing::RequestReset()
 // 当前线程调用,检查是否有外部线程请求复位当前线程,如果有的话就复位回环检测线程
 void LoopClosing::ResetIfRequested()
 {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     // 如果有来自于外部的线程的复位请求,那么就复位当前线程
     if(mbResetRequested)
     {
@@ -1010,7 +1010,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
     // 在global BA过程中local mapping线程仍然在工作，这意味着在global BA时可能有新的关键帧产生，但是并未包括在GBA里，
     // 所以和更新后的地图并不连续。需要通过spanning tree来传播
     {
-        unique_lock<mutex> lock(mMutexGBA);
+        std::unique_lock<std::mutex> lock(mMutexGBA);
         // 如果全局BA过程是因为意外结束的,那么直接退出GBA
         if(idx!=mnFullBAIdx)
             return;
@@ -1036,7 +1036,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 
             // Get Map Mutex
             // 后续要更新地图所以要上锁
-            unique_lock<mutex> lock(mpMap->mMutexMapUpdate);
+            std::unique_lock<std::mutex> lock(mpMap->mMutexMapUpdate);
 
             // Correct keyframes starting at map first keyframe
             // 看上去是链表，其实只保存了初始化第一个关键帧
@@ -1049,10 +1049,10 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
             while(!lpKFtoCheck.empty())
             {
                 KeyFrame* pKF = lpKFtoCheck.front();
-                const set<KeyFrame*> sChilds = pKF->GetChilds();
+                const std::set<KeyFrame*> sChilds = pKF->GetChilds();
                 cv::Mat Twc = pKF->GetPoseInverse();
                 // 遍历当前关键帧的子关键帧
-                for(set<KeyFrame*>::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
+                for(std::set<KeyFrame*>::const_iterator sit=sChilds.begin();sit!=sChilds.end();sit++)
                 {
                     KeyFrame* pChild = *sit;
                     // 记录避免重复
@@ -1077,7 +1077,7 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
             }
 
             // Correct MapPoints
-            const vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
+            const std::vector<MapPoint*> vpMPs = mpMap->GetAllMapPoints();
 
             // Step 3 遍历每一个地图点并用更新的关键帧位姿来更新地图点位置
             for(size_t i=0; i<vpMPs.size(); i++)
@@ -1133,28 +1133,28 @@ void LoopClosing::RunGlobalBundleAdjustment(unsigned long nLoopKF)
 // 由外部线程调用,请求终止当前线程
 void LoopClosing::RequestFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinishRequested = true;
 }
 
 // 当前线程调用,查看是否有外部线程请求当前线程
 bool LoopClosing::CheckFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinishRequested;
 }
 
 // 有当前线程调用,执行完成该函数之后线程主函数退出,线程销毁
 void LoopClosing::SetFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinished = true;
 }
 
 // 由外部线程调用,判断当前回环检测线程是否已经正确终止了
 bool LoopClosing::isFinished()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinished;
 }
 

@@ -383,10 +383,10 @@ void process()
                                      pose_msg->pose.pose.orientation.z).toRotationMatrix();
             if((T - last_t).norm() > SKIP_DIS)
             {
-                vector<cv::Point3f> point_3d; 
-                vector<cv::Point2f> point_2d_uv; 
-                vector<cv::Point2f> point_2d_normal;
-                vector<double> point_id;
+                std::vector<cv::Point3f> point_3d; 
+                std::vector<cv::Point2f> point_2d_uv; 
+                std::vector<cv::Point2f> point_2d_normal;
+                std::vector<double> point_id;
 
                 for (unsigned int i = 0; i < point_msg->points.size(); i++)
                 {

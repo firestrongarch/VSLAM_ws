@@ -275,7 +275,7 @@ void process()
             }
             if (relo_msg != NULL)
             {
-                vector<Vector3d> match_points;
+                std::vector<Vector3d> match_points;
                 double frame_stamp = relo_msg->header.stamp.sec+relo_msg->header.stamp.nanosec * (1e-9);
                 for (unsigned int i = 0; i < relo_msg->points.size(); i++)
                 {
@@ -296,7 +296,7 @@ void process()
             RCUTILS_LOG_DEBUG("processing vision data with stamp %f \n", img_msg->header.stamp.sec+img_msg->header.stamp.nanosec * (1e-9));
 
             TicToc t_s;
-            map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> image;
+            std::map<int, std::vector<pair<int, Eigen::Matrix<double, 7, 1>>>> image;
             for (unsigned int i = 0; i < img_msg->points.size(); i++)
             {
                 int v = img_msg->channels[0].values[i] + 0.5;

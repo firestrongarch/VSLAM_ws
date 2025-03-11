@@ -230,9 +230,9 @@ public:
      * @param[in] r                     搜索半径 
      * @param[in] minLevel              最小金字塔层级
      * @param[in] maxLevel              最大金字塔层级
-     * @return vector<size_t>           返回搜索到的候选匹配点id
+     * @return std::vector<size_t>           返回搜索到的候选匹配点id
      */
-    vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
+    std::vector<size_t> GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel=-1, const int maxLevel=-1) const;
 
     // Search a match for each keypoint in the left image to a keypoint in the right image.
     // If there is a match, depth is computed and the right coordinate associated to the left keypoint is stored.
@@ -425,10 +425,10 @@ public:
     float mfScaleFactor;                ///<图像金字塔的尺度因子
     float mfLogScaleFactor;             ///<图像金字塔的尺度因子的对数值，用于仿照特征点尺度预测地图点的尺度
                                   
-    vector<float> mvScaleFactors;		///<图像金字塔每一层的缩放因子
-    vector<float> mvInvScaleFactors;	///<以及上面的这个变量的倒数
-    vector<float> mvLevelSigma2;		///@todo 目前在frame.c中没有用到，无法下定论
-    vector<float> mvInvLevelSigma2;		///<上面变量的倒数
+    std::vector<float> mvScaleFactors;		///<图像金字塔每一层的缩放因子
+    std::vector<float> mvInvScaleFactors;	///<以及上面的这个变量的倒数
+    std::vector<float> mvLevelSigma2;		///@todo 目前在frame.c中没有用到，无法下定论
+    std::vector<float> mvInvLevelSigma2;		///<上面变量的倒数
 
     /** @} */
 

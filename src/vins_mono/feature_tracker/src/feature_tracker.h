@@ -28,8 +28,8 @@ using namespace Eigen;
 
 bool inBorder(const cv::Point2f &pt);
 
-void reduceVector(vector<cv::Point2f> &v, vector<uchar> status);
-void reduceVector(vector<int> &v, vector<uchar> status);
+void reduceVector(std::vector<cv::Point2f> &v, std::vector<uchar> status);
+void reduceVector(std::vector<int> &v, std::vector<uchar> status);
 
 class FeatureTracker
 {
@@ -64,14 +64,14 @@ class FeatureTracker
     cv::Mat mask;
     cv::Mat fisheye_mask;
     cv::Mat prev_img, cur_img, forw_img, gray;
-    vector<cv::Point2f> n_pts;
-    vector<cv::Point2f> prev_pts, cur_pts, forw_pts;
-    vector<cv::Point2f> prev_un_pts, cur_un_pts;
-    vector<cv::Point2f> pts_velocity;
-    vector<int> ids;
-    vector<int> track_cnt;
-    map<int, cv::Point2f> cur_un_pts_map;
-    map<int, cv::Point2f> prev_un_pts_map;
+    std::vector<cv::Point2f> n_pts;
+    std::vector<cv::Point2f> prev_pts, cur_pts, forw_pts;
+    std::vector<cv::Point2f> prev_un_pts, cur_un_pts;
+    std::vector<cv::Point2f> pts_velocity;
+    std::vector<int> ids;
+    std::vector<int> track_cnt;
+    std::map<int, cv::Point2f> cur_un_pts_map;
+    std::map<int, cv::Point2f> prev_un_pts_map;
     camodocal::CameraPtr m_camera;
     double cur_time;
     double prev_time;

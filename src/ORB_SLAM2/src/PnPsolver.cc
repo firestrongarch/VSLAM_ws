@@ -117,7 +117,7 @@ namespace ORB_SLAM2
 // us表示图像坐标系下的2D点坐标
 // alphas为真实3D点用4个虚拟控制点表达时的系数
 // 构造函数
-PnPsolver::PnPsolver(const Frame &F, const vector<MapPoint*> &vpMapPointMatches):
+PnPsolver::PnPsolver(const Frame &F, const std::vector<MapPoint*> &vpMapPointMatches):
     pws(0), us(0), alphas(0), pcs(0), //这里的四个变量都是指针啊,直接这样子写的原因可以参考函数 set_maximum_number_of_correspondences()
     maximum_number_of_correspondences(0), number_of_correspondences(0), mnInliersi(0),
     mnIterations(0), mnBestInliers(0), N(0)
@@ -239,7 +239,7 @@ void PnPsolver::SetRansacParameters(double probability, int minInliers, int maxI
 }
 
 // REVIEW 目测函数没有被调用过
-cv::Mat PnPsolver::find(vector<bool> &vbInliers, int &nInliers)
+cv::Mat PnPsolver::find(std::vector<bool> &vbInliers, int &nInliers)
 {
     bool bFlag;
     return iterate(mRansacMaxIts,bFlag,vbInliers,nInliers);    
@@ -255,7 +255,7 @@ cv::Mat PnPsolver::find(vector<bool> &vbInliers, int &nInliers)
  * @param[in] nInliers      总共内点数
  * @return cv::Mat          计算出来的位姿
  */
-cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers)
+cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, std::vector<bool> &vbInliers, int &nInliers)
 {
     bNoMore = false;        //已经达到最大迭代次数的标志
     vbInliers.clear();
@@ -274,7 +274,7 @@ cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInlie
 
     // mvAllIndices为所有参与PnP的2D点的索引
     // vAvailableIndices为每次从mvAllIndices中随机挑选mRansacMinSet组3D-2D对应点进行一次RANSAC
-    vector<size_t> vAvailableIndices;
+    std::vector<size_t> vAvailableIndices;
 
     // 当前的迭代次数id
     int nCurrentIterations = 0;
@@ -341,7 +341,7 @@ cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInlie
             {
                 nInliers = mnRefinedInliers;
                 // 转录,作为计算结果
-                vbInliers = vector<bool>(mvpMapPointMatches.size(),false);
+                vbInliers = std::vector<bool>(mvpMapPointMatches.size(),false);
                 for(int i=0; i<N; i++)
                 {
                     if(mvbRefinedInliers[i])
@@ -368,7 +368,7 @@ cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInlie
         {
             // 返回计算结果
             nInliers=mnBestInliers;
-            vbInliers = vector<bool>(mvpMapPointMatches.size(),false);
+            vbInliers = std::vector<bool>(mvpMapPointMatches.size(),false);
             for(int i=0; i<N; i++)
             {
                 if(mvbBestInliers[i])
@@ -386,7 +386,7 @@ cv::Mat PnPsolver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInlie
 bool PnPsolver::Refine()
 {
     // 先备份一下历史上最好的内点数据
-    vector<int> vIndices;
+    std::vector<int> vIndices;
     vIndices.reserve(mvbBestInliers.size());
 
     for(size_t i=0; i<mvbBestInliers.size(); i++)

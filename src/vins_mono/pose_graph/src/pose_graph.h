@@ -74,8 +74,8 @@ private:
 
 	int global_index;
 	int sequence_cnt;
-	vector<bool> sequence_loop;
-	map<int, cv::Mat> image_pool;
+	std::vector<bool> sequence_loop;
+	std::map<int, cv::Mat> image_pool;
 	int earliest_loop_index;
 	int base_sequence;
 

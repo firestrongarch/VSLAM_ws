@@ -52,14 +52,14 @@ namespace ORB_SLAM2
  * @param[in] vpMatched12       通过词袋模型加速匹配所得到的,两帧特征点的匹配关系所得到的地图点,本质上是来自于候选闭环关键帧的地图点
  * @param[in] bFixScale         当前传感器类型的输入需不需要计算尺度。单目的时候需要，双目和RGBD的时候就不需要了
  */
-Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> &vpMatched12, const bool bFixScale):
+Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const std::vector<MapPoint *> &vpMatched12, const bool bFixScale):
     mnIterations(0), mnBestInliers(0), mbFixScale(bFixScale)
 {
     mpKF1 = pKF1;       // 当前关键帧
     mpKF2 = pKF2;       // 闭环关键帧
 
     // Step 1 取出当前关键帧中的所有地图点
-    vector<MapPoint*> vpKeyFrameMP1 = pKF1->GetMapPointMatches();
+    std::vector<MapPoint*> vpKeyFrameMP1 = pKF1->GetMapPointMatches();
 
     // 最多匹配的地图点数目
     mN1 = vpMatched12.size();
@@ -200,10 +200,10 @@ void Sim3Solver::SetRansacParameters(double probability, int minInliers, int max
  * @param[in] nInliers              内点数目
  * @return cv::Mat                  计算得到的Sim3矩阵
  */
-cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInliers, int &nInliers)
+cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, std::vector<bool> &vbInliers, int &nInliers)
 {
     bNoMore = false;                        // 现在还没有达到最好的效果
-    vbInliers = vector<bool>(mN1,false);    // 的确和最初传递给这个解算器的地图点向量是保持一致
+    vbInliers = std::vector<bool>(mN1,false);    // 的确和最初传递给这个解算器的地图点向量是保持一致
     nInliers=0;                             // 存储迭代过程中得到的内点个数
 
     // Step 1 如果匹配点比要求的最少内点数还少，不满足Sim3 求解条件，返回空
@@ -215,7 +215,7 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
     }
 
     // 可以使用的点对的索引,为了避免重复使用
-    vector<size_t> vAvailableIndices;
+    std::vector<size_t> vAvailableIndices;
 
     // 随机选择的来自于这两个帧的三对匹配点
     cv::Mat P3Dc1i(3,3,CV_32F);
@@ -295,7 +295,7 @@ cv::Mat Sim3Solver::iterate(int nIterations, bool &bNoMore, vector<bool> &vbInli
 }
 
 // 在"进行迭代计算"函数 iterate 的基础上套了一层壳,使用默认参数. 不过目前好像没有被使用到
-cv::Mat Sim3Solver::find(vector<bool> &vbInliers12, int &nInliers)
+cv::Mat Sim3Solver::find(std::vector<bool> &vbInliers12, int &nInliers)
 {
     bool bFlag;
     return iterate(mRansacMaxIts,bFlag,vbInliers12,nInliers);
@@ -461,7 +461,7 @@ void Sim3Solver::ComputeSim3(cv::Mat &P1, cv::Mat &P2)
 void Sim3Solver::CheckInliers()
 {
     // 用计算的Sim3 对所有的地图点投影，得到图像点
-    vector<cv::Mat> vP1im2, vP2im1;
+    std::vector<cv::Mat> vP1im2, vP2im1;
     Project(mvX3Dc2,vP2im1,mT12i,mK1);// 把2系中的3D经过Sim3变换(mT12i)到1系中计算重投影坐标
     Project(mvX3Dc1,vP1im2,mT21i,mK2);// 把1系中的3D经过Sim3变换(mT21i)到2系中计算重投影坐标
 
@@ -515,7 +515,7 @@ float Sim3Solver::GetEstimatedScale()
  * @param[in] Tcw           Sim3变换
  * @param[in] K             内参
  */
-void Sim3Solver::Project(const vector<cv::Mat> &vP3Dw, vector<cv::Mat> &vP2D, cv::Mat Tcw, cv::Mat K)
+void Sim3Solver::Project(const std::vector<cv::Mat> &vP3Dw, std::vector<cv::Mat> &vP2D, cv::Mat Tcw, cv::Mat K)
 {
     cv::Mat Rcw = Tcw.rowRange(0,3).colRange(0,3);
     cv::Mat tcw = Tcw.rowRange(0,3).col(3);
@@ -548,7 +548,7 @@ void Sim3Solver::Project(const vector<cv::Mat> &vP3Dw, vector<cv::Mat> &vP2D, cv
  * @param[in] vP2D          投影的二维图像坐标
  * @param[in] K             内参矩阵
  */
-void Sim3Solver::FromCameraToImage(const vector<cv::Mat> &vP3Dc, vector<cv::Mat> &vP2D, cv::Mat K)
+void Sim3Solver::FromCameraToImage(const std::vector<cv::Mat> &vP3Dc, std::vector<cv::Mat> &vP2D, cv::Mat K)
 {
     const float &fx = K.at<float>(0,0);
     const float &fy = K.at<float>(1,1);

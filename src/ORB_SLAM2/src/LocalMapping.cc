@@ -164,7 +164,7 @@ void LocalMapping::Run()
 // 插入关键帧,由外部（Tracking）线程调用;这里只是插入到列表中,等待线程主函数对其进行处理
 void LocalMapping::InsertKeyFrame(KeyFrame *pKF)
 {
-    unique_lock<mutex> lock(mMutexNewKFs);
+    std::unique_lock<std::mutex> lock(mMutexNewKFs);
     // 将关键帧插入到列表中
     mlNewKeyFrames.push_back(pKF);
     mbAbortBA=true;
@@ -173,7 +173,7 @@ void LocalMapping::InsertKeyFrame(KeyFrame *pKF)
 // 查看列表中是否有等待被插入的关键帧,
 bool LocalMapping::CheckNewKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexNewKFs);
+    std::unique_lock<std::mutex> lock(mMutexNewKFs);
     return(!mlNewKeyFrames.empty());
 }
 
@@ -186,7 +186,7 @@ void LocalMapping::ProcessNewKeyFrame()
     // Step 1：从缓冲队列中取出一帧关键帧
     // 该关键帧队列是Tracking线程向LocalMapping中插入的关键帧组成
     {
-        unique_lock<mutex> lock(mMutexNewKFs);
+        std::unique_lock<std::mutex> lock(mMutexNewKFs);
         // 取出列表中最前面的关键帧，作为当前要处理的关键帧
         mpCurrentKeyFrame = mlNewKeyFrames.front();
         // 取出最前面的关键帧后，在原来的列表里删掉该关键帧
@@ -200,7 +200,7 @@ void LocalMapping::ProcessNewKeyFrame()
     // Associate MapPoints to the new keyframe and update normal and descriptor
     // Step 3：当前处理关键帧中有效的地图点，更新normal，描述子等信息
     // TrackLocalMap中和当前帧新匹配上的地图点和当前关键帧进行关联绑定
-    const vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
+    const std::vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
     // 对当前处理的这个关键帧中的所有的地图点展开遍历
     for(size_t i=0; i<vpMapPointMatches.size(); i++)
     {
@@ -305,7 +305,7 @@ void LocalMapping::CreateNewMapPoints()
         nn=20;
 
     // Step 1：在当前关键帧的共视关键帧中找到共视程度最高的nn帧相邻关键帧
-    const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
+    const std::vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
 
     // 特征点匹配配置 最佳距离 < 0.6*次佳距离，比较苛刻了。不检查旋转
     ORBmatcher matcher(0.6,false); 
@@ -378,7 +378,7 @@ void LocalMapping::CreateNewMapPoints()
 
         // Search matches that fullfil epipolar constraint
         // Step 5：通过BoW对两关键帧的未匹配的特征点快速匹配，用极线约束抑制离群点，生成新的匹配点对
-        vector<pair<size_t,size_t> > vMatchedIndices;
+        std::vector<pair<size_t,size_t> > vMatchedIndices;
         matcher.SearchForTriangulation(mpCurrentKeyFrame,pKF2,F12,vMatchedIndices,false);
 
         cv::Mat Rcw2 = pKF2->GetRotation();
@@ -634,12 +634,12 @@ void LocalMapping::SearchInNeighbors()
         nn=20;
 
     // 和当前关键帧相邻的关键帧，也就是一级相邻关键帧
-    const vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
+    const std::vector<KeyFrame*> vpNeighKFs = mpCurrentKeyFrame->GetBestCovisibilityKeyFrames(nn);
     
     // Step 2：存储一级相邻关键帧及其二级相邻关键帧
-    vector<KeyFrame*> vpTargetKFs;
+    std::vector<KeyFrame*> vpTargetKFs;
     // 开始对所有候选的一级关键帧展开遍历：
-    for(vector<KeyFrame*>::const_iterator vit=vpNeighKFs.begin(), vend=vpNeighKFs.end(); vit!=vend; vit++)
+    for(std::vector<KeyFrame*>::const_iterator vit=vpNeighKFs.begin(), vend=vpNeighKFs.end(); vit!=vend; vit++)
     {
         KeyFrame* pKFi = *vit;
         // 没有和当前帧进行过融合的操作
@@ -652,9 +652,9 @@ void LocalMapping::SearchInNeighbors()
 
         // Extend to some second neighbors
         // 以一级相邻关键帧的共视关系最好的5个相邻关键帧 作为二级相邻关键帧
-        const vector<KeyFrame*> vpSecondNeighKFs = pKFi->GetBestCovisibilityKeyFrames(5);
+        const std::vector<KeyFrame*> vpSecondNeighKFs = pKFi->GetBestCovisibilityKeyFrames(5);
         // 遍历得到的二级相邻关键帧
-        for(vector<KeyFrame*>::const_iterator vit2=vpSecondNeighKFs.begin(), vend2=vpSecondNeighKFs.end(); vit2!=vend2; vit2++)
+        for(std::vector<KeyFrame*>::const_iterator vit2=vpSecondNeighKFs.begin(), vend2=vpSecondNeighKFs.end(); vit2!=vend2; vit2++)
         {
             KeyFrame* pKFi2 = *vit2;
             // 当然这个二级相邻关键帧要求没有和当前关键帧发生融合,并且这个二级相邻关键帧也不是当前关键帧
@@ -670,8 +670,8 @@ void LocalMapping::SearchInNeighbors()
     ORBmatcher matcher;
 
     // Step 3：将当前帧的地图点分别与一级二级相邻关键帧地图点进行融合 -- 正向
-    vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
-    for(vector<KeyFrame*>::iterator vit=vpTargetKFs.begin(), vend=vpTargetKFs.end(); vit!=vend; vit++)
+    std::vector<MapPoint*> vpMapPointMatches = mpCurrentKeyFrame->GetMapPointMatches();
+    for(std::vector<KeyFrame*>::iterator vit=vpTargetKFs.begin(), vend=vpTargetKFs.end(); vit!=vend; vit++)
     {
         KeyFrame* pKFi = *vit;
 
@@ -685,17 +685,17 @@ void LocalMapping::SearchInNeighbors()
     // Search matches by projection from target KFs in current KF
     // Step 4：将一级二级相邻关键帧地图点分别与当前关键帧地图点进行融合 -- 反向
     // 用于进行存储要融合的一级邻接和二级邻接关键帧所有MapPoints的集合
-    vector<MapPoint*> vpFuseCandidates;
+    std::vector<MapPoint*> vpFuseCandidates;
     vpFuseCandidates.reserve(vpTargetKFs.size()*vpMapPointMatches.size());
     
     //  Step 4.1：遍历每一个一级邻接和二级邻接关键帧，收集他们的地图点存储到 vpFuseCandidates
-    for(vector<KeyFrame*>::iterator vitKF=vpTargetKFs.begin(), vendKF=vpTargetKFs.end(); vitKF!=vendKF; vitKF++)
+    for(std::vector<KeyFrame*>::iterator vitKF=vpTargetKFs.begin(), vendKF=vpTargetKFs.end(); vitKF!=vendKF; vitKF++)
     {
         KeyFrame* pKFi = *vitKF;
-        vector<MapPoint*> vpMapPointsKFi = pKFi->GetMapPointMatches();
+        std::vector<MapPoint*> vpMapPointsKFi = pKFi->GetMapPointMatches();
 
         // 遍历当前一级邻接和二级邻接关键帧中所有的MapPoints,找出需要进行融合的并且加入到集合中
-        for(vector<MapPoint*>::iterator vitMP=vpMapPointsKFi.begin(), vendMP=vpMapPointsKFi.end(); vitMP!=vendMP; vitMP++)
+        for(std::vector<MapPoint*>::iterator vitMP=vpMapPointsKFi.begin(), vendMP=vpMapPointsKFi.end(); vitMP!=vendMP; vitMP++)
         {
             MapPoint* pMP = *vitMP;
             if(!pMP)
@@ -766,16 +766,16 @@ cv::Mat LocalMapping::ComputeF12(KeyFrame *&pKF1, KeyFrame *&pKF2)
 // 外部线程调用,请求停止当前线程的工作; 其实是回环检测线程调用,来避免在进行全局优化的过程中局部建图线程添加新的关键帧
 void LocalMapping::RequestStop()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     mbStopRequested = true;
-    unique_lock<mutex> lock2(mMutexNewKFs);
+    std::unique_lock<std::mutex> lock2(mMutexNewKFs);
     mbAbortBA = true;
 }
 
 // 检查是否要把当前的局部建图线程停止工作,运行的时候要检查是否有终止请求,如果有就执行. 由run函数调用
 bool LocalMapping::Stop()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     // 如果当前线程还没有准备停止,但是已经有终止请求了,那么就准备停止当前线程
     if(mbStopRequested && !mbNotStop)
     {
@@ -790,14 +790,14 @@ bool LocalMapping::Stop()
 // 检查mbStopped是否为true，为true表示可以并终止localmapping 线程
 bool LocalMapping::isStopped()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     return mbStopped;
 }
 
 // 求外部线程调用，为true，表示外部线程请求停止 local mapping
 bool LocalMapping::stopRequested()
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
     return mbStopRequested;
 }
 
@@ -805,8 +805,8 @@ bool LocalMapping::stopRequested()
 //? ! 现在感觉之前的理解好像有问题,这个函数由LoopClosing在执行了回环的关键帧组优化之后调用的,是为了恢复LoopMapping线程的正常工作的
 void LocalMapping::Release()
 {
-    unique_lock<mutex> lock(mMutexStop);
-    unique_lock<mutex> lock2(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock2(mMutexFinish);
     if(mbFinished)
         return;
     mbStopped = false;
@@ -821,21 +821,21 @@ void LocalMapping::Release()
 // 查看当前是否允许接受关键帧
 bool LocalMapping::AcceptKeyFrames()
 {
-    unique_lock<mutex> lock(mMutexAccept);
+    std::unique_lock<std::mutex> lock(mMutexAccept);
     return mbAcceptKeyFrames;
 }
 
 // 设置"允许接受关键帧"的状态标志
 void LocalMapping::SetAcceptKeyFrames(bool flag)
 {
-    unique_lock<mutex> lock(mMutexAccept);
+    std::unique_lock<std::mutex> lock(mMutexAccept);
     mbAcceptKeyFrames=flag;
 }
 
 // 设置 mbnotStop标志的状态
 bool LocalMapping::SetNotStop(bool flag)
 {
-    unique_lock<mutex> lock(mMutexStop);
+    std::unique_lock<std::mutex> lock(mMutexStop);
 
     //已经处于!flag的状态了
     // 就是我希望线程先不要停止,但是经过检查这个时候线程已经停止了...
@@ -877,16 +877,16 @@ void LocalMapping::KeyFrameCulling()
     // scaleLevel：pKF的金字塔尺度
 
     // Step 1：根据共视图提取当前关键帧的所有共视关键帧
-    vector<KeyFrame*> vpLocalKeyFrames = mpCurrentKeyFrame->GetVectorCovisibleKeyFrames();
+    std::vector<KeyFrame*> vpLocalKeyFrames = mpCurrentKeyFrame->GetVectorCovisibleKeyFrames();
 
     // 对所有的共视关键帧进行遍历
-    for(vector<KeyFrame*>::iterator vit=vpLocalKeyFrames.begin(), vend=vpLocalKeyFrames.end(); vit!=vend; vit++)
+    for(std::vector<KeyFrame*>::iterator vit=vpLocalKeyFrames.begin(), vend=vpLocalKeyFrames.end(); vit!=vend; vit++)
     {
         KeyFrame* pKF = *vit;
         if(pKF->mnId==0)
             continue;
         // Step 2：提取每个共视关键帧的地图点
-        const vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
+        const std::vector<MapPoint*> vpMapPoints = pKF->GetMapPointMatches();
 
         // 记录某个点被观测次数，后面并未使用
         int nObs = 3;                     
@@ -918,11 +918,11 @@ void LocalMapping::KeyFrameCulling()
                     {
                         const int &scaleLevel = pKF->mvKeysUn[i].octave;
                         // Observation存储的是可以看到该地图点的所有关键帧的集合
-                        const map<KeyFrame*, size_t> observations = pMP->GetObservations();
+                        const std::map<KeyFrame*, size_t> observations = pMP->GetObservations();
 
                         int nObs=0;
                         // 遍历观测到该地图点的关键帧
-                        for(map<KeyFrame*, size_t>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
+                        for(std::map<KeyFrame*, size_t>::const_iterator mit=observations.begin(), mend=observations.end(); mit!=mend; mit++)
                         {
                             KeyFrame* pKFi = mit->first;
                             if(pKFi==pKF)
@@ -968,7 +968,7 @@ cv::Mat LocalMapping::SkewSymmetricMatrix(const cv::Mat &v)
 void LocalMapping::RequestReset()
 {
     {
-        unique_lock<mutex> lock(mMutexReset);
+        std::unique_lock<std::mutex> lock(mMutexReset);
         mbResetRequested = true;
     }
 
@@ -976,7 +976,7 @@ void LocalMapping::RequestReset()
     while(1)
     {
         {
-            unique_lock<mutex> lock2(mMutexReset);
+            std::unique_lock<std::mutex> lock2(mMutexReset);
             if(!mbResetRequested)
                 break;
         }
@@ -989,7 +989,7 @@ void LocalMapping::RequestReset()
 // 检查是否有复位线程的请求
 void LocalMapping::ResetIfRequested()
 {
-    unique_lock<mutex> lock(mMutexReset);
+    std::unique_lock<std::mutex> lock(mMutexReset);
     // 执行复位操作:清空关键帧缓冲区,清空待cull的地图点缓冲
     
     if(mbResetRequested)
@@ -1004,30 +1004,30 @@ void LocalMapping::ResetIfRequested()
 // 请求终止当前线程
 void LocalMapping::RequestFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinishRequested = true;
 }
 
 // 检查是否已经有外部线程请求终止当前线程
 bool LocalMapping::CheckFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinishRequested;
 }
 
 // 设置当前线程已经真正地结束了
 void LocalMapping::SetFinish()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     mbFinished = true;    // 线程已经被结束
-    unique_lock<mutex> lock2(mMutexStop);
+    std::unique_lock<std::mutex> lock2(mMutexStop);
     mbStopped = true;     //既然已经都结束了,那么当前线程也已经停止工作了
 }
 
 // 当前线程的run函数是否已经终止
 bool LocalMapping::isFinished()
 {
-    unique_lock<mutex> lock(mMutexFinish);
+    std::unique_lock<std::mutex> lock(mMutexFinish);
     return mbFinished;
 }
 

@@ -169,9 +169,9 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     ComputeStereoMatches();
 
     // 初始化本帧的地图点
-    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));   
+    mvpMapPoints = std::vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));   
 	// 记录地图点是否为外点，初始化均为外点false
-    mvbOutlier = vector<bool>(N,false);
+    mvbOutlier = std::vector<bool>(N,false);
 
     // This is done only for the first Frame (or after a change in the calibration)
 	//  Step 5 计算去畸变后图像边界，将特征点分配到网格中。这个过程一般是在第一帧或者是相机标定参数发生变化之后进行
@@ -261,9 +261,9 @@ Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeSt
     ComputeStereoFromRGBD(imDepth);
 
     // 初始化本帧的地图点
-    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
+    mvpMapPoints = std::vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
 	// 记录地图点是否为外点，初始化均为外点false
-    mvbOutlier = vector<bool>(N,false);
+    mvbOutlier = std::vector<bool>(N,false);
 
     // This is done only for the first Frame (or after a change in the calibration)
 	//  Step 5 计算去畸变后图像边界，将特征点分配到网格中。这个过程一般是在第一帧或者是相机标定参数发生变化之后进行
@@ -351,14 +351,14 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
 
     // Set no stereo information
 	// 由于单目相机无法直接获得立体信息，所以这里要给右图像对应点和深度赋值-1表示没有相关信息
-    mvuRight = vector<float>(N,-1);
-    mvDepth = vector<float>(N,-1);
+    mvuRight = std::vector<float>(N,-1);
+    mvDepth = std::vector<float>(N,-1);
 
 
     // 初始化本帧的地图点
-    mvpMapPoints = vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
+    mvpMapPoints = std::vector<MapPoint*>(N,static_cast<MapPoint*>(NULL));
 	// 记录地图点是否为外点，初始化均为外点false
-    mvbOutlier = vector<bool>(N,false);
+    mvbOutlier = std::vector<bool>(N,false);
 
     // This is done only for the first Frame (or after a change in the calibration)
 	//  Step 5 计算去畸变后图像边界，将特征点分配到网格中。这个过程一般是在第一帧或者是相机标定参数发生变化之后进行
@@ -585,12 +585,12 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
  * @param[in] r                     搜索半径 
  * @param[in] minLevel              最小金字塔层级
  * @param[in] maxLevel              最大金字塔层级
- * @return vector<size_t>           返回搜索到的候选匹配点id
+ * @return std::vector<size_t>           返回搜索到的候选匹配点id
  */
-vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel, const int maxLevel) const
+std::vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel, const int maxLevel) const
 {
 	// 存储搜索结果的vector
-    vector<size_t> vIndices;
+    std::vector<size_t> vIndices;
     vIndices.reserve(N);
 
     // Step 1 计算半径为r圆左右上下边界所在的网格列和行的id
@@ -633,7 +633,7 @@ vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const f
         for(int iy = nMinCellY; iy<=nMaxCellY; iy++)
         {
             // 获取这个网格内的所有特征点在 Frame::mvKeysUn 中的索引
-            const vector<size_t> vCell = mGrid[ix][iy];
+            const std::vector<size_t> vCell = mGrid[ix][iy];
 			// 如果这个网格中没有特征点，那么跳过这个网格继续下一个
             if(vCell.empty())
                 continue;
@@ -707,7 +707,7 @@ void Frame::ComputeBoW()
     if(mBowVec.empty())
     {
 		// 将描述子mDescriptors转换为DBOW要求的输入格式
-        vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
+        std::vector<cv::Mat> vCurrentDesc = Converter::toDescriptorVector(mDescriptors);
 		// 将特征点的描述子转换成词袋向量mBowVec以及特征向量mFeatVec
         mpORBvocabulary->transform(vCurrentDesc,	//当前的描述子vector
 								   mBowVec,			//输出，词袋向量，记录的是单词的id及其对应权重TF-IDF值
@@ -844,8 +844,8 @@ void Frame::ComputeStereoMatches()
     // 为匹配结果预先分配内存，数据类型为float型
     // mvuRight存储右图匹配点索引
     // mvDepth存储特征点的深度信息
-	mvuRight = vector<float>(N,-1.0f);
-    mvDepth = vector<float>(N,-1.0f);
+	mvuRight = std::vector<float>(N,-1.0f);
+    mvDepth = std::vector<float>(N,-1.0f);
 
 	// orb特征相似度阈值  -> mean ～= (max  + min) / 2
     const int thOrbDist = (ORBmatcher::TH_HIGH+ORBmatcher::TH_LOW)/2;
@@ -856,7 +856,7 @@ void Frame::ComputeStereoMatches()
 	// 二维vector存储每一行的orb特征点的列坐标，为什么是vector，因为每一行的特征点有可能不一样，例如
     // vRowIndices[0] = [1，2，5，8, 11]   第1行有5个特征点,他们的列号（即x坐标）分别是1,2,5,8,11
     // vRowIndices[1] = [2，6，7，9, 13, 17, 20]  第2行有7个特征点.etc
-    vector<vector<size_t> > vRowIndices(nRows, vector<size_t>());
+    std::vector<std::vector<size_t> > vRowIndices(nRows, std::vector<size_t>());
     for(int i=0; i<nRows; i++) vRowIndices[i].reserve(200);
 
 	// 右图特征点数量，N表示数量 r表示右图，且不能被修改
@@ -891,7 +891,7 @@ void Frame::ComputeStereoMatches()
     const float maxD = mbf/minZ; 
 
     // 保存sad块匹配相似度和左图特征点索引
-    vector<pair<int, int> > vDistIdx;
+    std::vector<pair<int, int> > vDistIdx;
     vDistIdx.reserve(N);
 
     // 为左图每一个特征点il，在右图搜索最相似的特征点ir
@@ -903,7 +903,7 @@ void Frame::ComputeStereoMatches()
         const float &uL = kpL.pt.x;
 
         // 获取左图特征点il所在行，以及在右图对应行中可能的匹配点
-        const vector<size_t> &vCandidates = vRowIndices[vL];
+        const std::vector<size_t> &vCandidates = vRowIndices[vL];
         if(vCandidates.empty()) continue;
 
         // 计算理论上的最佳搜索范围
@@ -980,7 +980,7 @@ void Frame::ComputeStereoMatches()
             const int L = 5;
 
 			// 初始化存储图像块相似度
-            vector<float> vDists;
+            std::vector<float> vDists;
             vDists.resize(2*L+1); 
 
             // 计算滑动窗口滑动范围的边界，因为是块匹配，还要算上图像块的尺寸
@@ -1086,8 +1086,8 @@ void Frame::ComputeStereoFromRGBD(const cv::Mat &imDepth)	//参数是深度图�
     /** 主要步骤如下:.对于彩色图像中的每一个特征点:<ul>  */
     // mvDepth直接由depth图像读取`
 	//这里是初始化这两个存储“右图”匹配特征点横坐标和存储特征点深度值的vector
-    mvuRight = vector<float>(N,-1);
-    mvDepth = vector<float>(N,-1);
+    mvuRight = std::vector<float>(N,-1);
+    mvDepth = std::vector<float>(N,-1);
 
 	//开始遍历彩色图像中的所有特征点
     for(int i=0; i<N; i++)

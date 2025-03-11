@@ -57,13 +57,13 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 void MapDrawer::DrawMapPoints()
 {
     //取出所有的地图点
-    const vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
+    const std::vector<MapPoint*> &vpMPs = mpMap->GetAllMapPoints();
     //取出mvpReferenceMapPoints，也即局部地图d点
-    const vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
+    const std::vector<MapPoint*> &vpRefMPs = mpMap->GetReferenceMapPoints();
 
     //将vpRefMPs从vector容器类型转化为set容器类型，便于使用set::count快速统计 - 我觉得称之为"重新构造"可能更加合适一些
     //补充, set::count用于返回集合中为某个值的元素的个数
-    set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
+    std::set<MapPoint*> spRefMPs(vpRefMPs.begin(), vpRefMPs.end());
 
     if(vpMPs.empty())
         return;
@@ -90,7 +90,7 @@ void MapDrawer::DrawMapPoints()
     glBegin(GL_POINTS);
     glColor3f(1.0,0.0,0.0);
 
-    for(set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
+    for(std::set<MapPoint*>::iterator sit=spRefMPs.begin(), send=spRefMPs.end(); sit!=send; sit++)
     {
         if((*sit)->isBad())
             continue;
@@ -110,7 +110,7 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
     const float z = w*0.6;
 
     // step 1：取出所有的关键帧
-    const vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    const std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
 
     // step 2：显示所有关键帧图标
     //通过显示界面选择是否显示历史关键帧图标
@@ -182,12 +182,12 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
             // Covisibility Graph (共视图)
             // step 3.1 共视程度比较高的共视关键帧用线连接
             //遍历每一个关键帧，得到它们共视程度比较高的关键帧
-            const vector<KeyFrame*> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);
+            const std::vector<KeyFrame*> vCovKFs = vpKFs[i]->GetCovisiblesByWeight(100);
             //遍历每一个关键帧，得到它在世界坐标系下的相机坐标
             cv::Mat Ow = vpKFs[i]->GetCameraCenter();
             if(!vCovKFs.empty())
             {
-                for(vector<KeyFrame*>::const_iterator vit=vCovKFs.begin(), vend=vCovKFs.end(); vit!=vend; vit++)
+                for(std::vector<KeyFrame*>::const_iterator vit=vCovKFs.begin(), vend=vCovKFs.end(); vit!=vend; vit++)
                 {
                     //单向绘制
                     if((*vit)->mnId<vpKFs[i]->mnId)
@@ -212,8 +212,8 @@ void MapDrawer::DrawKeyFrames(const bool bDrawKF, const bool bDrawGraph)
             // Loops
             // step 3.3 连接闭环时形成的连接关系
             //TODO 这个部分也不是非常明白
-            set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
-            for(set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
+            std::set<KeyFrame*> sLoopKFs = vpKFs[i]->GetLoopEdges();
+            for(std::set<KeyFrame*>::iterator sit=sLoopKFs.begin(), send=sLoopKFs.end(); sit!=send; sit++)
             {
                 if((*sit)->mnId<vpKFs[i]->mnId)
                     continue;
@@ -282,7 +282,7 @@ void MapDrawer::DrawCurrentCamera(pangolin::OpenGlMatrix &Twc)
 //设置当前帧相机的位姿, 设置这个函数是因为要处理多线程的操作
 void MapDrawer::SetCurrentCameraPose(const cv::Mat &Tcw)
 {
-    unique_lock<mutex> lock(mMutexCamera);
+    std::unique_lock<std::mutex> lock(mMutexCamera);
     mCameraPose = Tcw.clone();
 }
 
@@ -294,7 +294,7 @@ void MapDrawer::GetCurrentOpenGLCameraMatrix(pangolin::OpenGlMatrix &M)
         cv::Mat Rwc(3,3,CV_32F);
         cv::Mat twc(3,1,CV_32F);
         {
-            unique_lock<mutex> lock(mMutexCamera);
+            std::unique_lock<std::mutex> lock(mMutexCamera);
             Rwc = mCameraPose.rowRange(0,3).colRange(0,3).t();
             twc = -Rwc*mCameraPose.rowRange(0,3).col(3);
         }

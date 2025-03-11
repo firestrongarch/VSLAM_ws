@@ -14,9 +14,9 @@
 namespace common {
 using namespace std;
 inline void LoadKittiImagesTimestamps(const string &str_path_to_sequence,
-                                      vector<string> &str_image_left_vec_path,
-                                      vector<string> &str_image_right_vec_path,
-                                      vector<double> &timestamps_vec)
+                                      std::vector<string> &str_image_left_vec_path,
+                                      std::vector<string> &str_image_right_vec_path,
+                                      std::vector<double> &timestamps_vec)
 {
   string strPathTimeFile = str_path_to_sequence + "/times.txt";
 

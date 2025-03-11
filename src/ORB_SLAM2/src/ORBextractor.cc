@@ -91,7 +91,7 @@ const int EDGE_THRESHOLD = 19;		///<算法生成的图像边
  * @param[in] u_max     图像块的每一行的坐标边界 u_max
  * @return float        返回特征点的角度，范围为[0,360)角度，精度为0.3°
  */
-static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
+static float IC_Angle(const Mat& image, Point2f pt,  const std::vector<int> & u_max)
 {
 	//图像的矩，前者是按照图像块的y坐标加权，后者是按照图像块的x坐标加权
     int m_01 = 0, m_10 = 0;
@@ -577,10 +577,10 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
  * @param[in & out] keypoints       特征点向量
  * @param[in] umax                  每个特征点所在图像区块的每行的边界 u_max 组成的vector
  */
-static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
+static void computeOrientation(const Mat& image, std::vector<KeyPoint>& keypoints, const std::vector<int>& umax)
 {
 	// 遍历所有的特征点
-    for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+    for (std::vector<KeyPoint>::iterator keypoint = keypoints.begin(),
          keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint)
     {
 		// 调用IC_Angle 函数计算这个特征点的方向
@@ -683,9 +683,9 @@ void ExtractorNode::DivideNode(ExtractorNode &n1,
  * @param[in] maxY 
  * @param[in] N                     希望提取出的特征点个数
  * @param[in] level                 指定的金字塔图层，并未使用
- * @return vector<cv::KeyPoint>     已经均匀分散好的特征点vector容器
+ * @return std::vector<cv::KeyPoint>     已经均匀分散好的特征点vector容器
  */
-vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
+std::vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const std::vector<cv::KeyPoint>& vToDistributeKeys, const int &minX,
                                        const int &maxX, const int &minY, const int &maxY, const int &N, const int &level)
 {
     // Compute how many initial nodes
@@ -701,7 +701,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     list<ExtractorNode> lNodes;
 
 	//存储初始提取器节点指针的vector
-    vector<ExtractorNode*> vpIniNodes;
+    std::vector<ExtractorNode*> vpIniNodes;
 
 	//重新设置其大小
     vpIniNodes.resize(nIni);
@@ -770,7 +770,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
 	//声明一个vector用于存储节点的vSize和句柄对
 	//这个变量记录了在一次分裂循环中，那些可以再继续进行分裂的节点中包含的特征点数目和其句柄
-    vector<pair<int,ExtractorNode*> > vSizeAndPointerToNode;
+    std::vector<pair<int,ExtractorNode*> > vSizeAndPointerToNode;
 
 	//调整大小，这里的意思是一个初始化节点将“分裂”成为四个
     vSizeAndPointerToNode.reserve(lNodes.size()*4);
@@ -917,7 +917,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
                 prevSize = lNodes.size();
 
 				//保留那些还可以分裂的节点的信息, 这里是深拷贝
-                vector<pair<int,ExtractorNode*> > vPrevSizeAndPointerToNode = vSizeAndPointerToNode;
+                std::vector<pair<int,ExtractorNode*> > vPrevSizeAndPointerToNode = vSizeAndPointerToNode;
 				//清空
                 vSizeAndPointerToNode.clear();
 
@@ -996,7 +996,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     // Retain the best point in each node
     // Step 7 保留每个区域响应值最大的一个兴趣点
     //使用这个vector来存储我们感兴趣的特征点的过滤结果
-    vector<cv::KeyPoint> vResultKeys;
+    std::vector<cv::KeyPoint> vResultKeys;
 
 	//调整容器大小为要提取的特征点数目
     vResultKeys.reserve(nfeatures);
@@ -1005,7 +1005,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
     for(list<ExtractorNode>::iterator lit=lNodes.begin(); lit!=lNodes.end(); lit++)
     {
 		//得到这个节点区域中的特征点容器句柄
-        vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
+        std::vector<cv::KeyPoint> &vNodeKeys = lit->vKeys;
 
 		//得到指向第一个特征点的指针，后面作为最大响应值对应的关键点
         cv::KeyPoint* pKP = &vNodeKeys[0];
@@ -1036,7 +1036,7 @@ vector<cv::KeyPoint> ORBextractor::DistributeOctTree(const vector<cv::KeyPoint>&
 
 //计算四叉树的特征点，函数名字后面的OctTree只是说明了在过滤和分配特征点时所使用的方式
 void ORBextractor::ComputeKeyPointsOctTree(
-	vector<vector<KeyPoint> >& allKeypoints)	//所有的特征点，这里第一层vector存储的是某图层里面的所有特征点，
+	std::vector<std::vector<KeyPoint> >& allKeypoints)	//所有的特征点，这里第一层vector存储的是某图层里面的所有特征点，
 												//第二层存储的是整个图像金字塔中的所有图层里面的所有特征点
 {
 	//重新调整图像层数
@@ -1056,7 +1056,7 @@ void ORBextractor::ComputeKeyPointsOctTree(
         const int maxBorderY = mvImagePyramid[level].rows-EDGE_THRESHOLD+3;
 
 		//存储需要进行平均分配的特征点
-        vector<cv::KeyPoint> vToDistributeKeys;
+        std::vector<cv::KeyPoint> vToDistributeKeys;
 		//一般地都是过量采集，所以这里预分配的空间大小是nfeatures*10
         vToDistributeKeys.reserve(nfeatures*10);
 
@@ -1107,7 +1107,7 @@ void ORBextractor::ComputeKeyPointsOctTree(
 
                 // FAST提取兴趣点, 自适应阈值
 				//这个向量存储这个cell中的特征点
-                vector<cv::KeyPoint> vKeysCell;
+                std::vector<cv::KeyPoint> vKeysCell;
 				//调用opencv的库函数来检测FAST角点
                 FAST(mvImagePyramid[level].rowRange(iniY,maxY).colRange(iniX,maxX),	//待检测的图像，这里就是当前遍历到的图像块
                      vKeysCell,			//存储角点位置的容器
@@ -1128,7 +1128,7 @@ void ORBextractor::ComputeKeyPointsOctTree(
                 if(!vKeysCell.empty())
                 {
 					//遍历其中的所有FAST角点
-                    for(vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
+                    for(std::vector<cv::KeyPoint>::iterator vit=vKeysCell.begin(); vit!=vKeysCell.end();vit++)
                     {
 						//NOTICE 到目前为止，这些角点的坐标都是基于图像cell的，现在我们要先将其恢复到当前的【坐标边界】下的坐标
 						//这样做是因为在下面使用八叉树法整理特征点的时候将会使用得到这个坐标
@@ -1143,11 +1143,11 @@ void ORBextractor::ComputeKeyPointsOctTree(
         }//开始遍历图像cell的行
 
         //声明一个对当前图层的特征点的容器的引用
-        vector<KeyPoint> & keypoints = allKeypoints[level];
+        std::vector<KeyPoint> & keypoints = allKeypoints[level];
 		//并且调整其大小为欲提取出来的特征点个数（当然这里也是扩大了的，因为不可能所有的特征点都是在这一个图层中提取出来的）
         keypoints.reserve(nfeatures);
 
-        // 根据mnFeatuvector<KeyPoint> & keypoints = allKeypoints[level];resPerLevel,即该层的兴趣点数,对特征点进行剔除
+        // 根据mnFeatustd::vector<KeyPoint> & keypoints = allKeypoints[level];resPerLevel,即该层的兴趣点数,对特征点进行剔除
 		//返回值是一个保存有特征点的vector容器，含有剔除后的保留下来的特征点
         //得到的特征点的坐标，依旧是在当前图层下来讲的
         keypoints = DistributeOctTree(vToDistributeKeys, 			//当前图层提取出来的特征点，也即是等待剔除的特征点
@@ -1234,17 +1234,17 @@ void ORBextractor::ComputeKeyPointsOld(
 		//第三层vector-当前cell中的特征点向量
 		//第二层vector-包含了一行cell中，每个cell的上面的特征点容器
 		//第一层vector-包含了所有行的，存储“第二层vector”的容器
-        vector<vector<vector<KeyPoint> > > cellKeyPoints(levelRows, vector<vector<KeyPoint> >(levelCols));
+        std::vector<std::vector<std::vector<KeyPoint> > > cellKeyPoints(levelRows, std::vector<std::vector<KeyPoint> >(levelCols));
 
 		//每个cell中应该保留的特征点数量
-        vector<vector<int> > nToRetain(levelRows,vector<int>(levelCols,0));
+        std::vector<std::vector<int> > nToRetain(levelRows,std::vector<int>(levelCols,0));
 		//每个cell中实际提取出来的特征点的数量
-        vector<vector<int> > nTotal(levelRows,vector<int>(levelCols,0));
+        std::vector<std::vector<int> > nTotal(levelRows,std::vector<int>(levelCols,0));
 		//每个cell中是否只提取出来了一个特征点的标记
-        vector<vector<bool> > bNoMore(levelRows,vector<bool>(levelCols,false));
+        std::vector<std::vector<bool> > bNoMore(levelRows,std::vector<bool>(levelCols,false));
 		//保存每一个cell图像的x起始坐标和y起始坐标
-        vector<int> iniXCol(levelCols);
-        vector<int> iniYRow(levelRows);
+        std::vector<int> iniXCol(levelCols);
+        std::vector<int> iniYRow(levelRows);
 		
 		//TODO 那些只有一个特征点的图像cell的计数？
         int nNoMore = 0;
@@ -1429,7 +1429,7 @@ void ORBextractor::ComputeKeyPointsOld(
         //cell中vector中的特征点进行删减——或者说是过滤
 
         //声明一个对当前图层中特征点vector容器的引用
-        vector<KeyPoint> & keypoints = allKeypoints[level];
+        std::vector<KeyPoint> & keypoints = allKeypoints[level];
 		//预分配2倍的期望特征点空间（因为实际的提取过程中，我们都是按照稍微超过期望值的特征点数目进行操作的）
         keypoints.reserve(nDesiredFeatures*2);
 
@@ -1447,7 +1447,7 @@ void ORBextractor::ComputeKeyPointsOld(
             for(int j=0; j<levelCols; j++)
             {
 				//获取当前遍历到的cell所提取出来的特征点vector容器句柄
-                vector<KeyPoint> &keysCell = cellKeyPoints[i][j];
+                std::vector<KeyPoint> &keysCell = cellKeyPoints[i][j];
 				//这里是调用了opencv函数，根据特征点的评分（也就是响应值），保留一个cell中指定数量的特征点
                 KeyPointsFilter::retainBest(keysCell,			//输入输出，用于提供待保留的特征点vector，操作完成后将保留的特征点存放在里面
 																//其实就是把那些响应值低的点从vector中给删除了
@@ -1508,8 +1508,8 @@ void ORBextractor::ComputeKeyPointsOld(
  * @param[out] descriptors          描述子
  * @param[in] pattern               计算描述子使用的固定随机点集
  */
-static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Mat& descriptors,
-                               const vector<Point>& pattern)
+static void computeDescriptors(const Mat& image, std::vector<KeyPoint>& keypoints, Mat& descriptors,
+                               const std::vector<Point>& pattern)
 {
 	//清空保存描述子信息的容器
     descriptors = Mat::zeros((int)keypoints.size(), 32, CV_8UC1);
@@ -1531,7 +1531,7 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
  * @param[in & out] _keypoints                存储特征点关键点的向量
  * @param[in & out] _descriptors              存储特征点描述子的矩阵
  */
-void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
+void ORBextractor::operator()( InputArray _image, InputArray _mask, std::vector<KeyPoint>& _keypoints,
                       OutputArray _descriptors)
 { 
 	// Step 1 检查图像有效性。如果图像为空，那么就直接返回
@@ -1549,7 +1549,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
 
     // Step 3 计算图像的特征点，并且将特征点进行均匀化。均匀的特征点可以提高位姿计算精度
 	// 存储所有的特征点，注意此处为二维的vector，第一维存储的是金字塔的层数，第二维存储的是那一层金字塔图像里提取的所有特征点
-    vector < vector<KeyPoint> > allKeypoints; 
+    vector < std::vector<KeyPoint> > allKeypoints; 
     //使用四叉树的方式计算每层图像的特征点并进行分配
     ComputeKeyPointsOctTree(allKeypoints);
 
@@ -1594,7 +1594,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
     for (int level = 0; level < nlevels; ++level)
     {
 		//获取在allKeypoints中当前层特征点容器的句柄
-        vector<KeyPoint>& keypoints = allKeypoints[level];
+        std::vector<KeyPoint>& keypoints = allKeypoints[level];
 		//本层的特征点数
         int nkeypointsLevel = (int)keypoints.size();
 
@@ -1636,7 +1636,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
 			// 获取当前图层上的缩放系数
             float scale = mvScaleFactor[level];
             // 遍历本层所有的特征点
-            for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),
+            for (std::vector<KeyPoint>::iterator keypoint = keypoints.begin(),
                  keypointEnd = keypoints.end(); keypoint != keypointEnd; ++keypoint)
 				// 特征点本身直接乘缩放倍数就可以了
                 keypoint->pt *= scale;
@@ -1666,7 +1666,7 @@ void ORBextractor::ComputePyramid(cv::Mat image)
         Size wholeSize(sz.width + EDGE_THRESHOLD*2, sz.height + EDGE_THRESHOLD*2);
 		// 定义了两个变量：temp是扩展了边界的图像，masktemp并未使用
         Mat temp(wholeSize, image.type()), masktemp;
-        // mvImagePyramid 刚开始时是个空的vector<Mat>
+        // mvImagePyramid 刚开始时是个空的std::vector<Mat>
 		// 把图像金字塔该图层的图像指针mvImagePyramid指向temp的中间部分（这里为浅拷贝，内存相同）
         mvImagePyramid[level] = temp(Rect(EDGE_THRESHOLD, EDGE_THRESHOLD, sz.width, sz.height));
 

@@ -72,7 +72,7 @@ cv::Mat BinaryDescriptor::toCvMat() {
 }
 
 // std::string BinaryDescriptor::toString() {
-//   boost::dynamic_bitset<> b(size_in_bits_);
+//   boost::dynamic_bitstd::set<> b(size_in_bits_);
 //   for (unsigned i = 0; i < size_in_bytes_; i++) {
 //     unsigned char cur = bits_[i];
 //     int offset = i * 8;

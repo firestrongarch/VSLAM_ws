@@ -82,10 +82,10 @@ public:
      * @return false                    该帧不满足初始化条件，返回false
      */
     bool Initialize(const Frame &CurrentFrame,  
-                    const vector<int> &vMatches12,
+                    const std::vector<int> &vMatches12,
                     cv::Mat &R21, cv::Mat &t21,   
-                    vector<cv::Point3f> &vP3D,    
-                    vector<bool> &vbTriangulated);
+                    std::vector<cv::Point3f> &vP3D,    
+                    std::vector<bool> &vbTriangulated);
 	
 private:
     /**
@@ -101,7 +101,7 @@ private:
      * @param[in & out] score                     计算单应矩阵的得分
      * @param[in & out] H21                       单应矩阵结果
      */
-    void FindHomography(vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21);
+    void FindHomography(std::vector<bool> &vbMatchesInliers, float &score, cv::Mat &H21);
   
     /**
      * @brief 计算基础矩阵，假设场景为非平面情况下通过前两帧求取Fundamental矩阵，得到该模型的评分
@@ -115,7 +115,7 @@ private:
      * @param[in & out] score                     计算基础矩阵得分
      * @param[in & out] F21                       基础矩阵结果
      */
-    void FindFundamental(vector<bool> &vbInliers, float &score, cv::Mat &F21);
+    void FindFundamental(std::vector<bool> &vbInliers, float &score, cv::Mat &F21);
 
     /**
      * @brief 用DLT方法求解单应矩阵H
@@ -125,7 +125,7 @@ private:
      * @param[in] vP2               当前帧中归一化后的特征点
      * @return cv::Mat              计算的单应矩阵
      */
-    cv::Mat ComputeH21(const vector<cv::Point2f> &vP1, const vector<cv::Point2f> &vP2);
+    cv::Mat ComputeH21(const std::vector<cv::Point2f> &vP1, const std::vector<cv::Point2f> &vP2);
     
     /**
      * @brief 根据特征点匹配求fundamental matrix（normalized 8点法）
@@ -135,7 +135,7 @@ private:
      * @param[in] vP2           当前帧中归一化后的特征点
      * @return cv::Mat          最后计算得到的基础矩阵F
      */
-    cv::Mat ComputeF21(const vector<cv::Point2f> &vP1, const vector<cv::Point2f> &vP2);
+    cv::Mat ComputeF21(const std::vector<cv::Point2f> &vP1, const std::vector<cv::Point2f> &vP2);
 
     /**
      * @brief 对给定的homography matrix打分,需要使用到卡方检验的知识
@@ -146,7 +146,7 @@ private:
      * @param[in] sigma                     方差，默认为1
      * @return float                        返回得分
      */
-    float CheckHomography(const cv::Mat &H21, const cv::Mat &H12, vector<bool> &vbMatchesInliers, float sigma);
+    float CheckHomography(const cv::Mat &H21, const cv::Mat &H12, std::vector<bool> &vbMatchesInliers, float sigma);
     
     /**
      * @brief 对给定的Fundamental matrix打分
@@ -156,7 +156,7 @@ private:
      * @param[in] sigma                     方差，默认为1
      * @return float                        返回得分
      */
-    float CheckFundamental(const cv::Mat &F21, vector<bool> &vbMatchesInliers, float sigma);
+    float CheckFundamental(const cv::Mat &F21, std::vector<bool> &vbMatchesInliers, float sigma);
 
     /**
      * @brief 从基础矩阵F中求解位姿R，t及三维点
@@ -173,12 +173,12 @@ private:
      * @return true                         成功初始化
      * @return false                        初始化失败
      */
-    bool ReconstructF(vector<bool> &vbMatchesInliers,
+    bool ReconstructF(std::vector<bool> &vbMatchesInliers,
                       cv::Mat &F21, cv::Mat &K,
                       cv::Mat &R21,
                       cv::Mat &t21,
-                      vector<cv::Point3f> &vP3D,
-                      vector<bool> &vbTriangulated,
+                      std::vector<cv::Point3f> &vP3D,
+                      std::vector<bool> &vbTriangulated,
                       float minParallax,
                       int minTriangulated);
 
@@ -200,13 +200,13 @@ private:
      * @return true                         单应矩阵成功计算出位姿和三维点
      * @return false                        初始化失败
      */
-    bool ReconstructH(vector<bool> &vbMatchesInliers,
+    bool ReconstructH(std::vector<bool> &vbMatchesInliers,
                       cv::Mat &H21,
                       cv::Mat &K,
                       cv::Mat &R21,
                       cv::Mat &t21,
-                      vector<cv::Point3f> &vP3D,
-                      vector<bool> &vbTriangulated,
+                      std::vector<cv::Point3f> &vP3D,
+                      std::vector<bool> &vbTriangulated,
                       float minParallax,
                       int minTriangulated);
 
@@ -243,7 +243,7 @@ private:
      * @param[in & out] vNormalizedPoints             特征点归一化后的坐标
      * @param[in & out] T                             归一化特征点的变换矩阵
      */
-    void Normalize(const vector<cv::KeyPoint> &vKeys, vector<cv::Point2f> &vNormalizedPoints, cv::Mat &T);
+    void Normalize(const std::vector<cv::KeyPoint> &vKeys, std::vector<cv::Point2f> &vNormalizedPoints, cv::Mat &T);
 
     // 
 
@@ -263,9 +263,9 @@ private:
      * @param[out]  parallax			计算出来的比较大的视差角（注意不是最大，这个要看后面中程序的注释）
      * @return	int 返回本组解中good点的数目
      */
-    int CheckRT(const cv::Mat &R, const cv::Mat &t, const vector<cv::KeyPoint> &vKeys1, const vector<cv::KeyPoint> &vKeys2,
-                       const vector<Match> &vMatches12, vector<bool> &vbInliers,
-                       const cv::Mat &K, vector<cv::Point3f> &vP3D, float th2, vector<bool> &vbGood, float &parallax);
+    int CheckRT(const cv::Mat &R, const cv::Mat &t, const std::vector<cv::KeyPoint> &vKeys1, const std::vector<cv::KeyPoint> &vKeys2,
+                       const std::vector<Match> &vMatches12, std::vector<bool> &vbInliers,
+                       const cv::Mat &K, std::vector<cv::Point3f> &vP3D, float th2, std::vector<bool> &vbGood, float &parallax);
 
     /**
      * @brief 分解Essential矩阵
@@ -282,18 +282,18 @@ private:
 
     // Keypoints from Reference Frame (Frame 1)
     /** 存储Reference Frame中的特征点 */
-    vector<cv::KeyPoint> mvKeys1; 
+    std::vector<cv::KeyPoint> mvKeys1; 
 
     // Keypoints from Current Frame (Frame 2)
     /** 存储Current Frame中的特征点 */
-    vector<cv::KeyPoint> mvKeys2; 
+    std::vector<cv::KeyPoint> mvKeys2; 
 
     // Current Matches from Reference to Current
     // Reference Frame: 1, Current Frame: 2
     /** Match的数据结构是pair,mvMatches12只记录Reference到Current匹配上的特征点对  */
-    vector<Match> mvMatches12;
+    std::vector<Match> mvMatches12;
     /** 记录Reference Frame的每个特征点在Current Frame是否有匹配的特征点 */ 
-    vector<bool> mvbMatched1; 
+    std::vector<bool> mvbMatched1; 
 
     // Calibration
     /** 相机内参 */
@@ -309,7 +309,7 @@ private:
 
     // Ransac sets
     /** 二维容器，外层容器的大小为迭代次数，内层容器大小为每次迭代算H或F矩阵需要的点,实际上是八对 */
-    vector<vector<size_t> > mvSets; 
+    std::vector<std::vector<size_t> > mvSets; 
 
 };
 
