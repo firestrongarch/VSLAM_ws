@@ -28,10 +28,10 @@
 #include "g2o/core/block_solver.h"
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/core/optimization_algorithm_gauss_newton.h"
-#include "g2o/solvers/linear_solver_eigen.h"
+#include "g2o/solvers/eigen/linear_solver_eigen.h"
 #include "g2o/types/sba/types_six_dof_expmap.h"
 #include "g2o/core/robust_kernel_impl.h"
-#include "g2o/solvers/linear_solver_dense.h"
+#include "g2o/solvers/dense/linear_solver_dense.h"
 #include "G2oTypes.h"
 #include "Converter.h"
 
@@ -41,7 +41,7 @@
 
 namespace ORB_SLAM3
 {
-bool std::sortByVal(const std::pair<MapPoint *, int> &a, const std::pair<MapPoint *, int> &b)
+bool sortByVal(const std::pair<MapPoint *, int> &a, const std::pair<MapPoint *, int> &b)
 {
     return (a.second < b.second);
 }
@@ -57,16 +57,24 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     // 该优化函数主要用于Tracking线程中：运动跟踪、参考帧跟踪、地图跟踪、重定位
 
     // Step 1：构造g2o优化器, BlockSolver_6_3表示：位姿 _PoseDim 为6维，路标点 _LandmarkDim 是3维
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
+
+    // g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>();
-
-    g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    optimizer.setAlgorithm(solver);
-
+    using LinearSolver = g2o::LinearSolverDense<g2o::BlockSolver_6_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_6_3>(std::make_unique<LinearSolver>());
+    solver->setLambda(1e-5);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
+    
     // 输入的帧中,有效的,参与优化过程的2D-3D点对
     int nInitialCorrespondences = 0;
 
@@ -416,18 +424,24 @@ int Optimizer::PoseOptimization(Frame *pFrame)
 int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit)
 {
     // 1. 创建g2o优化器，初始化顶点和边
-    // 构建一个稀疏求解器
+    // // 构建一个稀疏求解器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
+    // linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+    // // 使用高斯牛顿求解器
+    // g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
+    
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
+    using LinearSolver = g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmGaussNewton(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
 
-    // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
-    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-    // 使用高斯牛顿求解器
-    g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
     optimizer.setVerbose(false);
-    optimizer.setAlgorithm(solver);
 
     // 当前帧单（左）目地图点数目
     int nInitialMonoCorrespondences = 0;
@@ -816,7 +830,7 @@ int Optimizer::PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit
 
         if (optimizer.edges().size() < 10)
         {
-            cout << "PIOLKF: NOT ENOUGH EDGES" << endl;
+            std::cout << "PIOLKF: NOT ENOUGH EDGES" << std::endl;
             break;
         }
     }
@@ -984,17 +998,24 @@ int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
 {
     // Step 1：创建g2o优化器，初始化顶点和边
     // 构建一个稀疏求解器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
+    // linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // // 使用高斯牛顿求解器
+    // g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
+    using LinearSolver = g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmGaussNewton(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
 
-    // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
-    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    // 使用高斯牛顿求解器
-    g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
-    optimizer.setAlgorithm(solver);
     optimizer.setVerbose(false);
 
     // 当前帧单（左）目地图点数目
@@ -1250,7 +1271,7 @@ int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
 
     // ?既然有判空的操作，可以区分一下有先验信息（五条边）和无先验信息（四条边）的情况
     if (!pFp->mpcpi)
-        Verbose::PrintMess("pFp->mpcpi does not exist!!!\nPrevious Frame " + to_string(pFp->mnId), Verbose::VERBOSITY_NORMAL);
+        Verbose::PrintMess("pFp->mpcpi does not exist!!!\nPrevious Frame " + std::to_string(pFp->mnId), Verbose::VERBOSITY_NORMAL);
 
     // 第五种边（先验约束）：上一帧信息随优化的改变量要尽可能小
     EdgePriorPoseImu *ep = new EdgePriorPoseImu(pFp->mpcpi);
@@ -1398,7 +1419,7 @@ int Optimizer::PoseInertialOptimizationLastFrame(Frame *pFrame, bool bRecInit)
 
         if (optimizer.edges().size() < 10)
         {
-            cout << "PIOLF: NOT ENOUGH EDGES" << endl;
+            std::cout << "PIOLF: NOT ENOUGH EDGES" << std::endl;
             break;
         }
     }
@@ -1856,18 +1877,27 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap
 
     // Setup optimizer
     // 步骤5：构造g2o优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+
+    // g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // if (pMap->IsInertial())
+    //     solver->setUserLambdaInit(100.0);
+
+    // optimizer.setAlgorithm(solver);
+    // optimizer.setVerbose(false);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
-
-    g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_6_3>(std::make_unique<LinearSolver>());
     if (pMap->IsInertial())
-        solver->setUserLambdaInit(100.0);
-
-    optimizer.setAlgorithm(solver);
+        solver->setLambda(100.0);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
 
     if (pbStopFlag)
@@ -1965,7 +1995,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap
     for (std::list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
     {
         MapPoint *pMP = *lit;
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
         int id = pMP->mnId + maxKFid + 1;
         vPoint->setId(id);
@@ -2179,7 +2209,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap
     for (std::list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
     {
         MapPoint *pMP = *lit;
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + maxKFid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMP->mnId + maxKFid + 1));
         pMP->SetWorldPos(vPoint->estimate().cast<float>());
         pMP->UpdateNormalAndDepth();
     }
@@ -2215,7 +2245,7 @@ void Optimizer::LocalInertialBA(
         opt_it = 4;
     }
     // 预计待优化的关键帧数，min函数是为了控制优化关键帧的数量
-    const int Nd = std::std::min((int)pCurrentMap->KeyFramesInMap() - 2, maxOpt);
+    const int Nd = std::min((int)pCurrentMap->KeyFramesInMap() - 2, maxOpt);
     const unsigned long maxKFid = pKF->mnId;
 
     std::vector<KeyFrame *> vpOptimizableKFs;
@@ -2335,24 +2365,38 @@ void Optimizer::LocalInertialBA(
 
     // Setup optimizer
     // 6. 构造优化器，正式开始优化
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // if (bLarge)
+    // {
+    //     g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    //     solver->setUserLambdaInit(1e-2); // to avoid iterating for finding optimal lambda
+    //     optimizer.setAlgorithm(solver);
+    // }
+    // else
+    // {
+    //     g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    //     solver->setUserLambdaInit(1e0);
+    //     optimizer.setAlgorithm(solver);
+    // }
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
     if (bLarge)
     {
-        g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-        solver->setUserLambdaInit(1e-2); // to avoid iterating for finding optimal lambda
-        optimizer.setAlgorithm(solver);
+        solver->setLambda(1e-2); // to avoid iterating for finding optimal lambda
     }
-    else
-    {
-        g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-        solver->setUserLambdaInit(1e0);
-        optimizer.setAlgorithm(solver);
+    else {
+        solver->setLambda(1e0);
     }
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
 
     // Set Local temporal KeyFrame vertices
     // 7. 建立关于关键帧的节点，其中包括，位姿，速度，以及两个偏置
@@ -2433,7 +2477,7 @@ void Optimizer::LocalInertialBA(
 
         if (!pKFi->mPrevKF)
         {
-            cout << "NOT INERTIAL LINK TO PREVIOUS FRAME!!!!" << endl;
+            std::cout << "NOT INERTIAL LINK TO PREVIOUS FRAME!!!!" << std::endl;
             continue;
         }
         if (pKFi->bImu && pKFi->mPrevKF->bImu && pKFi->mpImuPreintegrated)
@@ -2450,7 +2494,7 @@ void Optimizer::LocalInertialBA(
 
             if (!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2)
             {
-                cerr << "Error " << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << endl;
+                std::cerr << "Error " << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << std::endl;
                 continue;
             }
 
@@ -2496,7 +2540,7 @@ void Optimizer::LocalInertialBA(
             optimizer.addEdge(vear[i]);
         }
         else
-            cout << "ERROR building inertial edge" << endl;
+            std::cout << "ERROR building inertial edge" << std::endl;
     }
 
     // Set MapPoint vertices
@@ -2544,7 +2588,7 @@ void Optimizer::LocalInertialBA(
     for (std::list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
     {
         MapPoint *pMP = *lit;
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
 
         unsigned long id = pMP->mnId + iniMPid + 1;
@@ -2730,7 +2774,7 @@ void Optimizer::LocalInertialBA(
     // TODO: Some convergence problems have been detected here
     if ((2 * err < err_end || isnan(err) || isnan(err_end)) && !bLarge) // bGN)
     {
-        cout << "FAIL LOCAL-INERTIAL BA!!!!" << endl;
+        std::cout << "FAIL LOCAL-INERTIAL BA!!!!" << std::endl;
         return;
     }
 
@@ -2789,7 +2833,7 @@ void Optimizer::LocalInertialBA(
     for (std::list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
     {
         MapPoint *pMP = *lit;
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
         pMP->SetWorldPos(vPoint->estimate().cast<float>());
         pMP->UpdateNormalAndDepth();
     }
@@ -2839,17 +2883,25 @@ void Optimizer::BundleAdjustment(
 
     Map *pMap = vpKFs[0]->GetMap();
     // Step 1 初始化g2o优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+
+    // g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+
+    // // 使用LM算法优化
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+    // optimizer.setVerbose(false);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
-
-    g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-
-    // 使用LM算法优化
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    optimizer.setAlgorithm(solver);
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_6_3>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
+
     // 如果这个时候外部请求终止，那就结束
     // 注意这句执行之后，外部再请求结束BA，就结束不了了
     if (pbStopFlag)
@@ -2926,7 +2978,7 @@ void Optimizer::BundleAdjustment(
             continue;
 
         // 创建顶点
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
         // 前面记录maxKFid 是在这里使用的
         const int id = pMP->mnId + maxKFid + 1;
@@ -3202,7 +3254,7 @@ void Optimizer::BundleAdjustment(
         if (pMP->isBad())
             continue;
         // 获取优化之后的地图点的位置
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + maxKFid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMP->mnId + maxKFid + 1));
 
         if (nLoopKF == pMap->GetOriginKF()->mnId)
         {
@@ -3245,16 +3297,24 @@ void Optimizer::FullInertialBA(
 
     // Setup optimizer
     // 1. 很经典的一套设置优化器流程
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // solver->setUserLambdaInit(1e-5);
+    // optimizer.setAlgorithm(solver);
+    // optimizer.setVerbose(false);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    solver->setUserLambdaInit(1e-5);
-    optimizer.setAlgorithm(solver);
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    solver->setLambda(1e-5);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
 
     if (pbStopFlag)
@@ -3372,7 +3432,7 @@ void Optimizer::FullInertialBA(
                 {
                     if (!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2)
                     {
-                        cout << "Error" << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << endl;
+                        std::cout << "Error" << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << std::endl;
                         continue;
                     }
                 }
@@ -3380,7 +3440,7 @@ void Optimizer::FullInertialBA(
                 {
                     if (!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2)
                     {
-                        cout << "Error" << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << endl;
+                        std::cout << "Error" << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << std::endl;
                         continue;
                     }
                 }
@@ -3420,7 +3480,7 @@ void Optimizer::FullInertialBA(
                 }
             }
             else
-                cout << pKFi->mnId << " or " << pKFi->mPrevKF->mnId << " no imu" << endl;
+                std::cout << pKFi->mnId << " or " << pKFi->mPrevKF->mnId << " no imu" << std::endl;
         }
     }
 
@@ -3457,7 +3517,7 @@ void Optimizer::FullInertialBA(
     for (size_t i = 0; i < vpMPs.size(); i++)
     {
         MapPoint *pMP = vpMPs[i];
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
         unsigned long id = pMP->mnId + iniMPid + 1;
         vPoint->setId(id);
@@ -3651,7 +3711,7 @@ void Optimizer::FullInertialBA(
             continue;
 
         MapPoint *pMP = vpMPs[i];
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
 
         if (nLoopId == 0)
         {
@@ -3696,19 +3756,28 @@ void Optimizer::InertialOptimization(
 
     // Setup optimizer
     // 1. 构建优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+
+    // if (priorG != 0.f)
+    //     solver->setUserLambdaInit(1e3);
+
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
     if (priorG != 0.f)
-        solver->setUserLambdaInit(1e3);
-
-    optimizer.setAlgorithm(solver);
+        solver->setLambda(1e3);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
 
     // Set KeyFrame vertices (fixed poses and optimizable velocities)
     // 2. 确定关键帧节点（锁住的位姿及可优化的速度）
@@ -3811,7 +3880,7 @@ void Optimizer::InertialOptimization(
             g2o::HyperGraph::Vertex *VS = optimizer.vertex(maxKFid * 2 + 5);
             if (!VP1 || !VV1 || !VG || !VA || !VP2 || !VV2 || !VGDir || !VS)
             {
-                cout << "Error" << VP1 << ", " << VV1 << ", " << VG << ", " << VA << ", " << VP2 << ", " << VV2 << ", " << VGDir << ", " << VS << endl;
+                std::cout << "Error" << VP1 << ", " << VV1 << ", " << VG << ", " << VA << ", " << VP2 << ", " << VV2 << ", " << VGDir << ", " << VS << std::endl;
 
                 continue;
             }
@@ -3897,18 +3966,26 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Vector3d &bg, Eigen::Vect
 
     // Setup optimizer
     // 1. 构建优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // solver->setUserLambdaInit(1e3);
+
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    solver->setUserLambdaInit(1e3);
-
-    optimizer.setAlgorithm(solver);
-
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    solver->setLambda(1e3);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
+    
     // Set KeyFrame vertices (fixed poses and optimizable velocities)
     // 2. 构建节点，固定rt
     for (size_t i = 0; i < vpKFs.size(); i++)
@@ -3995,7 +4072,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Vector3d &bg, Eigen::Vect
             g2o::HyperGraph::Vertex *VS = optimizer.vertex(maxKFid * 2 + 5);
             if (!VP1 || !VV1 || !VG || !VA || !VP2 || !VV2 || !VGDir || !VS)
             {
-                cout << "Error" << VP1 << ", " << VV1 << ", " << VG << ", " << VA << ", " << VP2 << ", " << VV2 << ", " << VGDir << ", " << VS << endl;
+                std::cout << "Error" << VP1 << ", " << VV1 << ", " << VG << ", " << VA << ", " << VP2 << ", " << VV2 << ", " << VGDir << ", " << VS << std::endl;
 
                 continue;
             }
@@ -4072,15 +4149,22 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
 
     // 1. 构建优化器
     // Setup optimizer
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmGaussNewton *solver = new g2o::OptimizationAlgorithmGaussNewton(solver_ptr);
-    optimizer.setAlgorithm(solver);
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmGaussNewton(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
 
     // Set KeyFrame vertices (all variables are fixed)
     // 2. 添加帧节点，其中包括位姿，速度，两个偏置
@@ -4143,7 +4227,7 @@ void Optimizer::InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &sc
             g2o::HyperGraph::Vertex *VS = optimizer.vertex(4 * (maxKFid + 1) + 1);
             if (!VP1 || !VV1 || !VG || !VA || !VP2 || !VV2 || !VGDir || !VS)
             {
-                Verbose::PrintMess("Error" + to_string(VP1->id()) + ", " + to_string(VV1->id()) + ", " + to_string(VG->id()) + ", " + to_string(VA->id()) + ", " + to_string(VP2->id()) + ", " + to_string(VV2->id()) + ", " + to_string(VGDir->id()) + ", " + to_string(VS->id()), Verbose::VERBOSITY_NORMAL);
+                Verbose::PrintMess("Error" + std::to_string(VP1->id()) + ", " + std::to_string(VV1->id()) + ", " + std::to_string(VG->id()) + ", " + std::to_string(VA->id()) + ", " + std::to_string(VP2->id()) + ", " + std::to_string(VV2->id()) + ", " + std::to_string(VGDir->id()) + ", " + std::to_string(VS->id()), Verbose::VERBOSITY_NORMAL);
 
                 continue;
             }
@@ -4198,17 +4282,24 @@ int Optimizer::OptimizeSim3(
 {
     // 1. 初始化g2o优化器
     // 先构造求解器
+    // g2o::SparseOptimizer optimizer;
+    // // 构造线性方程求解器，Hx = -b的求解器
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+    // // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
+    // linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+    // // 使用L-M迭代
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
-    // 构造线性方程求解器，Hx = -b的求解器
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-    // 使用dense的求解器，（常见非dense求解器有cholmod线性求解器和shur补线性求解器）
-    linearSolver = new g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-    // 使用L-M迭代
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    optimizer.setAlgorithm(solver);
-
+    using LinearSolver = g2o::LinearSolverDense<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    // optimizer.setVerbose(false);
+    
     // Camera poses
     // 2.1 添加Sim3顶点
     const Eigen::Matrix3f R1w = pKF1->GetRotation();
@@ -4275,7 +4366,7 @@ int Optimizer::OptimizeSim3(
             if (!pMP1->isBad() && !pMP2->isBad())
             {
                 // 2.3 添加PointXYZ顶点， 且设为了固定
-                g2o::VertexSBAPointXYZ *vPoint1 = new g2o::VertexSBAPointXYZ();
+                g2o::VertexPointXYZ *vPoint1 = new g2o::VertexPointXYZ();
                 Eigen::Vector3f P3D1w = pMP1->GetWorldPos();
                 P3D1c = R1w * P3D1w + t1w;
                 vPoint1->setEstimate(P3D1c.cast<double>());  // 点1在当前关键帧下的三维点坐标
@@ -4283,7 +4374,7 @@ int Optimizer::OptimizeSim3(
                 vPoint1->setFixed(true);
                 optimizer.addVertex(vPoint1);
 
-                g2o::VertexSBAPointXYZ *vPoint2 = new g2o::VertexSBAPointXYZ();
+                g2o::VertexPointXYZ *vPoint2 = new g2o::VertexPointXYZ();
                 Eigen::Vector3f P3D2w = pMP2->GetWorldPos();
                 P3D2c = R2w * P3D2w + t2w;
                 vPoint2->setEstimate(P3D2c.cast<double>());  // 点2在候选关键帧下的三维点坐标
@@ -4305,7 +4396,7 @@ int Optimizer::OptimizeSim3(
             if (!pMP2->isBad())
             {
                 // 执行到这里意味着特征点没有对应的原始MP，却有回环MP，将其投到候选帧里面
-                g2o::VertexSBAPointXYZ *vPoint2 = new g2o::VertexSBAPointXYZ();
+                g2o::VertexPointXYZ *vPoint2 = new g2o::VertexPointXYZ();
                 Eigen::Vector3f P3D2w = pMP2->GetWorldPos();
                 P3D2c = R2w * P3D2w + t2w;
                 vPoint2->setEstimate(P3D2c.cast<double>());
@@ -4320,7 +4411,7 @@ int Optimizer::OptimizeSim3(
 
         if (i2 < 0 && !bAllPoints)
         {
-            Verbose::PrintMess("    Remove point -> i2: " + to_string(i2) + "; bAllPoints: " + to_string(bAllPoints), Verbose::VERBOSITY_DEBUG);
+            Verbose::PrintMess("    Remove point -> i2: " + std::to_string(i2) + "; bAllPoints: " + std::to_string(bAllPoints), Verbose::VERBOSITY_DEBUG);
             continue;
         }
 
@@ -4514,20 +4605,27 @@ void Optimizer::OptimizeEssentialGraph(
 {
     // Setup optimizer
     // Step 1：构造优化器
-    g2o::SparseOptimizer optimizer;
-    optimizer.setVerbose(false);
-    // 指定线性方程求解器使用Eigen的块求解器
-    // 7表示位姿是sim3  3表示三维点坐标维度
-    g2o::BlockSolver_7_3::LinearSolverType *linearSolver =
-        new g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>();
-    // 构造线性求解器
-    g2o::BlockSolver_7_3 *solver_ptr = new g2o::BlockSolver_7_3(linearSolver);
-    // 使用LM算法进行非线性迭代
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // g2o::SparseOptimizer optimizer;
+    // optimizer.setVerbose(false);
+    // // 指定线性方程求解器使用Eigen的块求解器
+    // // 7表示位姿是sim3  3表示三维点坐标维度
+    // g2o::BlockSolver_7_3::LinearSolverType *linearSolver =
+    //     new g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>();
+    // // 构造线性求解器
+    // g2o::BlockSolver_7_3 *solver_ptr = new g2o::BlockSolver_7_3(linearSolver);
+    // // 使用LM算法进行非线性迭代
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // // 第一次迭代的初始lambda值，如未指定会自动计算一个合适的值
+    // solver->setUserLambdaInit(1e-16);
+    // optimizer.setAlgorithm(solver);
 
-    // 第一次迭代的初始lambda值，如未指定会自动计算一个合适的值
-    solver->setUserLambdaInit(1e-16);
-    optimizer.setAlgorithm(solver);
+    g2o::SparseOptimizer optimizer;
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_7_3>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    solver->setLambda(1e-16);
+    optimizer.setAlgorithm(algorithm);
+    optimizer.setVerbose(false);
 
     // 获取当前地图中的所有关键帧 和地图点
     const std::vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
@@ -4859,15 +4957,22 @@ void Optimizer::OptimizeEssentialGraph4DoF(
 
     // Setup optimizer
     // 1. 构建优化器
+    // g2o::SparseOptimizer optimizer;
+    // optimizer.setVerbose(false);
+    // g2o::BlockSolverX::LinearSolverType *linearSolver =
+    //     new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+
+    // optimizer.setAlgorithm(solver);
+
     g2o::SparseOptimizer optimizer;
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
-    g2o::BlockSolverX::LinearSolverType *linearSolver =
-        new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-
-    optimizer.setAlgorithm(solver);
 
     const std::vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();  // 所有关键帧
     const std::vector<MapPoint *> vpMPs = pMap->GetAllMapPoints();  // 所有mp
@@ -5200,16 +5305,23 @@ void Optimizer::LocalBundleAdjustment(
     std::vector<MapPoint *> vpMPs;
 
     // 1. 构建g2o优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
+
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+
+    // g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // optimizer.setAlgorithm(solver);
+
+    // optimizer.setVerbose(false);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
-
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
-
-    g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-    optimizer.setAlgorithm(solver);
-
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_6_3>(std::make_unique<LinearSolver>());
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
 
     if (pbStopFlag)
@@ -5334,7 +5446,7 @@ void Optimizer::LocalBundleAdjustment(
         if (pMPi->isBad())
             continue;
 
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMPi->GetWorldPos().cast<double>());
         const int id = pMPi->mnId + maxKFid + 1;
         vPoint->setId(id);
@@ -5475,7 +5587,7 @@ void Optimizer::LocalBundleAdjustment(
 
             e->setRobustKernel(0);
         }
-        Verbose::PrintMess("[BA]: First optimization(Huber), there are " + to_string(badMonoMP) + " monocular and " + to_string(badStereoMP) + " stereo bad edges", Verbose::VERBOSITY_DEBUG);
+        Verbose::PrintMess("[BA]: First optimization(Huber), there are " + std::to_string(badMonoMP) + " monocular and " + std::to_string(badStereoMP) + " stereo bad edges", Verbose::VERBOSITY_DEBUG);
 
         optimizer.initializeOptimization(0);
         optimizer.optimize(10);
@@ -5529,7 +5641,7 @@ void Optimizer::LocalBundleAdjustment(
         }
     }
 
-    Verbose::PrintMess("[BA]: Second optimization, there are " + to_string(badMonoMP) + " monocular and " + to_string(badStereoMP) + " sterero bad edges", Verbose::VERBOSITY_DEBUG);
+    Verbose::PrintMess("[BA]: Second optimization, there are " + std::to_string(badMonoMP) + " monocular and " + std::to_string(badStereoMP) + " sterero bad edges", Verbose::VERBOSITY_DEBUG);
 
     // Get Map Mutex
     std::unique_lock<std::mutex> lock(pMainKF->GetMap()->mMutexMapUpdate);
@@ -5649,7 +5761,7 @@ void Optimizer::LocalBundleAdjustment(
         if (pMPi->isBad())
             continue;
 
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMPi->mnId + maxKFid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMPi->mnId + maxKFid + 1));
         pMPi->SetWorldPos(vPoint->estimate().cast<float>());
         pMPi->UpdateNormalAndDepth();
     }
@@ -5669,15 +5781,23 @@ void Optimizer::OptimizeEssentialGraph(
     std::vector<KeyFrame *> &vpNonFixedKFs, std::vector<MapPoint *> &vpNonCorrectedMPs)
 {
     // 1. 优化器构建
-    g2o::SparseOptimizer optimizer;
-    optimizer.setVerbose(false);
-    g2o::BlockSolver_7_3::LinearSolverType *linearSolver =
-        new g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>();
-    g2o::BlockSolver_7_3 *solver_ptr = new g2o::BlockSolver_7_3(linearSolver);
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    // g2o::SparseOptimizer optimizer;
+    // optimizer.setVerbose(false);
+    // g2o::BlockSolver_7_3::LinearSolverType *linearSolver =
+    //     new g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>();
+    // g2o::BlockSolver_7_3 *solver_ptr = new g2o::BlockSolver_7_3(linearSolver);
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
 
-    solver->setUserLambdaInit(1e-16);
-    optimizer.setAlgorithm(solver);
+    // solver->setUserLambdaInit(1e-16);
+    // optimizer.setAlgorithm(solver);
+
+    g2o::SparseOptimizer optimizer;
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolver_7_3>(std::make_unique<LinearSolver>());
+    solver->setLambda(1e-16);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
+    optimizer.setVerbose(false);
 
     Map *pMap = pCurKF->GetMap();
     const unsigned int nMaxKFid = pMap->GetMaxKFid();
@@ -5936,7 +6056,7 @@ void Optimizer::OptimizeEssentialGraph(
 
         if (num_connections == 0)
         {
-            Verbose::PrintMess("Opt_Essential: KF " + to_string(pKFi->mnId) + " has 0 connections", Verbose::VERBOSITY_DEBUG);
+            Verbose::PrintMess("Opt_Essential: KF " + std::to_string(pKFi->mnId) + " has 0 connections", Verbose::VERBOSITY_DEBUG);
         }
     }
 
@@ -5978,7 +6098,7 @@ void Optimizer::OptimizeEssentialGraph(
         {
             if (!pRefKF)
             {
-                Verbose::PrintMess("MP " + to_string(pMPi->mnId) + " without a valid reference KF", Verbose::VERBOSITY_DEBUG);
+                Verbose::PrintMess("MP " + std::to_string(pMPi->mnId) + " without a valid reference KF", Verbose::VERBOSITY_DEBUG);
                 break;
             }
 
@@ -5999,7 +6119,7 @@ void Optimizer::OptimizeEssentialGraph(
         }
         else
         {
-            cout << "ERROR: MapPoint has a reference KF from another map" << endl;
+            std::cout << "ERROR: MapPoint has a reference KF from another map" << std::endl;
         }
     }
 }
@@ -6156,11 +6276,11 @@ void Optimizer::MergeInertialBA(
         }
     }
 
-    std::vector<std::std::pair<MapPoint *, int>> pairs;
+    std::vector<std::pair<MapPoint *, int>> pairs;
     pairs.reserve(mLocalObs.size());
     for (auto itr = mLocalObs.begin(); itr != mLocalObs.end(); ++itr)
         pairs.push_back(*itr);
-    std::sort(pairs.begin(), pairs.end(), std::sortByVal);
+    std::sort(pairs.begin(), pairs.end(), sortByVal);
 
     // 4. 把pCurrKF的共视帧加进来 只优化位姿，不优化速度与偏置
     // 固定所有观察到地图点,但没有被加到优化变量中的关键帧
@@ -6189,17 +6309,25 @@ void Optimizer::MergeInertialBA(
     }
 
     // 5. 构建优化器
+    // g2o::SparseOptimizer optimizer;
+    // g2o::BlockSolverX::LinearSolverType *linearSolver;
+    // linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+    // g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
+
+    // g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+
+    // solver->setUserLambdaInit(1e3);
+
+    // optimizer.setAlgorithm(solver);
+    // optimizer.setVerbose(false);
+
     g2o::SparseOptimizer optimizer;
-    g2o::BlockSolverX::LinearSolverType *linearSolver;
-    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-    g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
-
-    g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
-
-    solver->setUserLambdaInit(1e3);
-
-    optimizer.setAlgorithm(solver);
+    using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>;
+    auto solver = std::make_unique<g2o::BlockSolverX>(std::make_unique<LinearSolver>());
+    solver->setLambda(1e3);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
+    optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
 
     // Set Local KeyFrame vertices
@@ -6327,7 +6455,7 @@ void Optimizer::MergeInertialBA(
 
             if (!VP1 || !VV1 || !VG1 || !VA1 || !VP2 || !VV2 || !VG2 || !VA2)
             {
-                cerr << "Error " << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << endl;
+                std::cerr << "Error " << VP1 << ", " << VV1 << ", " << VG1 << ", " << VA1 << ", " << VP2 << ", " << VV2 << ", " << VG2 << ", " << VA2 << std::endl;
                 continue;
             }
 
@@ -6413,7 +6541,7 @@ void Optimizer::MergeInertialBA(
         if (!pMP)
             continue;
 
-        g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+        g2o::VertexPointXYZ *vPoint = new g2o::VertexPointXYZ();
         vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
 
         unsigned long id = pMP->mnId + iniMPid + 1;
@@ -6630,7 +6758,7 @@ void Optimizer::MergeInertialBA(
     {
         // 跟新位置和normal等信息
         MapPoint *pMP = *lit;
-        g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
+        g2o::VertexPointXYZ *vPoint = static_cast<g2o::VertexPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
         pMP->SetWorldPos(vPoint->estimate().cast<float>());
         pMP->UpdateNormalAndDepth();
     }

@@ -286,7 +286,7 @@ bool KannalaBrandt8::ReconstructWithTwoViews(
     for (size_t i = 0; i < vKeys2.size(); i++)
         vPts2[i] = vKeys2[i].pt;
 
-    cv::Mat  D = (cv::Mat _<float>(4, 1) << mvParameters[4], mvParameters[5], mvParameters[6], mvParameters[7]);
+    cv::Mat  D = (cv::Mat_<float>(4, 1) << mvParameters[4], mvParameters[5], mvParameters[6], mvParameters[7]);
     cv::Mat  R = cv::Mat ::eye(3, 3, CV_32F);
     cv::Mat  K = this->toK();
     cv::fisheye::undistortPoints(vPts1, vPts1, K, D, R, K);
@@ -306,7 +306,7 @@ bool KannalaBrandt8::ReconstructWithTwoViews(
  */
 cv::Mat  KannalaBrandt8::toK()
 {
-    cv::Mat  K = (cv::Mat _<float>(3, 3) << 
+    cv::Mat  K = (cv::Mat_<float>(3, 3) << 
         mvParameters[0], 0.f,             mvParameters[2],
         0.f,             mvParameters[1], mvParameters[3],
         0.f,             0.f,             1.f);

@@ -31,11 +31,11 @@
 #include "ORBextractor.h"
 #include "Converter.h"
 #include "ORBmatcher.h"
-#include "GeometricCamera.h"
+#include "CameraModels/GeometricCamera.h"
 
 #include <thread>
-#include <include/CameraModels/Pinhole.h>
-#include <include/CameraModels/KannalaBrandt8.h>
+#include <CameraModels/Pinhole.h>
+#include <CameraModels/KannalaBrandt8.h>
 
 namespace ORB_SLAM3
 {
@@ -159,9 +159,9 @@ Frame::Frame(const cv::Mat  &imLeft, const cv::Mat  &imRight, const double &time
 #endif
     // TODO: 这里的时间怎么评估？
     // Step 3 对左目右目图像提取ORB特征点, 第一个参数0-左图， 1-右图。为加速计算，同时开了两个线程计算
-    thread threadLeft(&Frame::ExtractORB,this,0,imLeft,0,0);
+    std::thread threadLeft(&Frame::ExtractORB,this,0,imLeft,0,0);
     // 对右目图像提取orb特征
-    thread threadRight(&Frame::ExtractORB,this,1,imRight,0,0);
+    std::thread threadRight(&Frame::ExtractORB,this,1,imRight,0,0);
     // 等待两张图像特征点提取过程完成
     threadLeft.join();
     threadRight.join();
@@ -816,7 +816,7 @@ bool Frame::ProjectPointDistort(MapPoint* pMP, cv::Point2f &kp, float &u, float 
     // Check positive depth
     if(PcZ<0.0f)
     {
-        cout << "Negative depth: " << PcZ << endl;
+        std::cout << "Negative depth: " << PcZ << std::endl;
         return false;
     }
 
@@ -1439,7 +1439,7 @@ bool Frame::UnprojectStereo(const int &i, Eigen::Vector3f &x3D)
  */
 bool Frame::imuIsPreintegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    std::unique_lock<std::mutex> lock(*mpMutexImu);
     return mbImuPreintegrated;
 }
 
@@ -1448,7 +1448,7 @@ bool Frame::imuIsPreintegrated()
  */
 void Frame::setIntegrated()
 {
-    unique_lock<std::mutex> lock(*mpMutexImu);
+    std::unique_lock<std::mutex> lock(*mpMutexImu);
     mbImuPreintegrated = true;
 }
 
@@ -1480,8 +1480,8 @@ Frame::Frame(const cv::Mat  &imLeft, const cv::Mat  &imRight, const double &time
 #ifdef REGISTER_TIMES
     std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-    thread threadLeft(&Frame::ExtractORB,this,0,imLeft,static_cast<KannalaBrandt8*>(mpCamera)->mvLappingArea[0],static_cast<KannalaBrandt8*>(mpCamera)->mvLappingArea[1]);
-    thread threadRight(&Frame::ExtractORB,this,1,imRight,static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[0],static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[1]);
+    std::thread threadLeft(&Frame::ExtractORB,this,0,imLeft,static_cast<KannalaBrandt8*>(mpCamera)->mvLappingArea[0],static_cast<KannalaBrandt8*>(mpCamera)->mvLappingArea[1]);
+    std::thread threadRight(&Frame::ExtractORB,this,1,imRight,static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[0],static_cast<KannalaBrandt8*>(mpCamera2)->mvLappingArea[1]);
     threadLeft.join();
     threadRight.join();
 #ifdef REGISTER_TIMES

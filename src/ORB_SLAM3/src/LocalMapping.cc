@@ -186,7 +186,7 @@ void LocalMapping::Run()
                             // 如果累计时间差小于10s 并且 距离小于2厘米，认为运动幅度太小，不足以初始化IMU，将mbBadImu设置为true
                             if((mTinit<10.f) && (dist<0.02))
                             {
-                                cout << "Not enough motion for initializing. Reseting..." << endl;
+                                std::cout << "Not enough motion for initializing. Reseting..." << std::endl;
                                 std::unique_lock<std::mutex> lock(mMutexReset);
                                 mbResetRequestedActiveMap = true;
                                 mpMapToReset = mpCurrentKeyFrame->GetMap();
@@ -269,28 +269,28 @@ void LocalMapping::Run()
                             // 如果累计时间差大于5s，开始VIBA1（IMU第二阶段初始化）
                             if (mTinit>5.0f)
                             {
-                                cout << "start VIBA 1" << endl;
+                                std::cout << "start VIBA 1" << std::endl;
                                 mpCurrentKeyFrame->GetMap()->SetIniertialBA1();
                                 if (mbMonocular)
                                     InitializeIMU(1.f, 1e5, true);
                                 else
                                     InitializeIMU(1.f, 1e5, true);
 
-                                cout << "end VIBA 1" << endl;
+                                std::cout << "end VIBA 1" << std::endl;
                             }
                         }
                         // Step 9.2 根据条件判断是否进行VIBA2（IMU第三次初始化）
                         // 当前关键帧所在的地图还未完成VIBA 2
                         else if(!mpCurrentKeyFrame->GetMap()->GetIniertialBA2()){
                             if (mTinit>15.0f){
-                                cout << "start VIBA 2" << endl;
+                                std::cout << "start VIBA 2" << std::endl;
                                 mpCurrentKeyFrame->GetMap()->SetIniertialBA2();
                                 if (mbMonocular)
                                     InitializeIMU(0.f, 0.f, true);
                                 else
                                     InitializeIMU(0.f, 0.f, true);
 
-                                cout << "end VIBA 2" << endl;
+                                std::cout << "end VIBA 2" << std::endl;
                             }
                         }
 
@@ -1087,7 +1087,7 @@ bool LocalMapping::Stop()
     if(mbStopRequested && !mbNotStop)
     {
         mbStopped = true;
-        cout << "Local Mapping STOP" << endl;
+        std::cout << "Local Mapping STOP" << std::endl;
         return true;
     }
 
@@ -1127,7 +1127,7 @@ void LocalMapping::Release()
         delete *lit;
     mlNewKeyFrames.clear();
 
-    cout << "Local Mapping RELEASE" << endl;
+    std::cout << "Local Mapping RELEASE" << std::endl;
 }
 
 /**
@@ -1374,10 +1374,10 @@ void LocalMapping::RequestReset()
 {
     {
         std::unique_lock<std::mutex> lock(mMutexReset);
-        cout << "LM: Map reset recieved" << endl;
+        std::cout << "LM: Map reset recieved" << std::endl;
         mbResetRequested = true;
     }
-    cout << "LM: Map reset, waiting..." << endl;
+    std::cout << "LM: Map reset, waiting..." << std::endl;
 
     // 一直等到局部建图线程响应之后才可以退出
     while(1)
@@ -1389,7 +1389,7 @@ void LocalMapping::RequestReset()
         }
         usleep(3000);
     }
-    cout << "LM: Map reset, Done!!!" << endl;
+    std::cout << "LM: Map reset, Done!!!" << std::endl;
 }
 
 /**
@@ -1399,11 +1399,11 @@ void LocalMapping::RequestResetActiveMap(Map* pMap)
 {
     {
         std::unique_lock<std::mutex> lock(mMutexReset);
-        cout << "LM: Active map reset recieved" << endl;
+        std::cout << "LM: Active map reset recieved" << std::endl;
         mbResetRequestedActiveMap = true;
         mpMapToReset = pMap;
     }
-    cout << "LM: Active map reset, waiting..." << endl;
+    std::cout << "LM: Active map reset, waiting..." << std::endl;
 
     while(1)
     {
@@ -1414,7 +1414,7 @@ void LocalMapping::RequestResetActiveMap(Map* pMap)
         }
         usleep(3000);
     }
-    cout << "LM: Active map reset, Done!!!" << endl;
+    std::cout << "LM: Active map reset, Done!!!" << std::endl;
 }
 
 /**
@@ -1430,7 +1430,7 @@ void LocalMapping::ResetIfRequested()
         {
             executed_reset = true;
 
-            cout << "LM: Reseting Atlas in Local Mapping..." << endl;
+            std::cout << "LM: Reseting Atlas in Local Mapping..." << std::endl;
             mlNewKeyFrames.clear();
             mlpRecentAddedMapPoints.clear();
             // 恢复为false表示复位过程完成
@@ -1445,12 +1445,12 @@ void LocalMapping::ResetIfRequested()
 
             mIdxInit=0;
 
-            cout << "LM: End reseting Local Mapping..." << endl;
+            std::cout << "LM: End reseting Local Mapping..." << std::endl;
         }
 
         if(mbResetRequestedActiveMap) {
             executed_reset = true;
-            cout << "LM: Reseting current map in Local Mapping..." << endl;
+            std::cout << "LM: Reseting current map in Local Mapping..." << std::endl;
             mlNewKeyFrames.clear();
             mlpRecentAddedMapPoints.clear();
 
@@ -1462,11 +1462,11 @@ void LocalMapping::ResetIfRequested()
 
             mbResetRequested = false;
             mbResetRequestedActiveMap = false;
-            cout << "LM: End reseting Local Mapping..." << endl;
+            std::cout << "LM: End reseting Local Mapping..." << std::endl;
         }
     }
     if(executed_reset)
-        cout << "LM: Reset free the mutex" << endl;
+    std::cout << "LM: Reset free the mutex" << std::endl;
 
 }
 
@@ -1599,7 +1599,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
 
         if (have_imu_num < 6)
         {
-            cout << "imu初始化失败, 由于带有imu预积分信息的关键帧数量太少" << endl;
+            std::cout << "imu初始化失败, 由于带有imu预积分信息的关键帧数量太少" << std::endl;
             bInitializing=false;
             mbBadImu = true;
             return;
@@ -1644,7 +1644,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
     // 尺度太小的话初始化认为失败
     if (mScale<1e-1)
     {
-        cout << "scale too small" << endl;
+        std::cout << "scale too small" << std::endl;
         bInitializing=false;
         return;
     }
@@ -1777,7 +1777,7 @@ void LocalMapping::InitializeIMU(float priorG, float priorA, bool bFIBA)
             pKF->SetVelocity(pKF->mVwbGBA);
             pKF->SetNewBias(pKF->mBiasGBA);
         } else {
-            cout << "KF " << pKF->mnId << " not set to inertial!! \n";
+            std::cout << "KF " << pKF->mnId << " not set to inertial!! \n";
         }
 
         // pop
@@ -1886,7 +1886,7 @@ void LocalMapping::ScaleRefinement()
 
     if (mScale<1e-1) // 1e-1
     {
-        cout << "scale too small" << endl;
+        std::cout << "scale too small" << std::endl;
         bInitializing=false;
         return;
     }

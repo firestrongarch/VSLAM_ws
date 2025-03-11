@@ -22,8 +22,9 @@
 #include "Converter.h"
 #include <thread>
 #include <pangolin/pangolin.h>
+#include <openssl/evp.h>
 #include <iomanip>
-#include <openssl/md5.h>
+#include <sstream>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -32,6 +33,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
+#include "Serialization.h"
 
 namespace ORB_SLAM3
 {
@@ -54,28 +56,28 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
 {
     // Output welcome message
-    cout << endl <<
-    "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
-    "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl <<
-    "This program comes with ABSOLUTELY NO WARRANTY;" << endl  <<
-    "This is free software, and you are welcome to redistribute it" << endl <<
-    "under certain conditions. See LICENSE.txt." << endl << endl;
+    std::cout << std::endl <<
+    "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << std::endl <<
+    "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << std::endl <<
+    "This program comes with ABSOLUTELY NO WARRANTY;" << std::endl  <<
+    "This is free software, and you are welcome to redistribute it" << std::endl <<
+    "under certain conditions. See LICENSE.txt." << std::endl << std::endl;
     
     //* step 1 输出当前使用的模式
-    cout << "Input sensor was set to: ";
+    std::cout << "Input sensor was set to: ";
 
     if(mSensor==MONOCULAR)
-        cout << "Monocular" << endl;             // 单目
+        std::cout << "Monocular" << std::endl;             // 单目
     else if(mSensor==STEREO)
-        cout << "Stereo" << endl;                // 双目
+        std::cout << "Stereo" << std::endl;                // 双目
     else if(mSensor==RGBD)
-        cout << "RGB-D" << endl;                 // RGBD相机   
+        std::cout << "RGB-D" << std::endl;                 // RGBD相机   
     else if(mSensor==IMU_MONOCULAR)
-        cout << "Monocular-Inertial" << endl;    // 单目 + imu
+        std::cout << "Monocular-Inertial" << std::endl;    // 单目 + imu
     else if(mSensor==IMU_STEREO)
-        cout << "Stereo-Inertial" << endl;       // 双目 + imu
+        std::cout << "Stereo-Inertial" << std::endl;       // 双目 + imu
     else if(mSensor==IMU_RGBD)
-        cout << "RGB-D-Inertial" << endl;        // RGBD相机 + imu
+        std::cout << "RGB-D-Inertial" << std::endl;        // RGBD相机 + imu
 
     //Check settings file
     //* Step 2 读取配置文件
@@ -83,7 +85,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     // 如果打开失败，就输出错误信息
     if(!fsSettings.isOpened())
     {
-       cerr << "Failed to open settings file at: " << strSettingsFile << endl;
+       std::cerr << "Failed to open settings file at: " << strSettingsFile << std::endl;
        exit(-1);
     }
 
@@ -99,7 +101,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
         mStrLoadAtlasFromFile = settings_->atlasLoadFile();
         mStrSaveAtlasToFile = settings_->atlasSaveFile();
         // 输出所有读入系统保存好的配置信息供我们查看
-        cout << (*settings_) << endl;
+        std::cout << (*settings_) << std::endl;
     }
     else  // 如果不是上面的配置的化，我们的setting_是空指针，这也会影响后面的配置操作
     {
@@ -107,13 +109,13 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
         cv::FileNode node = fsSettings["System.LoadAtlasFromFile"];// 读取配置文件中加载atlas的命令
         if(!node.empty() && node.isString())
         {
-            mStrLoadAtlasFromFile = (string)node;
+            mStrLoadAtlasFromFile = (std::string)node;
         }
 
         node = fsSettings["System.SaveAtlasToFile"];
         if(!node.empty() && node.isString())
         {
-            mStrSaveAtlasToFile = (string)node;
+            mStrSaveAtlasToFile = (std::string)node;
         }
     }
 
@@ -137,19 +139,13 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     if(mStrLoadAtlasFromFile.empty())
     {
         //Load ORB Vocabulary
-        cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+        std::cout << std::endl << "Loading ORB Vocabulary. This could take a while..." << std::endl;
         // 建立一个新的ORB字典
         mpVocabulary = new ORBVocabulary();
         // 读取预训练好的ORB字典并返回成功/失败标志
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        // 如果加载失败，就输出错误信息
-        if(!bVocLoad)
-        {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
-            exit(-1);
-        }
-        cout << "Vocabulary loaded!" << endl << endl;
+        mpVocabulary->loadFromTextFile(strVocFile);
+
+        std::cout << "Vocabulary loaded!" << std::endl << std::endl;
 
         //Create KeyFrame Database
         //* Step 4 创建关键帧数据库
@@ -157,37 +153,31 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
 
         //Create the Atlas
         //* Step 5 创建多地图，参数0表示初始化关键帧id为0, 初始配置文件中, 我们并不加载地图，因此重新创建一个地图管理系统
-        cout << "Initialization of Atlas from scratch " << endl;
+        std::cout << "Initialization of Atlas from scratch " << std::endl;
         mpAtlas = new Atlas(0);
     }
     else
     {   // 如果地址不为空，有加载地图的地址
         // Load ORB Vocabulary  步骤与上面一样
-        cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+        std::cout << std::endl << "Loading ORB Vocabulary. This could take a while..." << std::endl;
 
         mpVocabulary = new ORBVocabulary();
-        bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-        if(!bVocLoad)
-        {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Falied to open at: " << strVocFile << endl;
-            exit(-1);
-        }
-        cout << "Vocabulary loaded!" << endl << endl;
+        mpVocabulary->loadFromTextFile(strVocFile);
+        std::cout << "Vocabulary loaded!" << std::endl << std::endl;
 
         //Create KeyFrame Database 创建关键帧数据库 
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
-        cout << "Load File" << endl;
+        std::cout << "Load File" << std::endl;
 
         //Load the file with an earlier session 从更早的一个版本初始化atlas，即我们给定的加载以前地图的版本
         //clock_t start = clock();
-        cout << "Initialization of Atlas from file: " << mStrLoadAtlasFromFile << endl;
+        std::cout << "Initialization of Atlas from file: " << mStrLoadAtlasFromFile << std::endl;
         bool isRead = LoadAtlas(FileType::BINARY_FILE);
 
         if(!isRead)
         {
-            cout << "Error to load the file, please try with other session file or vocabulary file" << endl;
+            std::cout << "Error to load the file, please try with other session file or vocabulary file" << std::endl;
             exit(-1);
         }
         //mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
@@ -219,7 +209,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     //(it will live in the main thread of execution, the one that called this constructor)
     //step 6.1 创建跟踪线程（主线程），作为主线程，在成员变量中并未定义相关的线程指针，没有立即开启，在主函数接受了图像和IMU信息后，调用追踪函数再进行追踪
     //!不会立刻开启,会在对图像和imu预处理后在main主线程种执行
-    cout << "Seq. Name: " << strSequence << endl;
+    std::cout << "Seq. Name: " << strSequence << std::endl;
     mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                              mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
@@ -227,7 +217,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     // step 6.2 创建并开启local mapping线程
     mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor==MONOCULAR || mSensor==IMU_MONOCULAR,
                                      mSensor==IMU_MONOCULAR || mSensor==IMU_STEREO || mSensor==IMU_RGBD, strSequence);
-    mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
+    mptLocalMapping = new std::thread(&ORB_SLAM3::LocalMapping::Run,mpLocalMapper);
     mpLocalMapper->mInitFr = initFr;
 
     // 设置最远3D地图点的深度值，如果超过阈值，说明可能三角化不太准确，丢弃
@@ -238,7 +228,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     // ? 这里有个疑问,C++中浮点型跟0比较是否用精确?
     if(mpLocalMapper->mThFarPoints!=0) // 如果设置了，那么输出，并把这设置了最远点的判断成员变量设置为真
     {
-        cout << "Discard points further than " << mpLocalMapper->mThFarPoints << " m from current camera" << endl;
+        std::cout << "Discard points further than " << mpLocalMapper->mThFarPoints << " m from current camera" << std::endl;
         mpLocalMapper->mbFarPoints = true;
     }
     else
@@ -248,7 +238,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     // mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR
     // step 6.3 创建并开启闭环线程
     mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR, activeLC); // mSensor!=MONOCULAR);
-    mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+    mptLoopClosing = new std::thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
     //Set pointers between threads
     // step 6.4 设置线程间的指针
@@ -272,7 +262,7 @@ System::System(const std::string &strVocFile, const std::string &strSettingsFile
     //if(false) // 默认是没有开启显示线程的
     {
         mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile,settings_);
-        mptViewer = new thread(&Viewer::Run, mpViewer);
+        mptViewer = new std::thread(&Viewer::Run, mpViewer);
         mpTracker->SetViewer(mpViewer);
         mpLoopCloser->mpViewer = mpViewer;
         mpViewer->both = mpFrameDrawer->both;
@@ -298,7 +288,7 @@ Sophus::SE3f System::TrackStereo(const cv::Mat  &imLeft, const cv::Mat  &imRight
     //* step 1 检查传感器模式，不对就报错
     if(mSensor!=STEREO && mSensor!=IMU_STEREO)
     {
-        cerr << "ERROR: you called TrackStereo but input sensor was not set to Stereo nor Stereo-Inertial." << endl;
+        std::cerr << "ERROR: you called TrackStereo but input sensor was not set to Stereo nor Stereo-Inertial." << std::endl;
         exit(-1);
     }
     //* step 2 图像处理：矫正、缩放、不处理
@@ -409,7 +399,7 @@ Sophus::SE3f System::TrackRGBD(const cv::Mat  &im, const cv::Mat  &depthmap, con
 {
     if(mSensor!=RGBD  && mSensor!=IMU_RGBD)
     {
-        cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
+        std::cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << std::endl;
         exit(-1);
     }
 
@@ -496,7 +486,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat  &im, const double &timestamp,
     // 确保是单目或单目VIO模式
     if(mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR)
     {
-        cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
+        std::cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << std::endl;
         exit(-1);
     }
 
@@ -546,7 +536,7 @@ Sophus::SE3f System::TrackMonocular(const cv::Mat  &im, const double &timestamp,
         // 如果检测到重置活动地图的标志为true,将重置地图
         else if(mbResetActiveMap)
         {
-            cout << "SYSTEM-> Reseting active map in monocular case" << endl;
+            std::cout << "SYSTEM-> Reseting active map in monocular case" << std::endl;
             mpTracker->ResetActiveMap();
             mbResetActiveMap = false;
         }
@@ -614,7 +604,7 @@ void System::Shutdown()
         mbShutDown = true;
     }
 
-    cout << "Shutdown" << endl;
+    std::cout << "Shutdown" << std::endl;
 
     if (mpViewer)
     {
@@ -674,10 +664,10 @@ bool System::isShutDown()
 
 void System::SaveTrajectoryTUM(const std::string &filename)
 {
-    cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving camera trajectory to " << filename << " ..." << std::endl;
     if(mSensor==MONOCULAR)
     {
-        cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << endl;
+        std::cerr << "ERROR: SaveTrajectoryTUM cannot be used for monocular." << std::endl;
         return;
     }
 
@@ -688,9 +678,9 @@ void System::SaveTrajectoryTUM(const std::string &filename)
     // After a loop closure the first keyframe might not be at the origin.
     Sophus::SE3f Two = vpKFs[0]->GetPoseInverse();
 
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
     // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
     // We need to get first the keyframe pose and then concatenate the relative transformation.
@@ -726,7 +716,7 @@ void System::SaveTrajectoryTUM(const std::string &filename)
         Eigen::Vector3f twc = Twc.translation();
         Eigen::Quaternionf q = Twc.unit_quaternion();
 
-        f << setprecision(6) << *lT << " " <<  setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+        f << std::setprecision(6) << *lT << " " <<  std::setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
     }
     f.close();
     // cout << endl << "trajectory saved!" << endl;
@@ -734,16 +724,16 @@ void System::SaveTrajectoryTUM(const std::string &filename)
 
 void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
 {
-    cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving keyframe trajectory to " << filename << " ..." << std::endl;
 
     std::vector<KeyFrame*> vpKFs = mpAtlas->GetAllKeyFrames();
     std::sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
     for(size_t i=0; i<vpKFs.size(); i++)
     {
@@ -757,8 +747,8 @@ void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
         Sophus::SE3f Twc = pKF->GetPoseInverse();
         Eigen::Quaternionf q = Twc.unit_quaternion();
         Eigen::Vector3f t = Twc.translation();
-        f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t(0) << " " << t(1) << " " << t(2)
-          << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+        f << std::setprecision(6) << pKF->mTimeStamp << std::setprecision(7) << " " << t(0) << " " << t(1) << " " << t(2)
+          << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
 
     }
 
@@ -768,7 +758,7 @@ void System::SaveKeyFrameTrajectoryTUM(const std::string &filename)
 void System::SaveTrajectoryEuRoC(const std::string &filename)
 {
 
-    cout << endl << "Saving trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving trajectory to " << filename << " ..." << std::endl;
     /*if(mSensor==MONOCULAR)
     {
         cerr << "ERROR: SaveTrajectoryEuRoC cannot be used for monocular." << endl;
@@ -800,10 +790,10 @@ void System::SaveTrajectoryEuRoC(const std::string &filename)
     else
         Twb = vpKFs[0]->GetPoseInverse();
 
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
     // cout << "file open" << endl;
-    f << fixed;
+    f << std::fixed;
 
     // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
     // We need to get first the keyframe pose and then concatenate the relative transformation.
@@ -865,27 +855,27 @@ void System::SaveTrajectoryEuRoC(const std::string &filename)
             Sophus::SE3f Twb = (pKF->mImuCalib.mTbc * (*lit) * Trw).inverse();
             Eigen::Quaternionf q = Twb.unit_quaternion();
             Eigen::Vector3f twb = Twb.translation();
-            f << setprecision(6) << 1e9*(*lT) << " " <<  setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*(*lT) << " " <<  std::setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
         else
         {
             Sophus::SE3f Twc = ((*lit)*Trw).inverse();
             Eigen::Quaternionf q = Twc.unit_quaternion();
             Eigen::Vector3f twc = Twc.translation();
-            f << setprecision(6) << 1e9*(*lT) << " " <<  setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*(*lT) << " " <<  std::setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
 
         // cout << "5" << endl;
     }
     //cout << "end saving trajectory" << endl;
     f.close();
-    cout << endl << "End of saving trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "End of saving trajectory to " << filename << " ..." << std::endl;
 }
 
 void System::SaveTrajectoryEuRoC(const std::string &filename, Map* pMap)
 {
 
-    cout << endl << "Saving trajectory of map " << pMap->GetId() << " to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving trajectory of map " << pMap->GetId() << " to " << filename << " ..." << std::endl;
     /*if(mSensor==MONOCULAR)
     {
         cerr << "ERROR: SaveTrajectoryEuRoC cannot be used for monocular." << endl;
@@ -905,10 +895,10 @@ void System::SaveTrajectoryEuRoC(const std::string &filename, Map* pMap)
     else
         Twb = vpKFs[0]->GetPoseInverse();
 
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
     // cout << "file open" << endl;
-    f << fixed;
+    f << std::fixed;
 
     // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
     // We need to get first the keyframe pose and then concatenate the relative transformation.
@@ -970,21 +960,21 @@ void System::SaveTrajectoryEuRoC(const std::string &filename, Map* pMap)
             Sophus::SE3f Twb = (pKF->mImuCalib.mTbc * (*lit) * Trw).inverse();
             Eigen::Quaternionf q = Twb.unit_quaternion();
             Eigen::Vector3f twb = Twb.translation();
-            f << setprecision(6) << 1e9*(*lT) << " " <<  setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*(*lT) << " " <<  std::setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
         else
         {
             Sophus::SE3f Twc = ((*lit)*Trw).inverse();
             Eigen::Quaternionf q = Twc.unit_quaternion();
             Eigen::Vector3f twc = Twc.translation();
-            f << setprecision(6) << 1e9*(*lT) << " " <<  setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*(*lT) << " " <<  std::setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
 
         // cout << "5" << endl;
     }
     //cout << "end saving trajectory" << endl;
     f.close();
-    cout << endl << "End of saving trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "End of saving trajectory to " << filename << " ..." << std::endl;
 }
 
 /*void System::SaveTrajectoryEuRoC(const std::string &filename)
@@ -1162,7 +1152,7 @@ void System::SaveTrajectoryEuRoC(const std::string &filename, Map* pMap)
 
 void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename)
 {
-    cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving keyframe trajectory to " << filename << " ..." << std::endl;
 
     std::vector<Map*> vpMaps = mpAtlas->GetAllMaps();
     Map* pBiggerMap;
@@ -1187,9 +1177,9 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename)
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
     for(size_t i=0; i<vpKFs.size(); i++)
     {
@@ -1204,7 +1194,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename)
             Sophus::SE3f Twb = pKF->GetImuPose();
             Eigen::Quaternionf q = Twb.unit_quaternion();
             Eigen::Vector3f twb = Twb.translation();
-            f << setprecision(6) << 1e9*pKF->mTimeStamp  << " " <<  setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*pKF->mTimeStamp  << " " <<  std::setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
 
         }
         else
@@ -1212,7 +1202,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename)
             Sophus::SE3f Twc = pKF->GetPoseInverse();
             Eigen::Quaternionf q = Twc.unit_quaternion();
             Eigen::Vector3f t = Twc.translation();
-            f << setprecision(6) << 1e9*pKF->mTimeStamp << " " <<  setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*pKF->mTimeStamp << " " <<  std::setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
     }
     f.close();
@@ -1220,16 +1210,16 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename)
 
 void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename, Map* pMap)
 {
-    cout << endl << "Saving keyframe trajectory of map " << pMap->GetId() << " to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving keyframe trajectory of map " << pMap->GetId() << " to " << filename << " ..." << std::endl;
 
     std::vector<KeyFrame*> vpKFs = pMap->GetAllKeyFrames();
     std::sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
     for(size_t i=0; i<vpKFs.size(); i++)
     {
@@ -1242,7 +1232,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename, Map* pMap)
             Sophus::SE3f Twb = pKF->GetImuPose();
             Eigen::Quaternionf q = Twb.unit_quaternion();
             Eigen::Vector3f twb = Twb.translation();
-            f << setprecision(6) << 1e9*pKF->mTimeStamp  << " " <<  setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*pKF->mTimeStamp  << " " <<  std::setprecision(9) << twb(0) << " " << twb(1) << " " << twb(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
 
         }
         else
@@ -1250,7 +1240,7 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename, Map* pMap)
             Sophus::SE3f Twc = pKF->GetPoseInverse();
             Eigen::Quaternionf q = Twc.unit_quaternion();
             Eigen::Vector3f t = Twc.translation();
-            f << setprecision(6) << 1e9*pKF->mTimeStamp << " " <<  setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+            f << std::setprecision(6) << 1e9*pKF->mTimeStamp << " " <<  std::setprecision(9) << t(0) << " " << t(1) << " " << t(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
     }
     f.close();
@@ -1311,10 +1301,10 @@ void System::SaveKeyFrameTrajectoryEuRoC(const std::string &filename, Map* pMap)
 
 void System::SaveTrajectoryKITTI(const std::string &filename)
 {
-    cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
+    std::cout << std::endl << "Saving camera trajectory to " << filename << " ..." << std::endl;
     if(mSensor==MONOCULAR)
     {
-        cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << endl;
+        std::cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << std::endl;
         return;
     }
 
@@ -1325,9 +1315,9 @@ void System::SaveTrajectoryKITTI(const std::string &filename)
     // After a loop closure the first keyframe might not be at the origin.
     Sophus::SE3f Tow = vpKFs[0]->GetPoseInverse();
 
-    ofstream f;
+    std::ofstream f;
     f.open(filename.c_str());
-    f << fixed;
+    f << std::fixed;
 
     // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
     // We need to get first the keyframe pose and then concatenate the relative transformation.
@@ -1360,9 +1350,9 @@ void System::SaveTrajectoryKITTI(const std::string &filename)
         Eigen::Matrix3f Rwc = Twc.rotationMatrix();
         Eigen::Vector3f twc = Twc.translation();
 
-        f << setprecision(9) << Rwc(0,0) << " " << Rwc(0,1)  << " " << Rwc(0,2) << " "  << twc(0) << " " <<
+        f << std::setprecision(9) << Rwc(0,0) << " " << Rwc(0,1)  << " " << Rwc(0,2) << " "  << twc(0) << " " <<
              Rwc(1,0) << " " << Rwc(1,1)  << " " << Rwc(1,2) << " "  << twc(1) << " " <<
-             Rwc(2,0) << " " << Rwc(2,1)  << " " << Rwc(2,2) << " "  << twc(2) << endl;
+             Rwc(2,0) << " " << Rwc(2,1)  << " " << Rwc(2,2) << " "  << twc(2) << std::endl;
     }
     f.close();
 }
@@ -1371,55 +1361,55 @@ void System::SaveTrajectoryKITTI(const std::string &filename)
 void System::SaveDebugData(const int &initIdx)
 {
     // 0. Save initialization trajectory
-    SaveTrajectoryEuRoC("init_FrameTrajectoy_" +to_string(mpLocalMapper->mInitSect)+ "_" + to_string(initIdx)+".txt");
+    SaveTrajectoryEuRoC("init_FrameTrajectoy_" +std::to_string(mpLocalMapper->mInitSect)+ "_" + std::to_string(initIdx)+".txt");
 
     // 1. Save scale
-    ofstream f;
-    f.open("init_Scale_" + to_string(mpLocalMapper->mInitSect) + ".txt", ios_base::app);
-    f << fixed;
-    f << mpLocalMapper->mScale << endl;
+    std::ofstream f;
+    f.open("init_Scale_" + std::to_string(mpLocalMapper->mInitSect) + ".txt", std::ios_base::app);
+    f << std::fixed;
+    f << mpLocalMapper->mScale << std::endl;
     f.close();
 
     // 2. Save gravity direction
-    f.open("init_GDir_" +to_string(mpLocalMapper->mInitSect)+ ".txt", ios_base::app);
-    f << fixed;
-    f << mpLocalMapper->mRwg(0,0) << "," << mpLocalMapper->mRwg(0,1) << "," << mpLocalMapper->mRwg(0,2) << endl;
-    f << mpLocalMapper->mRwg(1,0) << "," << mpLocalMapper->mRwg(1,1) << "," << mpLocalMapper->mRwg(1,2) << endl;
-    f << mpLocalMapper->mRwg(2,0) << "," << mpLocalMapper->mRwg(2,1) << "," << mpLocalMapper->mRwg(2,2) << endl;
+    f.open("init_GDir_" +std::to_string(mpLocalMapper->mInitSect)+ ".txt", std::ios_base::app);
+    f << std::fixed;
+    f << mpLocalMapper->mRwg(0,0) << "," << mpLocalMapper->mRwg(0,1) << "," << mpLocalMapper->mRwg(0,2) << std::endl;
+    f << mpLocalMapper->mRwg(1,0) << "," << mpLocalMapper->mRwg(1,1) << "," << mpLocalMapper->mRwg(1,2) << std::endl;
+    f << mpLocalMapper->mRwg(2,0) << "," << mpLocalMapper->mRwg(2,1) << "," << mpLocalMapper->mRwg(2,2) << std::endl;
     f.close();
 
     // 3. Save computational cost
-    f.open("init_CompCost_" +to_string(mpLocalMapper->mInitSect)+ ".txt", ios_base::app);
-    f << fixed;
-    f << mpLocalMapper->mCostTime << endl;
+    f.open("init_CompCost_" +std::to_string(mpLocalMapper->mInitSect)+ ".txt", std::ios_base::app);
+    f << std::fixed;
+    f << mpLocalMapper->mCostTime << std::endl;
     f.close();
 
     // 4. Save biases
-    f.open("init_Biases_" +to_string(mpLocalMapper->mInitSect)+ ".txt", ios_base::app);
-    f << fixed;
-    f << mpLocalMapper->mbg(0) << "," << mpLocalMapper->mbg(1) << "," << mpLocalMapper->mbg(2) << endl;
-    f << mpLocalMapper->mba(0) << "," << mpLocalMapper->mba(1) << "," << mpLocalMapper->mba(2) << endl;
+    f.open("init_Biases_" +std::to_string(mpLocalMapper->mInitSect)+ ".txt", std::ios_base::app);
+    f << std::fixed;
+    f << mpLocalMapper->mbg(0) << "," << mpLocalMapper->mbg(1) << "," << mpLocalMapper->mbg(2) << std::endl;
+    f << mpLocalMapper->mba(0) << "," << mpLocalMapper->mba(1) << "," << mpLocalMapper->mba(2) << std::endl;
     f.close();
 
     // 5. Save covariance matrix
-    f.open("init_CovMatrix_" +to_string(mpLocalMapper->mInitSect)+ "_" +to_string(initIdx)+".txt", ios_base::app);
-    f << fixed;
+    f.open("init_CovMatrix_" +std::to_string(mpLocalMapper->mInitSect)+ "_" +std::to_string(initIdx)+".txt", std::ios_base::app);
+    f << std::fixed;
     for(int i=0; i<mpLocalMapper->mcovInertial.rows(); i++)
     {
         for(int j=0; j<mpLocalMapper->mcovInertial.cols(); j++)
         {
             if(j!=0)
                 f << ",";
-            f << setprecision(15) << mpLocalMapper->mcovInertial(i,j);
+            f << std::setprecision(15) << mpLocalMapper->mcovInertial(i,j);
         }
-        f << endl;
+        f << std::endl;
     }
     f.close();
 
     // 6. Save initialization time
-    f.open("init_Time_" +to_string(mpLocalMapper->mInitSect)+ ".txt", ios_base::app);
-    f << fixed;
-    f << mpLocalMapper->mInitTime << endl;
+    f.open("init_Time_" +std::to_string(mpLocalMapper->mInitSect)+ ".txt", std::ios_base::app);
+    f << std::fixed;
+    f << mpLocalMapper->mInitTime << std::endl;
     f.close();
 }
 
@@ -1533,7 +1523,7 @@ void System::SaveAtlas(int type)
 
         if(type == TEXT_FILE) // File text
         {
-            cout << "Starting to write the save text file " << endl;
+            std::cout << "Starting to write the save text file " << std::endl;
             std::remove(pathSaveFileName.c_str());
             std::ofstream ofs(pathSaveFileName, std::ios::binary);
             boost::archive::text_oarchive oa(ofs);
@@ -1541,18 +1531,18 @@ void System::SaveAtlas(int type)
             oa << strVocabularyName;
             oa << strVocabularyChecksum;
             oa << mpAtlas;
-            cout << "End to write the save text file" << endl;
+            std::cout << "End to write the save text file" << std::endl;
         }
         else if(type == BINARY_FILE) // File binary
         {
-            cout << "Starting to write the save binary file" << endl;
+            std::cout << "Starting to write the save binary file" << std::endl;
             std::remove(pathSaveFileName.c_str());
             std::ofstream ofs(pathSaveFileName, std::ios::binary);
             boost::archive::binary_oarchive oa(ofs);
             oa << strVocabularyName;
             oa << strVocabularyChecksum;
             oa << mpAtlas;
-            cout << "End to write save binary file" << endl;
+            std::cout << "End to write save binary file" << std::endl;
         }
     }
 }
@@ -1573,34 +1563,34 @@ bool System::LoadAtlas(int type)
 
     if(type == TEXT_FILE) // File text
     {
-        cout << "Starting to read the save text file " << endl;
+        std::cout << "Starting to read the save text file " << std::endl;
         std::ifstream ifs(pathLoadFileName, std::ios::binary);
         if(!ifs.good())
         {
-            cout << "Load file not found" << endl;
+            std::cout << "Load file not found" << std::endl;
             return false;
         }
         boost::archive::text_iarchive ia(ifs);
         ia >> strFileVoc;
         ia >> strVocChecksum;
         ia >> mpAtlas;
-        cout << "End to load the save text file " << endl;
+        std::cout << "End to load the save text file " << std::endl;
         isRead = true;
     }
     else if(type == BINARY_FILE) // File binary
     {
-        cout << "Starting to read the save binary file"  << endl;
+        std::cout << "Starting to read the save binary file"  << std::endl;
         std::ifstream ifs(pathLoadFileName, std::ios::binary);
         if(!ifs.good())
         {
-            cout << "Load file not found" << endl;
+            std::cout << "Load file not found" << std::endl;
             return false;
         }
         boost::archive::binary_iarchive ia(ifs);
         ia >> strFileVoc;
         ia >> strVocChecksum;
         ia >> mpAtlas;
-        cout << "End to load the save binary file" << endl;
+        std::cout << "End to load the save binary file" << std::endl;
         isRead = true;
     }
 
@@ -1613,8 +1603,8 @@ bool System::LoadAtlas(int type)
 
         if(strInputVocabularyChecksum.compare(strVocChecksum) != 0)
         {
-            cout << "The vocabulary load isn't the same which the load session was created " << endl;
-            cout << "-Vocabulary name: " << strFileVoc << endl;
+            std::cout << "The vocabulary load isn't the same which the load session was created " << std::endl;
+            std::cout << "-Vocabulary name: " << strFileVoc << std::endl;
             return false; // Both are differents
         }
 
@@ -1631,42 +1621,44 @@ bool System::LoadAtlas(int type)
 // 校验词典文件，哈希出一个值，两个哈希值一样表示是同一文件
 std::string System::CalculateCheckSum(std::string filename, int type)
 {
-    std::string checksum = "";
+    std::string checksum;
+    
+    // 创建EVP上下文
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if(!ctx) return checksum;
 
-    unsigned char c[MD5_DIGEST_LENGTH];
-
-    std::ios_base::openmode flags = std::ios::in;
-    if(type == BINARY_FILE) // Binary file
-        flags = std::ios::in | std::ios::binary;
-
-    ifstream f(filename.c_str(), flags);
-    if ( !f.is_open() )
-    {
-        cout << "[E] Unable to open the in file " << filename << " for Md5 hash." << endl;
+    // 初始化摘要算法 
+    if(!EVP_DigestInit_ex(ctx, EVP_md5(), nullptr)) {
+        EVP_MD_CTX_free(ctx);
         return checksum;
     }
 
-    MD5_CTX md5Context;
+    // 读取文件并更新摘要
+    std::ios_base::openmode flags = (type == BINARY_FILE) ? 
+                                   (std::ios::in | std::ios::binary) : std::ios::in;
+    std::ifstream f(filename.c_str(), flags);
+    if(!f.is_open()) {
+        EVP_MD_CTX_free(ctx);
+        return checksum;
+    }
+
     char buffer[1024];
-
-    MD5_Init (&md5Context);
-    while ( int count = f.readsome(buffer, sizeof(buffer)))
-    {
-        MD5_Update(&md5Context, buffer, count);
+    while(int count = f.readsome(buffer, sizeof(buffer))) {
+        EVP_DigestUpdate(ctx, buffer, count);
     }
 
-    f.close();
-
-    MD5_Final(c, &md5Context );
-
-    for(int i = 0; i < MD5_DIGEST_LENGTH; i++)
-    {
-        char aux[10];
-        sprintf(aux,"%02x", c[i]);
-        checksum = checksum + aux;
-    }
-
-    return checksum;
+    // 完成摘要计算
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int len;
+    EVP_DigestFinal_ex(ctx, hash, &len);
+    EVP_MD_CTX_free(ctx);
+    
+    // 转换为十六进制字符串
+    std::stringstream ss;
+    for(unsigned int i = 0; i < len; i++)
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+    
+    return ss.str();
 }
 
 } //namespace ORB_SLAM

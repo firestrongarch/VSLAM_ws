@@ -330,7 +330,7 @@ cv::Mat  FrameDrawer::DrawRightFrame(float imageScale)
 
 void FrameDrawer::DrawTextInfo(cv::Mat  &im, int nState, cv::Mat  &imText)
 {
-    stringstream s;
+    std::stringstream s;
     if(nState==Tracking::NO_IMAGES_YET)
         s << " WAITING FOR IMAGES";
     else if(nState==Tracking::NOT_INITIALIZED)

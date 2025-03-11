@@ -18,13 +18,13 @@
 
 #include "Initializer.h"
 
-// #include "DBoW2/DUtils/Random.h"
+#include "DUtils/Random.h"
 
 #include "Optimizer.h"
 #include "ORBmatcher.h"
 
 #include<thread>
-#include <include/CameraModels/Pinhole.h>
+#include <CameraModels/Pinhole.h>
 
 namespace ORB_SLAM3
 {
@@ -164,13 +164,13 @@ bool Initializer::Initialize(const Frame &CurrentFrame, const std::vector<int> &
 
     // 构造线程来计算H矩阵及其得分
     // thread方法比较特殊，在传递引用的时候，外层需要用ref来进行引用传递，否则就是浅拷贝
-    thread threadH(&Initializer::FindHomography,	//该线程的主函数
+    std::thread threadH(&Initializer::FindHomography,	//该线程的主函数
 				   this,							//由于主函数为类的成员函数，所以第一个参数就应该是当前对象的this指针
-				   ref(vbMatchesInliersH), 			//输出，特征点对的Inlier标记
-				   ref(SH), 						//输出，计算的单应矩阵的RANSAC评分
-				   ref(H));							//输出，计算的单应矩阵结果
+				   std::ref(vbMatchesInliersH), 			//输出，特征点对的Inlier标记
+				   std::ref(SH), 						//输出，计算的单应矩阵的RANSAC评分
+				   std::ref(H));							//输出，计算的单应矩阵结果
     // 计算fundamental matrix并打分，参数定义和H是一样的，这里不再赘述
-    thread threadF(&Initializer::FindFundamental,this,ref(vbMatchesInliersF), ref(SF), ref(F));
+    std::thread threadF(&Initializer::FindFundamental,this,std::ref(vbMatchesInliersF), std::ref(SF), std::ref(F));
 
     //cout << "5" << endl;
 
@@ -1619,8 +1619,9 @@ int Initializer::CheckRT(const cv::Mat  &R, const cv::Mat  &t, const std::vector
 
         // Step 5 第三关：计算空间点在参考帧和当前帧上的重投影误差，如果大于阈值则舍弃
         // Check reprojection error in first image
-        cv::Point2f uv1 = mpCamera->project(p3dC1);
-		//参考帧上的重投影误差，这个的确就是按照定义来的
+        cv::Point3f p3dC1f(p3dC1.at<float>(0), p3dC1.at<float>(1), p3dC1.at<float>(2));
+        cv::Point2f uv1 = mpCamera->project(p3dC1f);
+        //参考帧上的重投影误差，这个的确就是按照定义来的
         float squareError1 = (uv1.x-kp1.pt.x)*(uv1.x-kp1.pt.x)+(uv1.y-kp1.pt.y)*(uv1.y-kp1.pt.y);
 
         // 重投影误差太大，跳过淘汰
@@ -1628,7 +1629,8 @@ int Initializer::CheckRT(const cv::Mat  &R, const cv::Mat  &t, const std::vector
             continue;
 
         // Check reprojection error in second image
-        cv::Point2f uv2 = mpCamera->project(p3dC2);
+        cv::Point3f p3dC2f(p3dC2.at<float>(0), p3dC2.at<float>(1), p3dC2.at<float>(2));
+        cv::Point2f uv2 = mpCamera->project(p3dC2f);
         float squareError2 = (uv2.x-kp2.pt.x)*(uv2.x-kp2.pt.x)+(uv2.y-kp2.pt.y)*(uv2.y-kp2.pt.y);
 
         // 重投影误差太大，跳过淘汰

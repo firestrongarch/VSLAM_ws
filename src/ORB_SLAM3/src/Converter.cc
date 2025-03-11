@@ -24,10 +24,10 @@ namespace ORB_SLAM3
 /**
  * @brief 将描述子转换为描述子向量，其实本质上是cv:Mat->std:vector
  */
-std::vector<cv::Mat > Converter::toDescriptorVector(const cv::Mat  &Descriptors)
+std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
     // 存储转换结果的向量
-    std::vector<cv::Mat > vDesc;
+    std::vector<cv::Mat> vDesc;
     // 创建保留空间
     vDesc.reserve(Descriptors.rows);
     // 对于每一个特征点的描述子
@@ -41,7 +41,7 @@ std::vector<cv::Mat > Converter::toDescriptorVector(const cv::Mat  &Descriptors)
 /**
  * @brief 将变换矩阵转换为李代数se3：cv:Mat->g2o::SE3Quat
  */
-g2o::SE3Quat Converter::toSE3Quat(const cv::Mat  &cvT)
+g2o::SE3Quat Converter::toSE3Quat(const cv::Mat &cvT)
 {
     // 首先将旋转矩阵提取出来
     Eigen::Matrix<double,3,3> R;
@@ -64,18 +64,18 @@ g2o::SE3Quat Converter::toSE3Quat(const Sophus::SE3f &T)
 }
 
 /**
- * @brief g2o::SE3Quat->cv::Mat 
+ * @brief g2o::SE3Quat->cv::Mat
  */
-cv::Mat  Converter::toCvMat(const g2o::SE3Quat &SE3)
+cv::Mat Converter::toCvMat(const g2o::SE3Quat &SE3)
 {
     Eigen::Matrix<double,4,4> eigMat = SE3.to_homogeneous_matrix();
     return toCvMat(eigMat);
 }
 
 /**
- * @brief 将仿射矩阵由g2o::Sim3->cv::Mat 
+ * @brief 将仿射矩阵由g2o::Sim3->cv::Mat
  */
-cv::Mat  Converter::toCvMat(const g2o::Sim3 &Sim3)
+cv::Mat Converter::toCvMat(const g2o::Sim3 &Sim3)
 {
     // 首先将仿射矩阵的旋转部分转换成为Eigen下的矩阵格式
     Eigen::Matrix3d eigR = Sim3.rotation().toRotationMatrix();
@@ -83,17 +83,17 @@ cv::Mat  Converter::toCvMat(const g2o::Sim3 &Sim3)
     Eigen::Vector3d eigt = Sim3.translation();
     // 获取仿射矩阵的缩放系数
     double s = Sim3.scale();
-    // 然后构造cv::Mat 格式下的仿射矩阵
+    // 然后构造cv::Mat格式下的仿射矩阵
     return toCvSE3(s*eigR,eigt);
 }
 
 /**
- * @brief Eigen::Matrix<double,4,4> -> cv::Mat ，用于变换矩阵T的中间转换
+ * @brief Eigen::Matrix<double,4,4> -> cv::Mat，用于变换矩阵T的中间转换
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 {
     // 首先定义存储计算结果的变量
-    cv::Mat  cv::Mat(4,4,CV_32F);
+    cv::Mat cvMat(4,4,CV_32F);
     // 然后逐个元素赋值
     for(int i=0;i<4;i++)
         for(int j=0; j<4; j++)
@@ -103,11 +103,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 }
 
 /**
- * @brief Eigen::Matrix<float,4,4> -> cv::Mat ，用于变换矩阵T的中间转换
+ * @brief Eigen::Matrix<float,4,4> -> cv::Mat，用于变换矩阵T的中间转换
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,4,4> &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix<float,4,4> &m)
 {
-    cv::Mat  cv::Mat(4,4,CV_32F);
+    cv::Mat cvMat(4,4,CV_32F);
     for(int i=0;i<4;i++)
         for(int j=0; j<4; j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -116,11 +116,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,4,4> &m)
 }
 
 /**
- * @brief Eigen::Matrix<float,3,4> -> cv::Mat 
+ * @brief Eigen::Matrix<float,3,4> -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,3,4> &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,4> &m)
 {
-    cv::Mat  cv::Mat(3,4,CV_32F);
+    cv::Mat cvMat(3,4,CV_32F);
     for(int i=0;i<3;i++)
         for(int j=0; j<4; j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -129,11 +129,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,3,4> &m)
 }
 
 /**
- * @brief Eigen::Matrix<double,3,3> -> cv::Mat 
+ * @brief Eigen::Matrix<double,3,3> -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix3d &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m)
 {
-    cv::Mat  cv::Mat(3,3,CV_32F);
+    cv::Mat cvMat(3,3,CV_32F);
     for(int i=0;i<3;i++)
         for(int j=0; j<3; j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -142,11 +142,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix3d &m)
 }
 
 /**
- * @brief Eigen::Matrix<float,3,3> -> cv::Mat 
+ * @brief Eigen::Matrix<float,3,3> -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix3f &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix3f &m)
 {
-    cv::Mat  cv::Mat(3,3,CV_32F);
+    cv::Mat cvMat(3,3,CV_32F);
     for(int i=0;i<3;i++)
         for(int j=0; j<3; j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -155,11 +155,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix3f &m)
 }
 
 /**
- * @brief Eigen::MatrixXf -> cv::Mat 
+ * @brief Eigen::MatrixXf -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::MatrixXf &m)
+cv::Mat Converter::toCvMat(const Eigen::MatrixXf &m)
 {
-    cv::Mat  cv::Mat(m.rows(),m.cols(),CV_32F);
+    cv::Mat cvMat(m.rows(),m.cols(),CV_32F);
     for(int i=0;i<m.rows();i++)
         for(int j=0; j<m.cols(); j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -168,11 +168,11 @@ cv::Mat  Converter::toCvMat(const Eigen::MatrixXf &m)
 }
 
 /**
- * @brief Eigen::MatrixXd -> cv::Mat 
+ * @brief Eigen::MatrixXd -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::MatrixXd &m)
+cv::Mat Converter::toCvMat(const Eigen::MatrixXd &m)
 {
-    cv::Mat  cv::Mat(m.rows(),m.cols(),CV_32F);
+    cv::Mat cvMat(m.rows(),m.cols(),CV_32F);
     for(int i=0;i<m.rows();i++)
         for(int j=0; j<m.cols(); j++)
             cvMat.at<float>(i,j)=m(i,j);
@@ -181,11 +181,11 @@ cv::Mat  Converter::toCvMat(const Eigen::MatrixXd &m)
 }
 
 /**
- * @brief Eigen::Matrix<double,3,1> -> cv::Mat 
+ * @brief Eigen::Matrix<double,3,1> -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
 {
-    cv::Mat  cv::Mat(3,1,CV_32F);
+    cv::Mat cvMat(3,1,CV_32F);
     for(int i=0;i<3;i++)
             cvMat.at<float>(i)=m(i);
 
@@ -193,11 +193,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
 }
 
 /**
- * @brief Eigen::Matrix<float,3,1> -> cv::Mat 
+ * @brief Eigen::Matrix<float,3,1> -> cv::Mat
  */
-cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
+cv::Mat Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
 {
-    cv::Mat  cv::Mat(3,1,CV_32F);
+    cv::Mat cvMat(3,1,CV_32F);
     for(int i=0;i<3;i++)
         cvMat.at<float>(i)=m(i);
 
@@ -205,11 +205,11 @@ cv::Mat  Converter::toCvMat(const Eigen::Matrix<float,3,1> &m)
 }
 
 /**
- * @brief 将给定的旋转矩阵R和平移向量t转换成为 以cv::Mat 格式存储的李群SE3（其实就是变换矩阵）
+ * @brief 将给定的旋转矩阵R和平移向量t转换成为 以cv::Mat格式存储的李群SE3（其实就是变换矩阵）
  */
-cv::Mat  Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
+cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
 {
-    cv::Mat  cvMat = cv::Mat ::eye(4,4,CV_32F);
+    cv::Mat cvMat = cv::Mat::eye(4,4,CV_32F);
     // 将旋转矩阵复制到左上角
     for(int i=0;i<3;i++)
     {
@@ -230,7 +230,7 @@ cv::Mat  Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Mat
 /**
  * @brief 将OpenCV中Mat类型的向量转化为Eigen中Matrix类型的变量
  */
-Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Mat  &cvVector)
+Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Mat &cvVector)
 {
     // 首先生成用于存储转换结果的向量
     Eigen::Matrix<double,3,1> v;
@@ -243,7 +243,7 @@ Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Mat  &cvVector)
 /**
  * @brief 类似上面
  */
-Eigen::Matrix<float,3,1> Converter::toVector3f(const cv::Mat  &cvVector)
+Eigen::Matrix<float,3,1> Converter::toVector3f(const cv::Mat &cvVector)
 {
     Eigen::Matrix<float,3,1> v;
     v << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
@@ -263,9 +263,9 @@ Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Point3f &cvPoint)
 }
 
 /**
- * @brief cv::Mat  -> Eigen::Matrix<double,3,3>
+ * @brief cv::Mat -> Eigen::Matrix<double,3,3>
  */
-Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat  &cvMat3)
+Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
 {
     Eigen::Matrix<double,3,3> M;
 
@@ -277,9 +277,9 @@ Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat  &cvMat3)
 }
 
 /**
- * @brief cv::Mat  -> Eigen::Matrix<double,4,4>
+ * @brief cv::Mat -> Eigen::Matrix<double,4,4>
  */
-Eigen::Matrix<double,4,4> Converter::toMatrix4d(const cv::Mat  &cvMat4)
+Eigen::Matrix<double,4,4> Converter::toMatrix4d(const cv::Mat &cvMat4)
 {
     Eigen::Matrix<double,4,4> M;
 
@@ -291,9 +291,9 @@ Eigen::Matrix<double,4,4> Converter::toMatrix4d(const cv::Mat  &cvMat4)
 }
 
 /**
- * @brief cv::Mat  -> Eigen::Matrix<float,3,3>
+ * @brief cv::Mat -> Eigen::Matrix<float,3,3>
  */
-Eigen::Matrix<float,3,3> Converter::toMatrix3f(const cv::Mat  &cvMat3)
+Eigen::Matrix<float,3,3> Converter::toMatrix3f(const cv::Mat &cvMat3)
 {
     Eigen::Matrix<float,3,3> M;
 
@@ -305,9 +305,9 @@ Eigen::Matrix<float,3,3> Converter::toMatrix3f(const cv::Mat  &cvMat3)
 }
 
 /**
- * @brief cv::Mat  -> Eigen::Matrix<float,4,4>
+ * @brief cv::Mat -> Eigen::Matrix<float,4,4>
  */
-Eigen::Matrix<float,4,4> Converter::toMatrix4f(const cv::Mat  &cvMat4)
+Eigen::Matrix<float,4,4> Converter::toMatrix4f(const cv::Mat &cvMat4)
 {
     Eigen::Matrix<float,4,4> M;
 
@@ -321,7 +321,7 @@ Eigen::Matrix<float,4,4> Converter::toMatrix4f(const cv::Mat  &cvMat4)
 /**
  * @brief 旋转矩阵转四元数以vector形式输出
  */
-std::vector<float> Converter::toQuaternion(const cv::Mat  &M)
+std::vector<float> Converter::toQuaternion(const cv::Mat &M)
 {
     Eigen::Matrix<double,3,3> eigMat = toMatrix3d(M);
     Eigen::Quaterniond q(eigMat);
@@ -338,9 +338,9 @@ std::vector<float> Converter::toQuaternion(const cv::Mat  &M)
 /**
  * @brief 反对称
  */
-cv::Mat  Converter::tocvSkewMatrix(const cv::Mat  &v)
+cv::Mat Converter::tocvSkewMatrix(const cv::Mat &v)
 {
-    return (cv::Mat _<float>(3,3) <<
+    return (cv::Mat_<float>(3,3) <<
         0,               -v.at<float>(2),  v.at<float>(1),
         v.at<float>(2),                0, -v.at<float>(0),
         -v.at<float>(1),  v.at<float>(0),              0);
@@ -349,12 +349,12 @@ cv::Mat  Converter::tocvSkewMatrix(const cv::Mat  &v)
 /**
  * @brief 判断是否为旋转矩阵
  */
-bool Converter::isRotationMatrix(const cv::Mat  &R)
+bool Converter::isRotationMatrix(const cv::Mat &R)
 {
-    cv::Mat  Rt;
+    cv::Mat Rt;
     cv::transpose(R, Rt);
-    cv::Mat  shouldBeIdentity = Rt * R;
-    cv::Mat  I = cv::Mat ::eye(3,3, shouldBeIdentity.type());
+    cv::Mat shouldBeIdentity = Rt * R;
+    cv::Mat I = cv::Mat::eye(3,3, shouldBeIdentity.type());
 
     return  cv::norm(I, shouldBeIdentity) < 1e-6;
 
@@ -363,7 +363,7 @@ bool Converter::isRotationMatrix(const cv::Mat  &R)
 /**
  * @brief 旋转矩阵转欧拉角
  */
-std::vector<float> Converter::toEuler(const cv::Mat  &R)
+std::vector<float> Converter::toEuler(const cv::Mat &R)
 {
     assert(isRotationMatrix(R));
     float sy = sqrt(R.at<float>(0,0) * R.at<float>(0,0) +  R.at<float>(1,0) * R.at<float>(1,0) );
@@ -395,7 +395,7 @@ std::vector<float> Converter::toEuler(const cv::Mat  &R)
 /**
  * @brief 转成Sophus::SE3<float>
  */
-Sophus::SE3<float> Converter::toSophus(const cv::Mat  &T) {
+Sophus::SE3<float> Converter::toSophus(const cv::Mat &T) {
     Eigen::Matrix<double,3,3> eigMat = toMatrix3d(T.rowRange(0,3).colRange(0,3));
     Eigen::Quaternionf q(eigMat.cast<float>());
 

@@ -140,7 +140,7 @@ void LoopClosing::Run()
                     if ((mpTracker->mSensor==System::IMU_MONOCULAR || mpTracker->mSensor==System::IMU_STEREO || mpTracker->mSensor==System::IMU_RGBD) &&
                         (!mpCurrentKF->GetMap()->isImuInitialized()))
                     {
-                        cout << "IMU is not initilized, merge is aborted" << endl;
+                        std::cout << "IMU is not initilized, merge is aborted" << std::endl;
                     }
                     else
                     {
@@ -163,7 +163,7 @@ void LoopClosing::Run()
                         // 如果是imu模式
                         if(mpCurrentKF->GetMap()->IsInertial() && mpMergeMatchedKF->GetMap()->IsInertial())
                         {
-                            cout << "Merge check transformation with IMU" << endl;
+                            std::cout << "Merge check transformation with IMU" << std::endl;
                             // 如果尺度变换太大, 认为累积误差较大，则放弃融合
                             if(mSold_new.scale()<0.90||mSold_new.scale()>1.1){
                                 mpMergeLastCurrentKF->SetErase();
@@ -277,7 +277,7 @@ void LoopClosing::Run()
 
                         // 拿到 roll ,pitch ,yaw
                         Eigen::Vector3d phi = LogSO3(g2oSww_new.rotation().toRotationMatrix());
-                        cout << "phi = " << phi.transpose() << endl; 
+                        std::cout << "phi = " << phi.transpose() << std::endl; 
                         // 这里算是通过imu重力方向验证回环结果, 如果pitch或roll角度偏差稍微有一点大,则回环失败. 对yaw容忍比较大(20度)
                         if (fabs(phi(0))<0.008f && fabs(phi(1))<0.008f && fabs(phi(2))<0.349f)
                         {
@@ -299,7 +299,7 @@ void LoopClosing::Run()
                         }
                         else
                         {
-                            cout << "BAD LOOP!!!" << endl;
+                            std::cout << "BAD LOOP!!!" << std::endl;
                             bGoodLoop = false;
                         }
 
@@ -478,7 +478,7 @@ bool LoopClosing::NewDetectCommonRegions()
             //! 这里的条件反了,不过对功能没什么影响,只是打印信息
             if(!mbLoopDetected)
             {
-                cout << "PR: Loop detected with Reffine Sim3" << endl;
+                std::cout << "PR: Loop detected with Reffine Sim3" << std::endl;
             }
         }
         // 如果没找到共同区域(时序验证失败一次)
@@ -1280,18 +1280,18 @@ void LoopClosing::CorrectLoop()
     // If a Global Bundle Adjustment is running, abort it
     if(isRunningGBA())
     {
-        cout << "Stoping Global Bundle Adjustment...";
+        std::cout << "Stoping Global Bundle Adjustment...";
         std::unique_lock<std::mutex> lock(mMutexGBA);
         mbStopGBA = true;
         // 记录全局BA次数
-        mnFullBAIdx++;
+        mnFullBAIdx = mnFullBAIdx + 1;
 
         if(mpThreadGBA)
         {
             mpThreadGBA->detach();
             delete mpThreadGBA;
         }
-        cout << "  Done!!" << endl;
+        std::cout << "  Done!!" << std::endl;
     }
 
     // Wait until Local Mapping has effectively stopped
@@ -1567,7 +1567,7 @@ void LoopClosing::CorrectLoop()
         mbStopGBA = false;
         mnCorrectionGBA = mnNumCorrection;
 
-        mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment, this, pLoopMap, mpCurrentKF->mnId);
+        mpThreadGBA = new std::thread(&LoopClosing::RunGlobalBundleAdjustment, this, pLoopMap, mpCurrentKF->mnId);
     }
 
     // Loop closed. Release Local Mapping.
@@ -1608,7 +1608,7 @@ void LoopClosing::MergeLocal()
         std::unique_lock<std::mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx = mnFullBAIdx + 1;
 
         if(mpThreadGBA)
         {
@@ -2284,7 +2284,7 @@ void LoopClosing::MergeLocal()
         mbFinishedGBA = false;
         mbStopGBA = false;
         // 执行全局BA
-        mpThreadGBA = new thread(&LoopClosing::RunGlobalBundleAdjustment,this, pMergeMap, mpCurrentKF->mnId);
+        mpThreadGBA = new std::thread(&LoopClosing::RunGlobalBundleAdjustment,this, pMergeMap, mpCurrentKF->mnId);
     }
 
     // 添加融合边(这里不是参与优化的边,只是记录)
@@ -2333,7 +2333,7 @@ void LoopClosing::MergeLocal2()
         std::unique_lock<std::mutex> lock(mMutexGBA);
         mbStopGBA = true;
 
-        mnFullBAIdx++;
+        mnFullBAIdx = mnFullBAIdx + 1;
 
         if(mpThreadGBA)
         {
@@ -2629,7 +2629,7 @@ void LoopClosing::MergeLocal2()
  */
 void LoopClosing::CheckObservations(std::set<KeyFrame*> &spKFsMap1, std::set<KeyFrame*> &spKFsMap2)
 {
-    cout << "----------------------" << endl;
+    std::cout << "----------------------" << std::endl;
     for(KeyFrame* pKFi1 : spKFsMap1)
     {
         std::map<KeyFrame*, int> mMatchedMP;
@@ -2662,18 +2662,18 @@ void LoopClosing::CheckObservations(std::set<KeyFrame*> &spKFsMap1, std::set<Key
 
         if(mMatchedMP.size() == 0)
         {
-            cout << "CHECK-OBS: KF " << pKFi1->mnId << " has not any matched MP with the other map" << endl;
+            std::cout << "CHECK-OBS: KF " << pKFi1->mnId << " has not any matched MP with the other map" << std::endl;
         }
         else
         {
-            cout << "CHECK-OBS: KF " << pKFi1->mnId << " has matched MP with " << mMatchedMP.size() << " KF from the other map" << endl;
+            std::cout << "CHECK-OBS: KF " << pKFi1->mnId << " has matched MP with " << mMatchedMP.size() << " KF from the other map" << std::endl;
             for(std::pair<KeyFrame*, int> matchedKF : mMatchedMP)
             {
-                cout << "   -KF: " << matchedKF.first->mnId << ", Number of matches: " << matchedKF.second << endl;
+                std::cout << "   -KF: " << matchedKF.first->mnId << ", Number of matches: " << matchedKF.second << std::endl;
             }
         }
     }
-    cout << "----------------------" << endl;
+    std::cout << "----------------------" << std::endl;
 }
 
 /** 
@@ -2827,7 +2827,7 @@ void LoopClosing::ResetIfRequested()
     // 如果有来自于外部的线程的复位请求,那么就复位当前线程
     if(mbResetRequested)
     {
-        cout << "Loop closer reset requested..." << endl;
+        std::cout << "Loop closer reset requested..." << std::endl;
         // 清空参与和进行回环检测的关键帧队列
         mlpLoopKeyFrameQueue.clear();
         // 上一次没有和任何关键帧形成闭环关系

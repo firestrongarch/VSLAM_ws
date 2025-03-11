@@ -781,7 +781,7 @@ void KeyFrameDatabase::DetectNBestCandidates(KeyFrame *pKF, std::vector<KeyFrame
 
     // cout << "Amount of candidates: " << lAccScoreAndMatch.size() << endl;
     //  按相似度从大到小排序
-    lAccScoreAndMatch.std::sort(compFirst);
+    lAccScoreAndMatch.sort(compFirst);
     // 最后返回的变量, 记录回环的候选帧
     vpLoopCand.reserve(nNumCandidates);
     // 最后返回的变量, 记录融合候选帧

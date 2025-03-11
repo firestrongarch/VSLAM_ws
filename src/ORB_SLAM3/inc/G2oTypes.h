@@ -396,8 +396,8 @@ public:
  * 但是加入imu时，优化要有残差的边与重投影的边同时存在，且两个边可能连接同一个位姿节点，所以需要重新弄一个包含imu位姿的节点
  * 因此，边也需要重新写，并且在imu优化时使用这个边
  */
-// 误差为2维， 类型为Eigen::Vector2d， 节点1类型为g2o::VertexSBAPointXYZ，节点二类型为VertexPose
-class EdgeMono : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSBAPointXYZ, VertexPose>
+// 误差为2维， 类型为Eigen::Vector2d， 节点1类型为g2o::VertexPointXYZ，节点二类型为VertexPose
+class EdgeMono : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexPointXYZ, VertexPose>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -412,7 +412,7 @@ public:
     // 计算重投影误差
     void computeError()
     {
-        const g2o::VertexSBAPointXYZ *VPoint = static_cast<const g2o::VertexSBAPointXYZ *>(_vertices[0]);
+        const g2o::VertexPointXYZ *VPoint = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
         const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[1]);
         const Eigen::Vector2d obs(_measurement);
         _error = obs - VPose->estimate().Project(VPoint->estimate(), cam_idx);
@@ -422,7 +422,7 @@ public:
 
     bool isDepthPositive()
     {
-        const g2o::VertexSBAPointXYZ *VPoint = static_cast<const g2o::VertexSBAPointXYZ *>(_vertices[0]);
+        const g2o::VertexPointXYZ *VPoint = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
         const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[1]);
         return VPose->estimate().isDepthPositive(VPoint->estimate(), cam_idx);
     }
@@ -494,7 +494,7 @@ public:
 /** 
  * @brief 双目位姿三维点二元边
  */
-class EdgeStereo : public g2o::BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexSBAPointXYZ, VertexPose>
+class EdgeStereo : public g2o::BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPointXYZ, VertexPose>
 {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -507,7 +507,7 @@ public:
 
     void computeError()
     {
-        const g2o::VertexSBAPointXYZ *VPoint = static_cast<const g2o::VertexSBAPointXYZ *>(_vertices[0]);
+        const g2o::VertexPointXYZ *VPoint = static_cast<const g2o::VertexPointXYZ *>(_vertices[0]);
         const VertexPose *VPose = static_cast<const VertexPose *>(_vertices[1]);
         const Eigen::Vector3d obs(_measurement);
         _error = obs - VPose->estimate().ProjectStereo(VPoint->estimate(), cam_idx);

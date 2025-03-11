@@ -45,7 +45,7 @@ Viewer::Viewer(System* pSystem, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer
             {
                 throw -1;
             }
-            catch(exception &e)
+            catch(std::exception &e)
             {
 
             }
@@ -218,7 +218,7 @@ void Viewer::Run()
 
     float trackedImageScale = mpTracker->GetImageScale();
 
-    cout << "Starting the Viewer" << endl;
+    std::cout << "Starting the Viewer" << std::endl;
     while(1)
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

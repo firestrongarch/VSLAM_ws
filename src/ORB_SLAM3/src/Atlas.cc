@@ -19,9 +19,9 @@
 #include "Atlas.h"
 #include "Viewer.h"
 
-#include "GeometricCamera.h"
-#include "Pinhole.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/GeometricCamera.h"
+#include "CameraModels/Pinhole.h"
+#include "CameraModels/KannalaBrandt8.h"
 
 namespace ORB_SLAM3
 {
@@ -63,7 +63,7 @@ void Atlas::CreateNewMap()
 {
     // 锁住地图集
     std::unique_lock<std::mutex> lock(mMutexAtlas);
-    cout << "Creation of new map with id: " << Map::nNextId << endl;
+    std::cout << "Creation of new map with id: " << Map::nNextId << std::endl;
     // 如果当前活跃地图有效，先存储当前地图为不活跃地图后退出
     if (mpCurrentMap)
     {
@@ -73,12 +73,12 @@ void Atlas::CreateNewMap()
 
         // 将当前地图储存起来，其实就是把mIsInUse标记为false
         mpCurrentMap->SetStoredMap();
-        cout << "Stored map with ID: " << mpCurrentMap->GetId() << endl;
+        std::cout << "Stored map with ID: " << mpCurrentMap->GetId() << std::endl;
 
         // if(mHasViewer)
         //     mpViewer->AddMapToCreateThumbnail(mpCurrentMap);
     }
-    cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
+    std::cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << std::endl;
 
     mpCurrentMap = new Map(mnLastInitKFidMap);  //新建地图
     mpCurrentMap->SetCurrentMap();              //设置为活跃地图
@@ -88,7 +88,7 @@ void Atlas::CreateNewMap()
 void Atlas::ChangeMap(Map *pMap)
 {
     std::unique_lock<std::mutex> lock(mMutexAtlas);
-    cout << "Change to map with id: " << pMap->GetId() << endl;
+    std::cout << "Change to map with id: " << pMap->GetId() << std::endl;
     if (mpCurrentMap)
     {
         mpCurrentMap->SetStoredMap();

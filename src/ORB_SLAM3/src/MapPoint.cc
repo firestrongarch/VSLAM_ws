@@ -731,13 +731,13 @@ int MapPoint::PredictScale(const float &currentDist, Frame* pF)
 
 void MapPoint::PrintObservations()
 {
-    std::cout << "MP_OBS: MP " << mnId << endl;
+    std::cout << "MP_OBS: MP " << mnId << std::endl;
     for(std::map<KeyFrame*,std::tuple<int,int>>::iterator mit=mObservations.begin(), mend=mObservations.end(); mit!=mend; mit++)
     {
         KeyFrame* pKFi = mit->first;
         std::tuple<int,int> indexes = mit->second;
         int leftIndex = std::get<0>(indexes), rightIndex = std::get<1>(indexes);
-        std::cout << "--OBS in KF " << pKFi->mnId << " in map " << pKFi->GetMap()->GetId() << endl;
+        std::cout << "--OBS in KF " << pKFi->mnId << " in map " << pKFi->GetMap()->GetId() << std::endl;
     }
 }
 
@@ -800,7 +800,7 @@ void MapPoint::PostLoad(std::map<long unsigned int, KeyFrame*>& mpKFid, std::map
     mpRefKF = mpKFid[mBackupRefKFId];
     if(!mpRefKF)
     {
-        std::cout << "ERROR: MP without KF reference " << mBackupRefKFId << "; Num obs: " << nObs << endl;
+        std::cout << "ERROR: MP without KF reference " << mBackupRefKFId << "; Num obs: " << nObs << std::endl;
     }
     mpReplaced = static_cast<MapPoint*>(NULL);
     if(mBackupReplacedId>=0)

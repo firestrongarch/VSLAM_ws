@@ -24,8 +24,8 @@
 #include "Converter.h"
 #include "G2oTypes.h"
 #include "Optimizer.h"
-#include "Pinhole.h"
-#include "KannalaBrandt8.h"
+#include "CameraModels/Pinhole.h"
+#include "CameraModels/KannalaBrandt8.h"
 #include "MLPnPsolver.h"
 #include "GeometricTools.h"
 
@@ -3477,7 +3477,7 @@ bool Tracking::TrackWithMotionModel()
     // 纯定位模式下：如果成功追踪的地图点非常少,那么这里的mbVO标志就会置位
     if(mbOnlyTracking)
     {
-        mbVO = nmatchesstd::map<10;
+        mbVO = nmatchesMap<10;
         return nmatches>20;
     }
 

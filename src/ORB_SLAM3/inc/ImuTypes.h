@@ -30,6 +30,7 @@
 #include <mutex>
 
 #include "SerializationUtils.h"
+#include <iostream>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/vector.hpp>

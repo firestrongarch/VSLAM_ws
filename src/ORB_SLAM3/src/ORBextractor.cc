@@ -523,7 +523,7 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
         nDesiredFeaturesPerScale *= factor;
     }
     //由于前面的特征点个数取整操作，可能会导致剩余一些特征点个数没有被分配，所以这里就将这个余出来的特征点分配到最高的图层中
-    mnFeaturesPerLevel[nlevels-1] = std::std::max(nfeatures - sumFeatures, 0);
+    mnFeaturesPerLevel[nlevels-1] = std::max(nfeatures - sumFeatures, 0);
 
 	//成员变量pattern的长度，也就是点的个数，这里的512表示512个点（上面的数组中是存储的坐标所以是256*2*2）
     const int npoints = 512;

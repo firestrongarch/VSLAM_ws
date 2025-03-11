@@ -72,7 +72,7 @@ public:
     bool isFinished();
 
     int KeyframesInQueue(){
-        unique_lock<std::mutex> lock(mMutexNewKFs);
+        std::unique_lock<std::mutex> lock(mMutexNewKFs);
         return mlNewKeyFrames.size();
     }
 
@@ -193,7 +193,7 @@ protected:
     int countRefinement;
 
     //DEBUG
-    ofstream f_lm;
+    std::ofstream f_lm;
 
     };
 

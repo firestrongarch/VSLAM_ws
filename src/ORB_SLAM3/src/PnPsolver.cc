@@ -52,7 +52,9 @@
 #include <vector>
 #include <cmath>
 #include <opencv2/core/core.hpp>
-#include "Thirdparty/DBoW2/DUtils/Random.h"
+#include <opencv2/core.hpp>
+#include <opencv2/core/core_c.h>
+#include "DUtils/Random.h"
 #include <algorithm>
 
 using namespace std;
@@ -95,8 +97,8 @@ PnPsolver::PnPsolver(const Frame &F, const std::vector<MapPoint*> &vpMapPointMat
                 mvP2D.push_back(kp.pt);   //存放2维特征点
                 mvSigma2.push_back(F.mvLevelSigma2[kp.octave]);   //记录特征点是在哪一层提取出来的
 
-                cv::Mat Pos = pMP->GetWorldPos();   //世界坐标系下的3D点
-                mvP3Dw.push_back(cv::Point3f(Pos.at<float>(0),Pos.at<float>(1), Pos.at<float>(2)));
+                Eigen::Vector3f Pos = pMP->GetWorldPos();   //世界坐标系下的3D点
+                mvP3Dw.push_back(cv::Point3f(Pos(0),Pos(1), Pos(2)));
 
                 mvKeyPointIndices.push_back(i); //记录被使用特征点在原始特征点容器中的索引, mvKeyPointIndices是跳跃的
                 mvAllIndices.push_back(idx);    //记录被使用特征点的索引, mvAllIndices是连续的

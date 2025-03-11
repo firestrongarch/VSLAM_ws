@@ -42,7 +42,7 @@ MapDrawer::MapDrawer(Atlas* pAtlas, const std::string &strSettingPath, Settings*
             {
                 throw -1;
             }
-            catch(exception &e)
+            catch(std::exception &e)
             {
 
             }

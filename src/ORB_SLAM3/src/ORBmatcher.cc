@@ -25,7 +25,7 @@
 
 #include "DBoW2/FeatureVector.h"
 
-#include<stdint-gcc.h>
+#include<cstdint>
 
 using namespace std;
 

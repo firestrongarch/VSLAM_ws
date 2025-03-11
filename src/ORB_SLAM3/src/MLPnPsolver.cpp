@@ -46,6 +46,7 @@
  * SUCH DAMAGE.                                                               *
  ******************************************************************************/
 #include "MLPnPsolver.h"
+#include "DUtils/Random.h"
 
 #include <Eigen/Sparse>
 
