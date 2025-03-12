@@ -58,6 +58,9 @@ colcon build
 # 解压orbvoc
 cd ./src/config_pkg/voc
 tar -xzvf ./ORBvoc.txt.tar.gz
+
+# 7z解压
+7z x zip.7z
 ```
 💡 build完成后也可以把 ```source (path)/install/setup.zsh(bash)``` 添加到环境变量中, 这样可以在对应包目录中单独利用cmake编译包, 运行和调试
 
