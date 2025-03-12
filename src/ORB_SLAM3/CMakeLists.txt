@@ -52,6 +52,10 @@ if(realsense2_FOUND)
 endif()
 
 # Build examples
-# add_executable(stereo_kitti
-# Examples/Stereo/stereo_kitti.cc)
-# target_link_libraries(stereo_kitti ${PROJECT_NAME})
+add_executable(stereo_kitti
+Examples/Stereo/stereo_kitti.cc)
+target_link_libraries(stereo_kitti ${PROJECT_NAME})
+
+add_executable(rgbd
+Examples/rgbd_tum.cc)
+target_link_libraries(rgbd ${PROJECT_NAME})

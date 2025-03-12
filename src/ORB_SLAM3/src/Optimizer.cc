@@ -4622,8 +4622,8 @@ void Optimizer::OptimizeEssentialGraph(
     g2o::SparseOptimizer optimizer;
     using LinearSolver = g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>;
     auto solver = std::make_unique<g2o::BlockSolver_7_3>(std::make_unique<LinearSolver>());
-    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     solver->setLambda(1e-16);
+    auto algorithm = new g2o::OptimizationAlgorithmLevenberg(std::move(solver));
     optimizer.setAlgorithm(algorithm);
     optimizer.setVerbose(false);
 
