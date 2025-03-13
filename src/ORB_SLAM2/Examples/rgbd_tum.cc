@@ -19,6 +19,7 @@
 */
 
 
+#include <cstddef>
 #include<iostream>
 #include<algorithm>
 #include<fstream>
@@ -36,9 +37,9 @@ void LoadImages(const string &strAssociationFilename, std::vector<string> &vstrI
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 6)
     {
-        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
+        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association num_images" << endl;
         return 1;
     }
 
@@ -75,7 +76,10 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat imRGB, imD;
-    for(int ni=0; ni<nImages; ni++)
+
+    std::cout << "Processing " << argv[5] << " images" << std::endl;
+
+    for(int ni=0; ni < std::min(std::stoi(argv[5]), nImages); ni++)
     {
         // Read image and depthmap from file
         imRGB = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGB[ni]);

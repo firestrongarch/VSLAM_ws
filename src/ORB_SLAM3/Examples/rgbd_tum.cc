@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 
     // Main loop
     cv::Mat imRGB, imD;
+    int stop = nImages/6;
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
@@ -108,6 +109,9 @@ int main(int argc, char **argv)
         else if(ni>0)
             T = tframe-vTimestamps[ni-1];
 
+        if (ni == stop){
+            break;
+        }
         // if(ttrack<T)
             // std::this_thread::sleep_for((T-ttrack)*1e6);
     }
