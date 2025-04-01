@@ -79,14 +79,14 @@ tar -xzvf ./ORBvoc.txt.tar.gz
 ./build/ssvio/test/test_ssvio --config_yaml_path=/home/fu/VSLAM_ws/src/config_pkg/config/ssvio/kitti_04-12.yaml --kitti_dataset_path=/home/fu/datasets/KITTI/09
 ```
 
-1. 通过ros2 run运行
+2. 通过ros2 run运行
 ```sh
 # ov2slam
 ros2 run ov2slam ov2slam_node config_file_path
 ros2 run ov2slam kitti 00 ~/VSLAM_ws/src/config_pkg/config/ov2slam/accurate/kitti/kitti_00-02.yaml
 ```
 
-1. 通过ros2 launch运行
+3. 通过ros2 launch运行
 ```sh
 # ov2slam
 ros2 launch ov2slam kitti.py
