@@ -6,36 +6,40 @@ project(ov2slam)
 
 find_package(OpenCV REQUIRED)
 set(WITH_OPENCV_CONTRIB OFF)
-if (OpenCV_FOUND)
-  message(STATUS "Found OpenCV lib : ${OpenCV_VERSION} - ${OpenCV_INCLUDE_DIRS}")
-  if(WITH_OPENCV_CONTRIB)
-    message(STATUS "Going to use OpenCV contrib!")
-    add_definitions(-DOPENCV_CONTRIB)
-  endif()
-endif (OpenCV_FOUND)
+
+if(OpenCV_FOUND)
+    message(STATUS "Found OpenCV lib : ${OpenCV_VERSION} - ${OpenCV_INCLUDE_DIRS}")
+
+    if(WITH_OPENCV_CONTRIB)
+        message(STATUS "Going to use OpenCV contrib!")
+        add_definitions(-DOPENCV_CONTRIB)
+    endif()
+endif(OpenCV_FOUND)
 
 find_package(Eigen3 REQUIRED)
 find_package(opengv)
-if (opengv_FOUND)
-  message(STATUS "Found Opengv lib : ${opengv_INCLUDE_DIR} - ${opengv_DIR}")
-  add_definitions(-DUSE_OPENGV)
-endif (opengv_FOUND)
+
+if(opengv_FOUND)
+    message(STATUS "Found Opengv lib : ${opengv_INCLUDE_DIR} - ${opengv_DIR}")
+    add_definitions(-DUSE_OPENGV)
+endif(opengv_FOUND)
 
 find_package(Ceres REQUIRED)
 find_package(Sophus REQUIRED)
 
-##########
+# #########
 # iBOW-LCD
-##########
+# #########
 find_package(obindex2 REQUIRED)
 find_package(ibow_lcd REQUIRED)
 
 set(WITH_IBOW_LCD OFF)
-if (ibow_lcd_FOUND)
-  set(WITH_IBOW_LCD ON)
-  add_definitions(-DIBOW_LCD)
-  message(STATUS "iBoW-LCD found!  Going to use Loop Closer! : ${lcdetector_VERSION} - ${lcdetector_DIR}")
-endif (ibow_lcd_FOUND)
+
+if(ibow_lcd_FOUND)
+    set(WITH_IBOW_LCD ON)
+    add_definitions(-DIBOW_LCD)
+    message(STATUS "iBoW-LCD found!  Going to use Loop Closer! : ${lcdetector_VERSION} - ${lcdetector_DIR}")
+endif(ibow_lcd_FOUND)
 
 find_package(ament_index_cpp REQUIRED)
 find_package(jsoncpp REQUIRED)
@@ -50,134 +54,135 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
-# find_package(backward_ros REQUIRED)
 
+# find_package(backward_ros REQUIRED)
 find_package(dataset_reader REQUIRED)
 
-##################################################
-
+# #################################################
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
 
-## Declare a C++ library
+# # Declare a C++ library
 add_library(${PROJECT_NAME} SHARED ${srcs} ${headers})
 
 # Add mandatory dependencies
 target_include_directories(${PROJECT_NAME}
-  PUBLIC
+    PUBLIC
     ${OpenCV_INCLUDE_DIRS}
     ${PROJECT_SOURCE_DIR}/include/
     ${PROJECT_SOURCE_DIR}/include/ceres_parametrization/
 )
 
 target_link_libraries(${PROJECT_NAME}
-  Eigen3::Eigen
-  Sophus::Sophus
-  Ceres::ceres
-  ${OpenCV_LIBRARIES}
-  ament_index_cpp::ament_index_cpp
+    Eigen3::Eigen
+    Sophus::Sophus
+    Ceres::ceres
+    ${OpenCV_LIBRARIES}
+    ament_index_cpp::ament_index_cpp
 )
 
-if (ibow_lcd_FOUND)
-  target_link_libraries(
-    ${PROJECT_NAME}
-      ibow_lcd::ibow_lcd
-  )
-endif (ibow_lcd_FOUND)
+if(ibow_lcd_FOUND)
+    target_link_libraries(
+        ${PROJECT_NAME}
+        ibow_lcd::ibow_lcd
+    )
+endif(ibow_lcd_FOUND)
 
-if (opengv_FOUND)
-  target_link_libraries(
-    ${PROJECT_NAME}
-      opengv
-  )
-endif (opengv_FOUND)
+if(opengv_FOUND)
+    target_link_libraries(
+        ${PROJECT_NAME}
+        opengv
+    )
+endif(opengv_FOUND)
 
 ament_target_dependencies(${PROJECT_NAME}
-  rclcpp
-  tf2
-  tf2_ros
-  visualization_msgs
-  pcl_conversions
-  PCL
-  std_msgs
-  cv_bridge
-  image_transport
-  # backward_ros
+    rclcpp
+    tf2
+    tf2_ros
+    visualization_msgs
+    pcl_conversions
+    PCL
+    std_msgs
+    cv_bridge
+    image_transport
+
+    # backward_ros
 )
 
 install(DIRECTORY include/ DESTINATION include/)
 install(TARGETS ${PROJECT_NAME} DESTINATION lib/)
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
+# # Declare a C++ executable
+# # With catkin_make all packages are built within a single CMake context
+# # The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ov2slam_node.cpp)
-
 add_executable(${PROJECT_NAME}_node test/ov2slam_node.cpp)
 
 ament_target_dependencies(${PROJECT_NAME}_node
-  rclcpp
-  image_transport
-  std_msgs
-  sensor_msgs
-  cv_bridge
+    rclcpp
+    image_transport
+    std_msgs
+    sensor_msgs
+    cv_bridge
 )
 
-## Specify libraries to link a library or executable target against
+# # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_NAME}
+    ${PROJECT_NAME}
 )
 
 add_executable(${PROJECT_NAME}_datasets test/ov2slam_datasets.cpp)
 ament_target_dependencies(${PROJECT_NAME}_datasets
-  rclcpp
-  image_transport
-  std_msgs
-  sensor_msgs
-  cv_bridge
+    rclcpp
+    image_transport
+    std_msgs
+    sensor_msgs
+    cv_bridge
 )
-## Specify libraries to link a library or executable target against
+
+# # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_datasets
-  ${PROJECT_NAME}
+    ${PROJECT_NAME}
 )
 
-add_executable(kitti test/ov2slam_kitti.cpp)
-ament_target_dependencies(kitti
-  rclcpp
-  image_transport
-  std_msgs
-  sensor_msgs
-  cv_bridge
+add_executable(${PROJECT_NAME}_kitti test/ov2slam_kitti.cpp)
+ament_target_dependencies(${PROJECT_NAME}_kitti
+    rclcpp
+    image_transport
+    std_msgs
+    sensor_msgs
+    cv_bridge
 )
-## Specify libraries to link a library or executable target against
-target_link_libraries(kitti
-  ${PROJECT_NAME}
-  dataset_reader::dataset_reader
-)
-
-add_executable(ov2slam_111 test/ov2slam_111.cpp)
-ament_target_dependencies(ov2slam_111
-  rclcpp
-  image_transport
-  std_msgs
-  sensor_msgs
-  cv_bridge
-)
-## Specify libraries to link a library or executable target against
-target_link_libraries(ov2slam_111
-  ${PROJECT_NAME}
-  dataset_reader::dataset_reader
+target_link_libraries(${PROJECT_NAME}_kitti
+    ${PROJECT_NAME}
+    dataset_reader::dataset_reader
 )
 
-install(TARGETS
-  ${PROJECT_NAME}_node
-  kitti
-  ov2slam_111
-  DESTINATION lib/${PROJECT_NAME}
-  INCLUDES DESTINATION include
+# add_executable(ov2slam_111 test/ov2slam_111.cpp)
+# ament_target_dependencies(ov2slam_111
+# rclcpp
+# image_transport
+# std_msgs
+# sensor_msgs
+# cv_bridge
+# )
+# target_link_libraries(ov2slam_111
+# ${PROJECT_NAME}
+# dataset_reader::dataset_reader
+# )
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+install(
+    TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}_kitti
+
+    # LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    # ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(DIRECTORY launch 
+install(DIRECTORY launch
     DESTINATION share/${PROJECT_NAME}
 )
 
