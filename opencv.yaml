@@ -1,0 +1,6 @@
+---
+repositories:
+  src/3rdParty/opencv:
+    type: git
+    url: https://github.com/opencv/opencv
+    version: 5.x
