@@ -1,7 +1,11 @@
 {
     "names": {
-        "ssvio": {
-            "packages-skip": "true"
+        "OpenCV": {
+            "cmake-args": [
+                "-DOPENCV_EXTRA_MODULES_PATH=../opencv_contrib/modules",
+                "-DOPENCV_BIN_INSTALL_PATH=bin",
+                "-DOPENCV_LIB_INSTALL_PATH=lib"
+            ]
         }
     }
 }

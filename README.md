@@ -2,28 +2,28 @@
 借助colcon构建一些需要手动编译的SLAM软件包, 同时构建一些视觉SLAM算法
 
 ## 此分支环境
-| 软件      | 版本 |
-| ----------- | ----------- |
-| ubuntu      | 24.04       |
-| ros2   | jazzy        |
+| 软件   | 版本  |
+| ------ | ----- |
+| ubuntu | 24.04 |
+| ros2   | jazzy |
 
 ⚠ 编译需要 RAM >= 32G, 如果不够则添加虚拟内存
 ## 主要内容
-| 依赖      | 版本 |
-| ----------- | ----------- |
-| g2o      |   20230223_git     |
-| sophus   |  1.24.6  |
-| pangolin   |  v0.9.2  |
-| DBoW2   |  master  |
-| ncnn   |  master  |
+| 依赖     | 版本         |
+| -------- | ------------ |
+| g2o      | 20230223_git |
+| sophus   | 1.24.6       |
+| pangolin | v0.9.2       |
+| DBoW2    | master       |
+| ncnn     | master       |
 
-| 原仓库      | 修改说明 |
-| ----------- | ----------- |
-| [obindex2](https://github.com/emiliofidalgo/obindex2)   |  删除 boost 依赖  |
-| [ibow_lcd](https://github.com/emiliofidalgo/ibow-lcd)   |  只保留库文件  |
-| [ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments)      | 适配新版g2o和opencv       |
-| [ov2slam](https://github.com/ov2slam/ov2slam)   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
-| [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)   | 适配新版ceres和ROS2; 增加直接读取数据集代码   |
+| 原仓库                                                                                  | 修改说明                                    |
+| --------------------------------------------------------------------------------------- | ------------------------------------------- |
+| [obindex2](https://github.com/emiliofidalgo/obindex2)                                   | 删除 boost 依赖                             |
+| [ibow_lcd](https://github.com/emiliofidalgo/ibow-lcd)                                   | 只保留库文件                                |
+| [ORB_SLAM2_detailed_comments](https://github.com/electech6/ORB_SLAM2_detailed_comments) | 适配新版g2o和opencv                         |
+| [ov2slam](https://github.com/ov2slam/ov2slam)                                           | 适配新版ceres和ROS2; 增加直接读取数据集代码 |
+| [VINS-MONO-ROS2](https://github.com/dongbo19/VINS-MONO-ROS2)                            | 适配新版ceres和ROS2; 增加直接读取数据集代码 |
 
 ## 依赖
 ```sh
@@ -40,7 +40,7 @@ sudo apt install libsuitesparse-dev
 # 其他依赖
 sudo apt install libpoco-dev
 
-vcs import < dependencies.yaml --shallow
+vcs import --input dependencies.yaml --shallow
 
 ```
 
