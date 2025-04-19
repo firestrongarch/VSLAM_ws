@@ -12,3 +12,7 @@ repositories:
     type: git
     url: https://gitlab.kitware.com/vtk/vtk
     version: v9.4.2
+  src/3rdParty/eigen3:
+    type: git
+    url: https://gitlab.com/libeigen/eigen
+    version: 3.4.0
