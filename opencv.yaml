@@ -8,3 +8,7 @@ repositories:
     type: git
     url: https://github.com/opencv/opencv_contrib
     version: 5.x
+  src/3rdParty/vtk:
+    type: git
+    url: https://gitlab.kitware.com/vtk/vtk
+    version: v9.4.2
