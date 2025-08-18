@@ -13,12 +13,31 @@ find_package(Pangolin REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(g2o REQUIRED)
 find_package(DBoW2 REQUIRED)
-find_package(LetNet REQUIRED)
 
+set(GFLAGS_USE_TARGET_NAMESPACE ON)
+
+# find_package(LetNet REQUIRED)
 find_package(glog REQUIRED)
+find_package(gflags REQUIRED)
 
-add_subdirectory(src/ui)
-add_subdirectory(src/ssvio)
+file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/ssvio/*.cpp src/ui/*.cpp)
+file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
+add_library(ssvio SHARED
+    ${srcs}
+)
+
+target_include_directories(ssvio PUBLIC
+    inc
+)
+target_link_libraries(ssvio
+    glog::glog
+    Sophus::Sophus
+    g2o::core g2o::types_sba g2o::types_sim3 g2o::solver_dense g2o::solver_eigen g2o::solver_csparse
+    ${Pangolin_LIBRARIES}
+    ${DBoW2_LIBRARY}
+    ${OpenCV_LIBS}
+)
+
 add_subdirectory(test)
 
 include(GNUInstallDirs)

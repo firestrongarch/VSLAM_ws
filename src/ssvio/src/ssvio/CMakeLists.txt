@@ -15,10 +15,10 @@ add_library(ssvio SHARED
 )
 
 target_include_directories(ssvio PUBLIC
-    ${DBoW2_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../../inc>
 )
-target_link_libraries(ssvio 
+target_link_libraries(ssvio
+    ui
     glog::glog
     Sophus::Sophus
     g2o::core g2o::types_sba g2o::types_sim3 g2o::solver_dense g2o::solver_eigen g2o::solver_csparse
