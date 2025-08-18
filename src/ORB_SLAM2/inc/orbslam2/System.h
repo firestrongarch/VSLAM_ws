@@ -26,7 +26,7 @@
 #define SYSTEM_H
 
 // 一些公用库的支持，字符串操作，多线程操作，以及opencv库等
-#include "orbslam2/MapPoint.h"
+#include "orbslam2/ORBVocabulary.h"
 #include <opencv2/core/core.hpp>
 #include <string>
 #include <thread>
@@ -42,6 +42,7 @@ class LocalMapping;
 class LoopClosing;
 class MapDrawer;
 class MapPoint;
+class KeyFrameDatabase;
 
 using namespace std;
 // 本类的定义

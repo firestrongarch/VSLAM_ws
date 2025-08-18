@@ -31,6 +31,7 @@
 
 #include "orbslam2/Frame.h"
 #include "orbslam2/Converter.h"
+#include "orbslam2/ORBextractor.h"
 #include "orbslam2/ORBmatcher.h"
 #include <thread>
 

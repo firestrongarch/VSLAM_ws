@@ -33,12 +33,8 @@
 
 #include "DBoW2/BowVector.h"
 #include "DBoW2/FeatureVector.h"
-#include "orbslam2/KeyFrame.h"
-#include "orbslam2/MapPoint.h"
 #include "orbslam2/ORBVocabulary.h"
-#include "orbslam2/ORBextractor.h"
-
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
 namespace ORB_SLAM2 {
 using namespace std;
@@ -62,6 +58,7 @@ using namespace std;
 
 class MapPoint;
 class KeyFrame;
+class ORBextractor;
 
 /**
  * @brief 帧
