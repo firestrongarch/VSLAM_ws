@@ -614,4 +614,9 @@ std::vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
     return mTrackedKeyPointsUn;
 }
 
+void System::SetFps(float& fps)
+{
+    mpFrameDrawer->mFps = fps;
+}
+
 } // namespace ORB_SLAM

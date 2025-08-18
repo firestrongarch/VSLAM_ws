@@ -91,6 +91,10 @@ int main(int argc, char** argv)
 
         vTimesTrack[ni] = ttrack;
 
+        float fps = 1 / ttrack; // 计算帧率
+
+        SLAM.SetFps(fps);
+
         // Wait to load the next frame
         // double T=0;
         // if(ni<nImages-1)
