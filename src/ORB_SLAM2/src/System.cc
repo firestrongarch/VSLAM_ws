@@ -24,6 +24,16 @@
 #include "orbslam2/System.h"
 #include "orbslam2/Converter.h" // TODO 目前还不是很明白这个是做什么的
 #include "orbslam2/ORBVocabulary.h"
+// 下面则是本ORB-SLAM2系统中的其他模块
+#include "orbslam2/FrameDrawer.h"
+#include "orbslam2/KeyFrameDatabase.h"
+#include "orbslam2/LocalMapping.h"
+#include "orbslam2/LoopClosing.h"
+#include "orbslam2/Map.h"
+#include "orbslam2/MapDrawer.h"
+#include "orbslam2/ORBVocabulary.h"
+#include "orbslam2/Tracking.h"
+#include "orbslam2/Viewer.h"
 // 包含共有库
 #include <iomanip> //主要是对cin,cout之类的一些操纵运算子
 #include <pangolin/pangolin.h> //可视化界面

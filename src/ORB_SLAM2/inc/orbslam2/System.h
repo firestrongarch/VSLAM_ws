@@ -26,20 +26,10 @@
 #define SYSTEM_H
 
 // 一些公用库的支持，字符串操作，多线程操作，以及opencv库等
+#include "orbslam2/MapPoint.h"
 #include <opencv2/core/core.hpp>
 #include <string>
 #include <thread>
-
-// 下面则是本ORB-SLAM2系统中的其他模块
-#include "orbslam2/FrameDrawer.h"
-#include "orbslam2/KeyFrameDatabase.h"
-#include "orbslam2/LocalMapping.h"
-#include "orbslam2/LoopClosing.h"
-#include "orbslam2/Map.h"
-#include "orbslam2/MapDrawer.h"
-#include "orbslam2/ORBVocabulary.h"
-#include "orbslam2/Tracking.h"
-#include "orbslam2/Viewer.h"
 
 namespace ORB_SLAM2 {
 
@@ -50,7 +40,10 @@ class Map;
 class Tracking;
 class LocalMapping;
 class LoopClosing;
+class MapDrawer;
+class MapPoint;
 
+using namespace std;
 // 本类的定义
 class System {
 public:

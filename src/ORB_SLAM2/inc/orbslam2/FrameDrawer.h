@@ -32,19 +32,14 @@
 #ifndef FRAMEDRAWER_H
 #define FRAMEDRAWER_H
 
-#include "orbslam2/Map.h"
-#include "orbslam2/MapPoint.h"
-#include "orbslam2/Tracking.h"
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-
 #include <mutex>
+#include <opencv2/core.hpp>
 
 namespace ORB_SLAM2 {
 
 class Tracking;
 class Viewer;
+class Map;
 
 class FrameDrawer {
 public:
