@@ -1,14 +1,16 @@
 #include "letnet/letnet.h"
 
-LetNet::LetNet(const std::string& path){
+LetNet::LetNet(const std::string& path)
+{
     net.load_param((path + "/model.param").c_str());
     net.load_model((path + "/model.bin").c_str());
 }
 
-bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score){
+bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score)
+{
     ncnn::Mat in;
     ncnn::Mat out1, out2;
-    
+
     in = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_BGR, src.cols, src.rows);
     in.substract_mean_normalize(mean_vals, norm_vals);
 
@@ -27,8 +29,8 @@ bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score){
 std::vector<cv::Point2f> LetNet::extractFeature(
     const cv::Mat& score,
     int ncellsize,
-    const std::vector<cv::Point2f>& vcurkps
-) {
+    const std::vector<cv::Point2f>& vcurkps)
+{
     if (score.empty()) {
         return std::vector<cv::Point2f>();
     }
@@ -46,9 +48,8 @@ std::vector<cv::Point2f> LetNet::extractFeature(
     vdetectedpx.reserve(nbcells);
 
     std::vector<std::vector<bool>> voccupcells(
-            nhcells + 1,
-            std::vector<bool>(nwcells + 1, false)
-    );
+        nhcells + 1,
+        std::vector<bool>(nwcells + 1, false));
 
     cv::Mat mask = cv::Mat::ones(score.rows, score.cols, CV_8UC1);
 
@@ -64,24 +65,23 @@ std::vector<cv::Point2f> LetNet::extractFeature(
 
     auto cvrange = cv::Range(0, nbcells);
 
-    parallel_for_(cvrange, [&](const cv::Range& range)
-    {
-        for (int i = range.start; i < range.end; i ++) {
+    parallel_for_(cvrange, [&](const cv::Range& range) {
+        for (int i = range.start; i < range.end; i++) {
 
             size_t r = floor(i / nwcells);
             size_t c = i % nwcells;
 
-            if( voccupcells[r][c] ) {
+            if (voccupcells[r][c]) {
                 nboccup++;
                 continue;
             }
 
-            size_t x = c*ncellsize;
-            size_t y = r*ncellsize;
+            size_t x = c * ncellsize;
+            size_t y = r * ncellsize;
 
-            cv::Rect hroi(x,y,ncellsize,ncellsize);
+            cv::Rect hroi(x, y, ncellsize, ncellsize);
 
-            if( x+ncellsize < ncols-1 && y+ncellsize < nrows-1 ) {
+            if (x + ncellsize < ncols - 1 && y + ncellsize < nrows - 1) {
 
                 double dminval, dmaxval;
                 cv::Point minpx, maxpx;
@@ -90,7 +90,7 @@ std::vector<cv::Point2f> LetNet::extractFeature(
                 maxpx.x += x;
                 maxpx.y += y;
 
-                if( dmaxval >= 0.2) {
+                if (dmaxval >= 0.2) {
                     vvdetectedpx.at(i).push_back(maxpx);
                     cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
                 }
@@ -99,8 +99,7 @@ std::vector<cv::Point2f> LetNet::extractFeature(
                 maxpx.x += x;
                 maxpx.y += y;
 
-                if( dmaxval >= 0.2)
-                {
+                if (dmaxval >= 0.2) {
                     vvsecdetectionspx.at(i).push_back(maxpx);
                     cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
                 }
@@ -108,7 +107,7 @@ std::vector<cv::Point2f> LetNet::extractFeature(
         }
     });
 
-    for (const auto& vpx:vvdetectedpx) {
+    for (const auto& vpx : vvdetectedpx) {
         if (!vpx.empty()) {
             vdetectedpx.insert(vdetectedpx.end(), vpx.begin(), vpx.end());
         }
@@ -119,10 +118,10 @@ std::vector<cv::Point2f> LetNet::extractFeature(
     if (nbkps + nboccup < nbcells) {
         size_t nbsec = nbcells - nbkps - nboccup;
         size_t k = 0;
-        for (const auto &vseckp : vvsecdetectionspx) {
+        for (const auto& vseckp : vvsecdetectionspx) {
             if (!vseckp.empty()) {
                 vdetectedpx.push_back(vseckp.back());
-                k ++;
+                k++;
                 if (k == nbsec) {
                     break;
                 }
