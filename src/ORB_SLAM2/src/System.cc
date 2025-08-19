@@ -195,7 +195,8 @@ cv::Mat System::TrackStereo(const cv::Mat& imLeft, // 左侧图像
 
             // Wait until Local Mapping has effectively stopped
             while (!mpLocalMapper->isStopped()) {
-                usleep(1000);
+                // usleep(1000);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             // 运行到这里的时候，局部建图部分就真正地停止了
             // 告知追踪器，现在 只有追踪工作
@@ -260,7 +261,8 @@ cv::Mat System::TrackRGBD(const cv::Mat& im, const cv::Mat& depthmap, const doub
 
             // Wait until Local Mapping has effectively stopped
             while (!mpLocalMapper->isStopped()) {
-                usleep(1000);
+                // usleep(1000);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
             mpTracker->InformOnlyTracking(true);
@@ -311,7 +313,8 @@ cv::Mat System::TrackMonocular(const cv::Mat& im, const double& timestamp)
 
             // Wait until Local Mapping has effectively stopped
             while (!mpLocalMapper->isStopped()) {
-                usleep(1000);
+                // usleep(1000);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
 
             // 局部地图关闭以后，只进行追踪的线程，只计算相机的位姿，没有对局部地图进行更新
@@ -396,13 +399,15 @@ void System::Shutdown()
         mpViewer->RequestFinish();
         // 等到，知道真正地停止
         while (!mpViewer->isFinished())
-            usleep(5000);
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        // usleep(5000);
     }
 
     // Wait until all thread have effectively stopped
     while (!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA()) // 说实在话不是很理解这个 TODO isRunningGBA函数是用来做什么的？
     {
-        usleep(5000);
+        // usleep(5000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     // if(mpViewer)

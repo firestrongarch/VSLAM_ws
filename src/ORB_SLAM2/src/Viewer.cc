@@ -182,7 +182,8 @@ void Viewer::Run()
         cv::Mat im = mpFrameDrawer->DrawFrame();
         cv::imshow("ORB-SLAM2: Current Frame", im);
         // NOTICE 注意对于我所遇到的问题,ORB-SLAM2是这样子来处理的
-        cv::waitKey(mT);
+        // cv::waitKey(mT);
+        cv::waitKey(1);
 
         // step 5 相应其他请求
         // 复位按钮
