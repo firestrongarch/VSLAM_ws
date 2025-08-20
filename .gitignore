@@ -45,3 +45,7 @@ ORBvoc.txt.tar.gz
 
 output
 *.7z
+
+datasets
+lightning_logs
+__pycache__
