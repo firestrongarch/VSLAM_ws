@@ -2,8 +2,10 @@
 
 LetNet::LetNet(const std::string& path)
 {
+    std::cout << "Loading model from: " << path << std::endl;
     net.load_param((path + "/model.param").c_str());
     net.load_model((path + "/model.bin").c_str());
+    std::cout << "Model loaded successfully." << std::endl;
 }
 
 bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score)

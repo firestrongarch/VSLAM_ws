@@ -1,8 +1,9 @@
 #include "letnet/letnet.h"
+#include <filesystem>
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <print>
 #include <string>
-
 
 class FeatureTracker {
 public:
@@ -120,7 +121,7 @@ private:
 int main(int argc, char** argv)
 {
     if (argc != 4) {
-        std::cout << "Usage: " << argv[0] << " <model_path> <video_path> <grid_size>" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <model_path> <image_sequence_path> <grid_size>" << std::endl;
         std::cout << "Example: " << argv[0] << " model_dir image_sequence 20" << std::endl;
         return -1;
     }
@@ -133,6 +134,7 @@ int main(int argc, char** argv)
 
     // 初始化特征跟踪器，传入网格大小参数
     FeatureTracker tracker(argv[1], grid_size);
+    std::println("FeatureTracker initialized.");
 
     // 打开视频或图像序列
     cv::VideoCapture cap(argv[2] + std::string("/%06d.png"));
@@ -161,7 +163,6 @@ int main(int argc, char** argv)
     }
     cv::waitKey(0);
 
-    cap.release();
     cv::destroyAllWindows();
     return 0;
 }

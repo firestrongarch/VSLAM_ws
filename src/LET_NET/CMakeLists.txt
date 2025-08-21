@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF()
+SET(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 project(LetNet)
 
@@ -19,7 +17,7 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS inc/*.h)
 
 # Build
 add_library(${PROJECT_NAME} SHARED src/letnet.cpp ${headers})
-target_include_directories(${PROJECT_NAME}  PUBLIC
+target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/inc>
     INTERFACE
     $<INSTALL_INTERFACE:include>
@@ -36,7 +34,7 @@ target_link_libraries(test PUBLIC
 )
 
 # install
-install(TARGETS ${PROJECT_NAME} 
+install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}Targets)
 install(EXPORT ${PROJECT_NAME}Targets
     FILE ${PROJECT_NAME}Targets.cmake
@@ -58,6 +56,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
 )
 
 # Install header files
-install(FILES ${headers}     
+install(FILES ${headers}
     DESTINATION include/${PROJECT_NAME}
 )
