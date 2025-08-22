@@ -2,10 +2,8 @@
 
 LetNet::LetNet(const std::string& path)
 {
-    std::cout << "Loading model from: " << path << std::endl;
     net.load_param((path + "/model.param").c_str());
     net.load_model((path + "/model.bin").c_str());
-    std::cout << "Model loaded successfully." << std::endl;
 }
 
 bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score)
@@ -13,18 +11,40 @@ bool LetNet::extract(const cv::Mat& src, cv::Mat& desc, cv::Mat& score)
     ncnn::Mat in;
     ncnn::Mat out1, out2;
 
-    in = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_BGR, src.cols, src.rows);
+    if (src.empty()) {
+        throw std::runtime_error("Error: Input image is empty.");
+    }
+
+    if (src.channels() != 1) {
+        std::println("src.channels() = {}", src.channels());
+        throw std::runtime_error("Error: Input image must have 1 channel.");
+    }
+
+    in = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_GRAY, src.cols, src.rows);
     in.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = net.create_extractor();
     ex.input("input", in);
     ex.extract("score", out1);
     ex.extract("descriptor", out2);
+
     out1.substract_mean_normalize(mean_vals_inv, norm_vals_inv);
     out2.substract_mean_normalize(mean_vals_inv, norm_vals_inv);
 
+    if (score.cols != out1.w || score.rows != out1.h) {
+        std::cerr << "Error: score cv::Mat has incorrect size." << std::endl;
+        return false;
+    }
+
+    if (desc.cols != out2.w || desc.rows != out2.h) {
+        std::cerr << "Error: desc cv::Mat has incorrect size." << std::endl;
+        return false;
+    }
+
     out1.to_pixels(score.data, ncnn::Mat::PIXEL_GRAY);
+    // std::println("LetNet::extract: Score converted to pixels.");
     out2.to_pixels(desc.data, ncnn::Mat::PIXEL_BGR);
+
     return true;
 }
 

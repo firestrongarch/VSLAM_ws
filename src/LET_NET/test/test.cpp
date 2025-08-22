@@ -1,9 +1,18 @@
 #include "letnet/letnet.h"
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <print>
 #include <string>
+
+using namespace std;
+
+const int HIGH = 376;
+const int WIDTH = 1241;
+
+void LoadImages(const string& strPathToSequence, std::vector<string>& vstrImageLeft,
+    std::vector<string>& vstrImageRight, std::vector<double>& vTimestamps);
 
 class FeatureTracker {
 public:
@@ -15,6 +24,8 @@ public:
 
     void readImage(const cv::Mat& _img)
     {
+        static int num = 0;
+        num++;
         cur_img = _img.clone();
 
         if (prev_img.empty()) {
@@ -26,12 +37,17 @@ public:
 
         if (!prev_pts.empty()) { // 只有当存在前一帧特征点时才进行跟踪
             trackFeatures();
-            std::cout << "Tracked features: " << cur_pts.size() << std::endl;
+            std::println("Tracked {} features, num: {}", cur_pts.size(), num);
         }
 
         // 当特征点数量太少时，提取新的特征点
         if (cur_pts.size() < 100) { // 可以调整这个阈值
-            extractFeatures();
+            try {
+                extractFeatures();
+            } catch (const std::exception& e) {
+                std::cerr << "Error extracting features: " << e.what() << std::endl;
+            }
+            // extractFeatures();
             std::cout << "Extracted new features, total: " << cur_pts.size() << std::endl;
         }
 
@@ -42,15 +58,11 @@ public:
 
     void extractFeatures()
     {
-        cv::Mat desc(480, 640, CV_8UC3), score(480, 640, CV_8UC1);
-        std::cout << "extractFeatures cvtColor" << std::endl;
+        cv::Mat desc(HIGH, WIDTH, CV_8UC3), score(HIGH, WIDTH, CV_8UC1);
         letnet.extract(cur_img, desc, score);
-        std::cout << "extractFeatures extract" << std::endl;
         // 使用命令行参数设置的网格大小
         std::vector<cv::Point2f> new_features = letnet.extractFeature(score, grid_size, cur_pts);
-        std::cout << "extractFeatures letnet.extractFeature with grid size: " << grid_size << std::endl;
         cur_pts.insert(cur_pts.end(), new_features.begin(), new_features.end());
-        std::cout << "extractFeatures cur_pts.insert" << std::endl;
     }
 
     void trackFeatures()
@@ -63,12 +75,12 @@ public:
         std::vector<uchar> status;
         std::vector<float> err;
 
-        cv::Mat prev_gray, cur_gray;
-        cv::cvtColor(prev_img, prev_gray, cv::COLOR_BGR2GRAY);
-        cv::cvtColor(cur_img, cur_gray, cv::COLOR_BGR2GRAY);
+        // cv::Mat prev_gray, cur_gray;
+        // cv::cvtColor(prev_img, prev_gray, cv::COLOR_BGR2GRAY);
+        // cv::cvtColor(cur_img, cur_gray, cv::COLOR_BGR2GRAY);
 
         try {
-            cv::calcOpticalFlowPyrLK(prev_gray, cur_gray, prev_pts, next_pts, status, err);
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, next_pts, status, err);
 
             // 保存特征点轨迹
             cur_pts.clear();
@@ -88,6 +100,9 @@ public:
 
     void drawTracking(cv::Mat& img)
     {
+        if (img.channels() == 1) {
+            cv::cvtColor(img, img, cv::COLOR_GRAY2BGR); // 确保图像是彩色的
+        }
         // 绘制特征点轨迹线段
         for (const auto& track : tracks) {
             cv::line(img, track.first, track.second, cv::Scalar(0, 255, 0), 1);
@@ -134,30 +149,40 @@ int main(int argc, char** argv)
 
     // 初始化特征跟踪器，传入网格大小参数
     FeatureTracker tracker(argv[1], grid_size);
-    std::println("FeatureTracker initialized.");
 
-    // 打开视频或图像序列
-    cv::VideoCapture cap(argv[2] + std::string("/%06d.png"));
-    if (!cap.isOpened()) {
-        std::cout << "Failed to open video file!" << std::endl;
-        return -1;
-    }
+    std::vector<string> vstrImageLeft;
+    std::vector<string> vstrImageRight;
+    std::vector<double> vTimestamps;
+    LoadImages(string(argv[2]), vstrImageLeft, vstrImageRight, vTimestamps);
 
-    cv::Mat frame;
-    int frame_count = 0;
-    while (cap.read(frame)) {
-        std::cout << "\nProcessing frame " << frame_count++ << std::endl;
+    const int nImages = vstrImageLeft.size();
+    // Vector for tracking time statistics
+    std::vector<float> vTimesTrack;
+    vTimesTrack.resize(nImages);
+    // Main loop
+    cv::Mat imLeft, imRight;
+    for (int ni = 0; ni < nImages; ni++) {
+        // Read left and right images from file
+        imLeft = cv::imread(vstrImageLeft[ni], cv::IMREAD_GRAYSCALE);
+        imRight = cv::imread(vstrImageRight[ni], cv::IMREAD_GRAYSCALE);
+        double tframe = vTimestamps[ni];
 
+        if (imLeft.empty()) {
+            cerr << endl
+                 << "Failed to load image at: "
+                 << string(vstrImageLeft[ni]) << endl;
+            return 1;
+        }
         // 特征点跟踪
-        tracker.readImage(frame);
+        tracker.readImage(imLeft);
 
         // 绘制跟踪结果
-        tracker.drawTracking(frame);
+        tracker.drawTracking(imLeft);
 
         // 显示结果
-        cv::imshow("Tracking", frame);
+        cv::imshow("Tracking", imLeft);
 
-        char key = cv::waitKey(1); // 改为1ms延时，使显示更流畅
+        char key = cv::waitKey(5); // 改为5ms延时，使显示更流畅
         if (key == 27)
             break; // ESC键退出
     }
@@ -165,4 +190,37 @@ int main(int argc, char** argv)
 
     cv::destroyAllWindows();
     return 0;
+}
+
+void LoadImages(const string& strPathToSequence, std::vector<string>& vstrImageLeft,
+    std::vector<string>& vstrImageRight, std::vector<double>& vTimestamps)
+{
+    ifstream fTimes;
+    string strPathTimeFile = strPathToSequence + "/times.txt";
+    fTimes.open(strPathTimeFile.c_str());
+    while (!fTimes.eof()) {
+        string s;
+        getline(fTimes, s);
+        if (!s.empty()) {
+            stringstream ss;
+            ss << s;
+            double t;
+            ss >> t;
+            vTimestamps.push_back(t);
+        }
+    }
+
+    string strPrefixLeft = strPathToSequence + "/image_0/";
+    string strPrefixRight = strPathToSequence + "/image_1/";
+
+    const int nTimes = vTimestamps.size();
+    vstrImageLeft.resize(nTimes);
+    vstrImageRight.resize(nTimes);
+
+    for (int i = 0; i < nTimes; i++) {
+        stringstream ss;
+        ss << setfill('0') << setw(6) << i;
+        vstrImageLeft[i] = strPrefixLeft + ss.str() + ".png";
+        vstrImageRight[i] = strPrefixRight + ss.str() + ".png";
+    }
 }
