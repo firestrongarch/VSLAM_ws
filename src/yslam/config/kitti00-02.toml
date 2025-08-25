@@ -1,0 +1,28 @@
+[dataset]
+name = "kitti"
+path = "E:/datasets/Kitti00-10/00"
+
+[camera]
+fps = 60
+type = "stereo"
+
+# stereo baseline times fx
+bf = 386.1448
+
+[camera.size]
+width = 1241
+height = 376
+
+[camera.intrinsics]
+# fx = f/dx, f is the focal length, dx represents the pixel size in the x direction
+fx = 718.856
+fy = 718.856
+# cx is the coordinate of the primary point
+cx = 607.1928
+cy = 185.2157
+
+[camera.distortion]
+k1 = 0.0
+k2 = 0.0
+p1 = 0.0
+p2 = 0.0
