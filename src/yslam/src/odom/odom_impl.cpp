@@ -1,7 +1,7 @@
 #include "odom_impl.h"
 #include "toml++/toml.h"
 // #include "toml.hpp"
-#include "kitti.h"
+#include "yslam/kitti.h"
 #include <opencv2/opencv.hpp>
 #include <print>
 
@@ -25,7 +25,7 @@ void Odom::OdomImpl::run(std::string config_file)
         cv::Mat left_image = cv::imread(std::get<1>(frame), cv::IMREAD_GRAYSCALE);
         cv::Mat right_image = cv::imread(std::get<2>(frame), cv::IMREAD_GRAYSCALE);
 
-        track({ std::get<0>(frame), left_image, right_image, nullptr });
+        track({ std::get<0>(frame), left_image, right_image });
 
         cv::imshow("Left Image", left_image);
         cv::waitKey(10);

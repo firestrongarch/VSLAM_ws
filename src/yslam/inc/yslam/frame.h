@@ -9,8 +9,13 @@ struct Frame {
     cv::Mat img0; // Left image
     cv::Mat img1; // Right image
 
-    std::vector<cv::KeyPoint> kps0; // Tracking Points
-    std::vector<cv::KeyPoint> kps1; // Tracking Points
+    cv::Mat mask; // Mask for extracting features
+
+    int cell_num = 20;
+    std::vector<cv::KeyPoint> kps0; // Extracted Points
+    std::vector<cv::KeyPoint> kps1; // Extracted Points
+    std::vector<cv::Point2f> pts0; // Extracted Points
+    std::vector<cv::Point2f> pts1; // Extracted Points
 
     cv::Mat desc0; // Descriptors for left image
     cv::Mat desc1; // Descriptors for right image

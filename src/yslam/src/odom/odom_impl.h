@@ -1,7 +1,7 @@
 #pragma once
-#include "extractor.h"
-#include "frame.h"
-#include "odom.h"
+#include "yslam/extractor.h"
+#include "yslam/frame.h"
+#include "yslam/odom.h"
 
 namespace Yslam {
 

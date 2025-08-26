@@ -1,6 +1,6 @@
 #pragma once
 
-#include "frame.h"
+#include "yslam/frame.h"
 
 namespace Yslam {
 
@@ -16,9 +16,7 @@ public:
     {
         // Implement ORB feature extraction here
         cv::Ptr<cv::ORB> orb = cv::ORB::create();
-        std::vector<cv::KeyPoint> keypoints;
-        cv::Mat descriptors;
-        orb->detectAndCompute(frame.img0, cv::Mat(), frame.kps0, frame.desc0);
+        orb->detectAndCompute(frame.img0, frame.mask, frame.kps0, frame.desc0);
     }
 };
 
