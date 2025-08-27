@@ -6,17 +6,24 @@ namespace Yslam {
 
 class Extractor {
 public:
-    virtual void extract(Frame& frame) = 0;
+    struct Param {
+        const cv::Mat& img;
+        const cv::Mat& mask;
+        std::vector<cv::Point2f>& pts;
+        std::vector<cv::KeyPoint>& kps;
+        cv::Mat& desc;
+    };
+    virtual void extract(Param params) = 0;
     virtual ~Extractor() = default;
 };
 
 class ORBExtractor : public Extractor {
 public:
-    void extract(Frame& frame) override
+    void extract(Param params) override
     {
         // Implement ORB feature extraction here
         cv::Ptr<cv::ORB> orb = cv::ORB::create();
-        orb->detectAndCompute(frame.img0, frame.mask, frame.kps0, frame.desc0);
+        orb->detectAndCompute(params.img, params.mask, params.kps, params.desc);
     }
 };
 

@@ -19,14 +19,12 @@ void Odom::OdomImpl::run(std::string config_file)
 
     auto frame_paths = loadKittiDataset(dataset_path_);
 
+    extractor_->load("E:/CPP/VSLAM_ws/src/config_pkg/model");
     for (const auto& frame : frame_paths) {
         cv::Mat left_image = cv::imread(std::get<1>(frame), cv::IMREAD_GRAYSCALE);
         cv::Mat right_image = cv::imread(std::get<2>(frame), cv::IMREAD_GRAYSCALE);
 
-        track({ std::get<0>(frame), left_image, right_image });
-
-        cv::imshow("Left Image", left_image);
-        cv::waitKey(10);
+        track(std::make_shared<Frame>(std::get<0>(frame), left_image, right_image));
     }
 }
 
@@ -43,21 +41,34 @@ void Odom::OdomImpl::stop()
     // Implementation for stopping the odometry
 }
 
-void Odom::OdomImpl::track(Frame frame)
+void Odom::OdomImpl::track(std::shared_ptr<Frame> frame)
 {
-    std::println("Tracking frame at timestamp: {}", frame.t);
+    std::println("Tracking frame at timestamp: {}", frame->t);
     LkTracker Lk;
-    // Implementation for tracking the given frame
-    extractor_->extract(frame);
 
-    if (frame.last) {
-        Lk.track({ .img0 = frame.last->img0,
-            .img1 = frame.img0,
-            .pts0 = frame.last->pts0,
-            .pts1 = frame.pts0 });
+    extractor_->extract({ .img = frame->img0,
+        .mask = frame->mask,
+        .pts = frame->pts0,
+        .kps = frame->kps0,
+        .desc = frame->desc0 });
+    // Implementation for tracking the given frame
+    if (frame->last) {
+        Lk.track({ .img0 = frame->last->desc0,
+            .img1 = frame->desc0,
+            .pts0 = frame->last->pts0,
+            .pts1 = frame->pts0 });
+    }
+    if (frame->pts0.size() < 100) {
+        extractor_->extract({ .img = frame->img0,
+            .mask = frame->mask,
+            .pts = frame->pts0,
+            .kps = frame->kps0,
+            .desc = frame->desc0 });
     }
 
-    frame.last = std::make_unique<Frame>(std::move(frame));
+    viewer_->view({ .img = frame->img0, .pts = frame->pts0 });
+
+    frame->last = frame;
 }
 
 }

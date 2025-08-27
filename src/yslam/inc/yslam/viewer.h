@@ -5,20 +5,19 @@
 
 namespace Yslam {
 
-struct ViewerParams {
-    const cv::Mat& img;
-    const std::vector<cv::Point2f>& pts;
-};
-
 class Viewer {
 public:
-    virtual void view(ViewerParams params) = 0;
+    struct Params {
+        const cv::Mat& img;
+        const std::vector<cv::Point2f>& pts;
+    };
+    virtual void view(Params params) = 0;
     virtual ~Viewer() = default;
 };
 
 class LetNetViewer : public Viewer {
 public:
-    void view(ViewerParams params) override
+    void view(Params params) override
     {
         auto img = params.img.clone();
         if (img.empty()) {
@@ -35,11 +34,9 @@ public:
             cv::circle(img, pt, 2, cv::Scalar(0, 255, 0), -1);
         }
 
-        // std::cout << "desc size : " << params.desc.size() << "\n";
-        std::cout << "img0 size : " << params.img.size() << "\n";
         // Implement LetNet specific viewing here
         cv::imshow("LetNet Keypoints", img);
-        cv::waitKey(0);
+        cv::waitKey(1);
     }
 };
 

@@ -8,11 +8,11 @@ namespace Yslam {
 
 class LetNetExtractor : public Extractor {
 public:
-    void extract(Frame& frame) override
+    void extract(Param params) override
     {
-        auto& src = frame.img0;
-        // auto& desc = frame.desc0;
-        auto& pts = frame.pts0;
+        auto& src = params.img;
+        // auto& desc = params.desc;
+        auto& pts = params.pts;
 
         cv::Mat score(src.rows, src.cols, CV_8UC1);
         cv::Mat desc(src.rows, src.cols, CV_8UC3);
@@ -42,8 +42,10 @@ public:
         out1.to_pixels(score.data, ncnn::Mat::PIXEL_GRAY);
         out2.to_pixels(desc.data, ncnn::Mat::PIXEL_BGR);
 
-        frame.desc0 = desc;
-        pts = extractFeature(score, frame.cell_num, frame.pts0);
+        params.desc = desc;
+
+        if (pts.size() < 100)
+            pts = extractFeature(score, 20, pts);
     }
 
     void load(const std::string& model_path)
@@ -133,6 +135,45 @@ public:
                 }
             }
         });
+        // for (int i = 0; i < nbcells; i++) {
+
+        //     size_t r = floor(i / nwcells);
+        //     size_t c = i % nwcells;
+
+        //     if (voccupcells[r][c]) {
+        //         nboccup++;
+        //         continue;
+        //     }
+
+        //     size_t x = c * ncellsize;
+        //     size_t y = r * ncellsize;
+
+        //     cv::Rect hroi(x, y, ncellsize, ncellsize);
+
+        //     if (x + ncellsize < ncols - 1 && y + ncellsize < nrows - 1) {
+
+        //         double dminval, dmaxval;
+        //         cv::Point minpx, maxpx;
+
+        //         cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
+        //         maxpx.x += x;
+        //         maxpx.y += y;
+
+        //         if (dmaxval >= 0.2) {
+        //             vvdetectedpx.at(i).push_back(maxpx);
+        //             cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+        //         }
+
+        //         cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
+        //         maxpx.x += x;
+        //         maxpx.y += y;
+
+        //         if (dmaxval >= 0.2) {
+        //             vvsecdetectionspx.at(i).push_back(maxpx);
+        //             cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+        //         }
+        //     }
+        // }
 
         for (const auto& vpx : vvdetectedpx) {
             if (!vpx.empty()) {

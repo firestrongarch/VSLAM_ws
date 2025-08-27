@@ -21,7 +21,9 @@ struct Frame {
     cv::Mat desc0; // Descriptors for left image
     cv::Mat desc1; // Descriptors for right image
 
-    std::unique_ptr<Frame> last;
+    static std::shared_ptr<Frame> last;
 };
+
+inline std::shared_ptr<Frame> Frame::last = nullptr;
 
 } // namespace Yslam

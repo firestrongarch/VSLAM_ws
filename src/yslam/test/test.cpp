@@ -15,7 +15,11 @@ int main()
     Yslam::Frame frame;
     frame.img0 = img;
 
-    extractor.extract(frame);
+    extractor.extract({ .img = frame.img0,
+        .mask = frame.mask,
+        .pts = frame.pts0,
+        .kps = frame.kps0,
+        .desc = frame.desc0 });
 
     std::cout << "Extracted " << frame.pts0.size() << " keypoints." << std::endl;
 
