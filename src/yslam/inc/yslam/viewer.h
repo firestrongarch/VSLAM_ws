@@ -1,6 +1,5 @@
 #pragma once
 
-#include "yslam/frame.h"
 #include <opencv2/opencv.hpp>
 
 namespace Yslam {
