@@ -2,6 +2,7 @@
 #include "toml++/toml.h"
 // #include "toml.hpp"
 #include "yslam/kitti.h"
+#include "yslam/tracker.h"
 #include <opencv2/opencv.hpp>
 #include <print>
 
@@ -19,9 +20,6 @@ void Odom::OdomImpl::run(std::string config_file)
     auto frame_paths = loadKittiDataset(dataset_path_);
 
     for (const auto& frame : frame_paths) {
-        // std::println("Frame timestamp: {}", std::get<0>(frame));
-        // std::println("Left image path: {}", std::get<1>(frame));
-        // std::println("Right image path: {}", std::get<2>(frame));
         cv::Mat left_image = cv::imread(std::get<1>(frame), cv::IMREAD_GRAYSCALE);
         cv::Mat right_image = cv::imread(std::get<2>(frame), cv::IMREAD_GRAYSCALE);
 
@@ -48,8 +46,18 @@ void Odom::OdomImpl::stop()
 void Odom::OdomImpl::track(Frame frame)
 {
     std::println("Tracking frame at timestamp: {}", frame.t);
+    LkTracker Lk;
     // Implementation for tracking the given frame
     extractor_->extract(frame);
+
+    if (frame.last) {
+        Lk.track({ .img0 = frame.last->img0,
+            .img1 = frame.img0,
+            .pts0 = frame.last->pts0,
+            .pts1 = frame.pts0 });
+    }
+
+    frame.last = std::make_unique<Frame>(std::move(frame));
 }
 
 }

@@ -20,7 +20,7 @@ int main()
     std::cout << "Extracted " << frame.pts0.size() << " keypoints." << std::endl;
 
     Yslam::LetNetViewer viewer;
-    viewer.view(frame);
+    viewer.view({ frame.img0, frame.pts0 });
 
     return 0;
 }
