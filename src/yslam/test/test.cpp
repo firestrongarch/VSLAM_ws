@@ -27,17 +27,15 @@ int main()
 
     extractor.extract({ .img = frame.img0,
         .mask = frame.mask,
-        .pts = frame.pts0,
-        .kps = frame.kps0,
-        .desc = frame.desc0 });
+        .pts = frame.pts0 });
 
     std::cout << "Extracted " << frame.pts0.size() << " keypoints." << std::endl;
 
     Yslam::LetNetViewer viewer;
     viewer.view({ frame.img0, frame.pts0 });
     cv::waitKey(0);
-    viewer.view({ frame.desc0, frame.pts0 });
-    cv::waitKey(0);
+    // viewer.view({ frame.desc0, frame.pts0 });
+    // cv::waitKey(0);
 
     return 0;
 }

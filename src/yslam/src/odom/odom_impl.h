@@ -16,6 +16,8 @@ public:
     void readConfig(const std::string& config_file);
     void track(std::shared_ptr<Frame> frame);
 
+    void init(std::shared_ptr<Frame> frame);
+
 private:
     std::string dataset_path_;
     std::unique_ptr<LetNetExtractor> extractor_ = std::make_unique<LetNetExtractor>();

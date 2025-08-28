@@ -42,10 +42,39 @@ public:
         out1.to_pixels(score.data, ncnn::Mat::PIXEL_GRAY);
         out2.to_pixels(desc.data, ncnn::Mat::PIXEL_BGR);
 
-        params.desc = desc;
-
         if (pts.size() < 100)
             pts = extractFeature(score, 15, pts);
+    }
+
+    void extractDescriptor(const cv::Mat& img, cv::Mat& desc)
+    {
+        auto& src = img;
+        // auto& desc = params.desc;
+        cv::Mat desc0(src.rows, src.cols, CV_8UC3);
+        ncnn::Mat in;
+        ncnn::Mat out2;
+
+        if (src.empty()) {
+            throw std::runtime_error("Error: Input image is empty.");
+        }
+
+        if (src.channels() != 1) {
+            std::println("src.channels() = {}", src.channels());
+            throw std::runtime_error("Error: Input image must have 1 channel.");
+        }
+
+        in = ncnn::Mat::from_pixels(src.data, ncnn::Mat::PIXEL_GRAY, src.cols, src.rows);
+        in.substract_mean_normalize(mean_vals, norm_vals);
+
+        ncnn::Extractor ex = net.create_extractor();
+        ex.input("input", in);
+        ex.extract("descriptor", out2);
+
+        out2.substract_mean_normalize(mean_vals_inv, norm_vals_inv);
+
+        out2.to_pixels(desc.data, ncnn::Mat::PIXEL_BGR);
+
+        desc = desc0;
     }
 
     void load(const std::string& model_path)
@@ -94,7 +123,7 @@ public:
 
         auto cvrange = cv::Range(0, nbcells);
 
-        parallel_for_(cvrange, [&](const cv::Range& range) {
+        cv::parallel_for_(cvrange, [&](const cv::Range& range) {
             for (int i = range.start; i < range.end; i++) {
 
                 size_t r = floor(i / nwcells);
@@ -135,45 +164,6 @@ public:
                 }
             }
         });
-        // for (int i = 0; i < nbcells; i++) {
-
-        //     size_t r = floor(i / nwcells);
-        //     size_t c = i % nwcells;
-
-        //     if (voccupcells[r][c]) {
-        //         nboccup++;
-        //         continue;
-        //     }
-
-        //     size_t x = c * ncellsize;
-        //     size_t y = r * ncellsize;
-
-        //     cv::Rect hroi(x, y, ncellsize, ncellsize);
-
-        //     if (x + ncellsize < ncols - 1 && y + ncellsize < nrows - 1) {
-
-        //         double dminval, dmaxval;
-        //         cv::Point minpx, maxpx;
-
-        //         cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
-        //         maxpx.x += x;
-        //         maxpx.y += y;
-
-        //         if (dmaxval >= 0.2) {
-        //             vvdetectedpx.at(i).push_back(maxpx);
-        //             cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
-        //         }
-
-        //         cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
-        //         maxpx.x += x;
-        //         maxpx.y += y;
-
-        //         if (dmaxval >= 0.2) {
-        //             vvsecdetectionspx.at(i).push_back(maxpx);
-        //             cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
-        //         }
-        //     }
-        // }
 
         for (const auto& vpx : vvdetectedpx) {
             if (!vpx.empty()) {

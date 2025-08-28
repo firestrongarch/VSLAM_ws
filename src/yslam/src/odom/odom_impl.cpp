@@ -46,27 +46,27 @@ void Odom::OdomImpl::track(std::shared_ptr<Frame> frame)
     std::println("Tracking frame at timestamp: {}", frame->t);
     LkTracker Lk;
 
-    extractor_->extract({ .img = frame->img0,
-        .mask = frame->mask,
-        .pts = frame->pts0,
-        .kps = frame->kps0,
-        .desc = frame->desc0 });
-    // Implementation for tracking the given frame
-    if (frame->last) {
-        Lk.track({ .img0 = frame->last->desc0,
-            .img1 = frame->desc0,
-            .pts0 = frame->last->pts0,
-            .pts1 = frame->pts0 });
-    }
-    if (frame->pts0.size() < 100) {
-        extractor_->extract({ .img = frame->img0,
-            .mask = frame->mask,
-            .pts = frame->pts0,
-            .kps = frame->kps0,
-            .desc = frame->desc0 });
+    if (!frame->last) {
+        init(frame);
+        return;
     }
 
+    Lk.track({ .img0 = frame->last->img0,
+        .img1 = frame->img0,
+        .pts0 = frame->last->pts0,
+        .pts1 = frame->pts0 });
+
     viewer_->view({ .img = frame->img0, .pts = frame->pts0 });
+
+    frame->last = frame;
+}
+
+void Odom::OdomImpl::init(std::shared_ptr<Frame> frame)
+{
+    std::println("Initializing frame at timestamp: {}", frame->t);
+    extractor_->extract({ .img = frame->img0,
+        .mask = cv::Mat(),
+        .pts = frame->pts0 });
 
     frame->last = frame;
 }
