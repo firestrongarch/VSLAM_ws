@@ -35,6 +35,9 @@ int main()
 
     Yslam::LetNetViewer viewer;
     viewer.view({ frame.img0, frame.pts0 });
+    cv::waitKey(0);
+    viewer.view({ frame.desc0, frame.pts0 });
+    cv::waitKey(0);
 
     return 0;
 }

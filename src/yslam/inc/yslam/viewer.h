@@ -30,7 +30,7 @@ public:
         }
 
         for (const auto& pt : params.pts) {
-            cv::circle(img, pt, 2, cv::Scalar(0, 255, 0), -1);
+            cv::circle(img, pt, 4, cv::Scalar(0, 255, 0), -1);
         }
 
         // Implement LetNet specific viewing here

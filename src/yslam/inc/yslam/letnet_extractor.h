@@ -45,7 +45,7 @@ public:
         params.desc = desc;
 
         if (pts.size() < 100)
-            pts = extractFeature(score, 20, pts);
+            pts = extractFeature(score, 15, pts);
     }
 
     void load(const std::string& model_path)
