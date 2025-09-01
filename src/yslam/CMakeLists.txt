@@ -23,6 +23,7 @@ target_link_libraries(slam PRIVATE Yslam)
 add_executable(test test/test.cpp)
 target_link_libraries(test PRIVATE Yslam)
 
+# add_subdirectory(cppm)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
