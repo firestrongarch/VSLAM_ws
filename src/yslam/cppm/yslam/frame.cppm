@@ -5,6 +5,11 @@ import std;
 
 export namespace Yslam {
 
+struct MapPoint {
+    cv::Point3d p3d; // 3D position
+    cv::Point2d p2d; // 2D position in the image
+};
+
 struct Frame {
     double t; // Timestamp in microseconds
     cv::Mat img0; // Left image
@@ -12,9 +17,7 @@ struct Frame {
 
     std::vector<cv::Point2f> pts; // Extracted Points
 
-    static std::shared_ptr<Frame> last;
+    inline static std::shared_ptr<Frame> last;
 };
-
-inline std::shared_ptr<Frame> Frame::last = nullptr;
 
 } // namespace Yslam

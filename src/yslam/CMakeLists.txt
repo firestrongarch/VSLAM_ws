@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS ON)
 project(Yslam VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_PREFIX_PATH "E:/CPP/vcpkg/installed/x64-mingw-dynamic")
-set(CMAKE_BUILD_PARALLEL_LEVEL 4)
+set(CMAKE_BUILD_PARALLEL_LEVEL 1)
 
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -26,7 +26,7 @@ add_library(Yslam SHARED)
 target_sources(Yslam PUBLIC FILE_SET CXX_MODULES FILES ${srcs})
 target_link_libraries(Yslam PUBLIC 3rd)
 
-# add_executable(slam main.cpp)
-# target_link_libraries(slam PRIVATE Yslam)
+add_executable(slam main.cpp)
+target_link_libraries(slam PRIVATE Yslam)
 add_executable(test test/test.cpp)
 target_link_libraries(test PRIVATE Yslam)

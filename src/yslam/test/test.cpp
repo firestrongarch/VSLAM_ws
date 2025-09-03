@@ -2,6 +2,7 @@ import letnet;
 
 int main()
 {
+    std::println("Hello {}", "World");
     auto letnet = Yslam::LetNet::create("E:/CPP/VSLAM_ws/src/config_pkg/model");
     cv::Mat image = cv::imread("E:/datasets/Kitti00-10/09/image_0/000155.png", 0);
     std::vector<cv::KeyPoint> keypoints;

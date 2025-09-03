@@ -8,11 +8,14 @@ export namespace Yslam {
 class Dataset {
 public:
     virtual void load(const std::string& path) = 0;
+    int size() const { return timestamps.size(); }
+
+public:
+    std::vector<double> timestamps;
 };
 
 class Kitti : public Dataset {
-private:
-    std::vector<double> timestamps;
+public:
     std::vector<std::string> images_0;
     std::vector<std::string> images_1;
 

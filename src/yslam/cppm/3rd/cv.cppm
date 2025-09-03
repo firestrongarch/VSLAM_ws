@@ -15,7 +15,9 @@ using cv::imshow;
 using cv::waitKey;
 
 using cv::KeyPoint;
+using cv::Point2d;
 using cv::Point2f;
+using cv::Point3d;
 
 using cv::drawKeypoints;
 using cv::drawMatches;
@@ -33,6 +35,8 @@ using cv::Range;
 using cv::Rect;
 using cv::Scalar;
 using cv::Size;
+
+using cv::triangulatePoints;
 
 // using CV_8UC1;
 using cv::Ptr;
