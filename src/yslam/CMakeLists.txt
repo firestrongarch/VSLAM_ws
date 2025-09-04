@@ -15,11 +15,12 @@ set(CMAKE_BUILD_PARALLEL_LEVEL 1)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(ncnn REQUIRED)
+find_package(Boost REQUIRED COMPONENTS lockfree)
 
 file(GLOB_RECURSE 3rd_sources CONFIGURE_DEPENDS cppm/3rd/*.cppm)
 add_library(3rd SHARED)
 target_sources(3rd PUBLIC FILE_SET CXX_MODULES FILES ${3rd_sources})
-target_link_libraries(3rd PUBLIC ${OpenCV_LIBS} tomlplusplus::tomlplusplus ncnn)
+target_link_libraries(3rd PUBLIC ${OpenCV_LIBS} tomlplusplus::tomlplusplus ncnn Boost::lockfree)
 
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS cppm/yslam/*.cppm)
 add_library(Yslam SHARED)

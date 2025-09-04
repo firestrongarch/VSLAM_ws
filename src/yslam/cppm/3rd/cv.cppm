@@ -9,6 +9,7 @@ using cv::Mat;
 
 using cv::circle;
 using cv::cvtColor;
+using cv::rectangle;
 
 using cv::imread;
 using cv::imshow;
@@ -40,6 +41,10 @@ using cv::triangulatePoints;
 
 // using CV_8UC1;
 using cv::Ptr;
+
+using cv::COLOR_BGR2GRAY;
+using cv::COLOR_GRAY2BGR;
+using cv::FILLED;
 
 const int MAT_8UC1 = CV_8UC1;
 const int MAT_8UC3 = CV_8UC3;
