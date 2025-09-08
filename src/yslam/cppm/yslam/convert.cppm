@@ -5,7 +5,7 @@ import cv;
 
 export namespace Yslam {
 
-auto kpsToPts(const std::vector<cv::KeyPoint>& keypoints)
+auto Kp2Pts(const std::vector<cv::KeyPoint>& keypoints)
 {
     std::vector<cv::Point2f> points;
     points.reserve(keypoints.size());

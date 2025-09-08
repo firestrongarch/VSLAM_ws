@@ -7,6 +7,7 @@ import std;
 import toml;
 import convert;
 import lockfree;
+import camera;
 // import tracker;
 
 export namespace Yslam {
@@ -17,11 +18,6 @@ public:
     void run(const std::string& config_file);
     void stop();
     void readConfig(const std::string& config_file);
-    void track(std::shared_ptr<Frame> frame);
-
-    void init(std::shared_ptr<Frame> frame);
-    void Lk(const cv::Mat& img0, const cv::Mat& img1, std::vector<cv::Point2f>& pts0, std::vector<cv::Point2f>& pts1);
-
     void view();
 
 private:
@@ -46,66 +42,40 @@ void Odom::run(const std::string& config_file)
 
     std::jthread view_thread(&Odom::view, this);
 
-    auto orb = cv::ORB::create();
+    auto extractor = cv::ORB::create();
+    auto cam = std::make_shared<Stereo>();
     for (int i = 0; i < kitti_->size(); ++i) {
         cv::Mat left_image = cv::imread(kitti_->images_0[i], 0);
         cv::Mat right_image = cv::imread(kitti_->images_1[i], 0);
-        std::shared_ptr<Frame> current_frame = std::make_shared<Frame>();
-        current_frame->img0 = left_image;
-        current_frame->img1 = right_image;
+        auto current_frame = std::make_shared<Frame>(
+            Frame {
+                .ID = i,
+                .timestamp = kitti_->timestamps[i],
+                .img0 = left_image,
+                .img1 = right_image });
 
-        if (current_frame->pts.empty()) {
-            std::vector<cv::KeyPoint> kps;
-            orb->detect(current_frame->img0, kps);
-            current_frame->pts = kpsToPts(kps);
+        if (current_frame->last == nullptr) {
+            cam->Init(current_frame);
+            continue;
         }
 
-        if (current_frame->last) {
-            Lk(current_frame->last->img0, current_frame->img0, current_frame->last->pts, current_frame->pts);
-        }
-
-        if (current_frame->pts.size() < 100) {
+        cam->Track(current_frame);
+        // If tracked points are less than a threshold, detect new keypoints
+        if (current_frame->kps.size() < 100) {
             cv::Mat mask;
-            for (auto& pt : current_frame->pts) {
-                cv::circle(mask, pt, 10, cv::Scalar(0), -1);
+            for (auto& kp : current_frame->kps) {
+                cv::circle(mask, kp.pt, 10, cv::Scalar(0), -1);
             }
             std::vector<cv::KeyPoint> kps;
-            orb->detect(current_frame->img0, kps, mask);
-            auto pts = kpsToPts(kps);
-            current_frame->pts.insert(current_frame->pts.end(), pts.begin(), pts.end());
+            extractor->detect(current_frame->img0, kps, mask);
+            for (auto& kp : kps) {
+                current_frame->kps.push_back(KeyPoint(kp));
+            }
         }
 
         current_frame->last = current_frame;
         frame_queue_.push(current_frame);
     }
-}
-
-void Odom::Lk(const cv::Mat& img0, const cv::Mat& img1, std::vector<cv::Point2f>& pts0, std::vector<cv::Point2f>& pts1)
-{
-    std::vector<unsigned char> status;
-    std::vector<float> err;
-    cv::calcOpticalFlowPyrLK(
-        img0,
-        img1,
-        pts0,
-        pts1,
-        status,
-        err,
-        cv::Size(21, 21),
-        7);
-
-    // Filter points based on status
-    std::vector<cv::Point2f> filtered_pts0;
-    std::vector<cv::Point2f> filtered_pts1;
-    for (int i = 0; i < status.size(); i++) {
-        if (status[i]) {
-            filtered_pts0.push_back(pts0.at(i));
-            filtered_pts1.push_back(pts1.at(i));
-        }
-    }
-
-    pts0 = filtered_pts0;
-    pts1 = filtered_pts1;
 }
 
 void Odom::view()
@@ -120,14 +90,14 @@ void Odom::view()
         auto image_kps = frame->img0.clone();
         cv::cvtColor(image_kps, image_kps, cv::COLOR_GRAY2BGR);
         // cv::drawKeypoints(image_kps, ptsToKps(frame->last->pts), image_kps, cv::Scalar(0, 255, 0));
-        for (auto pt : frame->pts) {
+        for (const auto& kp : frame->kps) {
             cv::Point2f pt1, pt2;
-            pt1.x = pt.x - 5;
-            pt1.y = pt.y - 5;
-            pt2.x = pt.x + 5;
-            pt2.y = pt.y + 5;
+            pt1.x = kp.pt.x - 5;
+            pt1.y = kp.pt.y - 5;
+            pt2.x = kp.pt.x + 5;
+            pt2.y = kp.pt.y + 5;
             cv::rectangle(image_kps, pt1, pt2, cv::Scalar(0, 255, 0));
-            cv::circle(image_kps, pt, 2, cv::Scalar(0, 255, 0), cv::FILLED);
+            cv::circle(image_kps, kp.pt, 2, cv::Scalar(0, 255, 0), cv::FILLED);
         }
         cv::imshow("Left Image", image_kps);
         cv::waitKey(1);

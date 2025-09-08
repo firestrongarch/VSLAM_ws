@@ -37,11 +37,13 @@ public:
 };
 
 struct Frame {
-    double t; // Timestamp in microseconds
+    const int ID;
+    inline static int factory_id_ = 0;
+
+    double timestamp; // Timestamp in microseconds
     cv::Mat img0; // Left image
     cv::Mat img1; // Right image
 
-    std::vector<cv::Point2f> pts; // Extracted Points
     std::vector<KeyPoint> kps; // Extracted KeyPoints
 
     inline static cv::Mat K; // Camera intrinsic matrix

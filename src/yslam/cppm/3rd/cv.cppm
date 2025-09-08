@@ -48,4 +48,13 @@ using cv::FILLED;
 
 const int MAT_8UC1 = CV_8UC1;
 const int MAT_8UC3 = CV_8UC3;
+
+// core/utility.hpp
+void parallel_for(const Range& range, std::function<void(const Range&)> functor, double nstripes = -1.)
+{
+    cv::parallel_for_(range, ParallelLoopBodyLambdaWrapper(functor), nstripes);
+}
+
+using cv::ParallelLoopBody;
+
 };

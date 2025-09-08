@@ -40,15 +40,10 @@ public:
         // 获取图像尺寸
         auto ncols = score.cols;
         auto nrows = score.rows;
-
-        // 计算半格子大小，用于绘制遮蔽区域
-        auto nhalfcell = ncellsize / 4;
-
         // 计算网格行列数和总网格数
         auto nhcells = nrows / ncellsize;
         auto nwcells = ncols / ncellsize;
         auto nbcells = nhcells * nwcells;
-
         // 存储检测到的特征点
         std::vector<cv::Point2f> detected_pts;
         detected_pts.reserve(nbcells);
@@ -57,10 +52,10 @@ public:
         std::vector<std::vector<bool>> occupied_cells(
             nhcells + 1,
             std::vector<bool>(nwcells + 1, false));
-
+        // 计算半格子大小，用于绘制遮蔽区域
+        auto nhalfcell = ncellsize / 4;
         // 创建遮蔽掩码，防止重复检测
         cv::Mat mask = cv::Mat::ones(score.rows, score.cols, cv::MAT_8UC1);
-
         // 遍历已有关键点，标记其所在网格为已占用，并在掩码中画圆遮蔽
         for (const auto& px : cur_kps) {
             occupied_cells[px.pt.y / ncellsize][px.pt.x / ncellsize] = true;
@@ -68,57 +63,51 @@ public:
         }
 
         auto nboccup = 0;
-
         // 主检测点和次级检测点存储容器
         std::vector<std::vector<cv::Point2f>> detected_cells_pts(nbcells);
         std::vector<std::vector<cv::Point2f>> secondary_detections_pts(nbcells);
-
         auto range = cv::Range(0, nbcells);
-
-        // 遍历每一个网格单元
-        for (int i = 0; i < nbcells; i++) {
-            auto r = std::floor(i / nwcells);
-            auto c = i % nwcells;
-
-            // 如果该网格已被占用，跳过
-            if (occupied_cells[r][c]) {
-                nboccup++;
-                continue;
-            }
-
-            auto x = c * ncellsize;
-            auto y = r * ncellsize;
-
-            cv::Rect hroi(x, y, ncellsize, ncellsize);
-
-            // 确保ROI在图像范围内
-            if (x + ncellsize < ncols - 1 && y + ncellsize < nrows - 1) {
-                double dminval, dmaxval;
-                cv::Point minpx, maxpx;
-
-                // 第一次查找局部最大值
-                cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
-                maxpx.x += x;
-                maxpx.y += y;
-
-                // 如果最大值大于阈值，则记录为主检测点
-                if (dmaxval >= 0.2) {
-                    detected_cells_pts.at(i).push_back(maxpx);
-                    cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+        cv::parallel_for(range, [&](const cv::Range& range) {
+            // 遍历每一个网格单元
+            for (int i = 0; i < nbcells; i++) {
+                auto r = std::floor(i / nwcells);
+                auto c = i % nwcells;
+                // 如果该网格已被占用，跳过
+                if (occupied_cells[r][c]) {
+                    nboccup++;
+                    continue;
                 }
 
-                // 第二次再次查找局部最大值（用于次优检测）
-                cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
-                maxpx.x += x;
-                maxpx.y += y;
+                auto x = c * ncellsize;
+                auto y = r * ncellsize;
+                cv::Rect hroi(x, y, ncellsize, ncellsize);
+                // 确保ROI在图像范围内
+                if (x + ncellsize < ncols - 1 && y + ncellsize < nrows - 1) {
+                    double dminval, dmaxval;
+                    cv::Point minpx, maxpx;
 
-                // 如果最大值大于阈值，则记录为次级检测点
-                if (dmaxval >= 0.2) {
-                    secondary_detections_pts.at(i).push_back(maxpx);
-                    cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+                    // 第一次查找局部最大值
+                    cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
+                    maxpx.x += x;
+                    maxpx.y += y;
+                    // 如果最大值大于阈值，则记录为主检测点
+                    if (dmaxval >= 0.2) {
+                        detected_cells_pts.at(i).push_back(maxpx);
+                        cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+                    }
+
+                    // 第二次再次查找局部最大值（用于次优检测）
+                    cv::minMaxLoc(score(hroi).mul(mask(hroi)), &dminval, &dmaxval, &minpx, &maxpx);
+                    maxpx.x += x;
+                    maxpx.y += y;
+                    // 如果最大值大于阈值，则记录为次级检测点
+                    if (dmaxval >= 0.2) {
+                        secondary_detections_pts.at(i).push_back(maxpx);
+                        cv::circle(mask, maxpx, nhalfcell, cv::Scalar(0.), -1);
+                    }
                 }
             }
-        }
+        });
 
         // 将主检测点加入最终结果
         for (const auto& vpx : detected_cells_pts) {
@@ -128,7 +117,6 @@ public:
         }
 
         auto nbkps = detected_pts.size();
-
         // 如果检测点数量不足，用次级检测点进行补充
         if (nbkps + nboccup < nbcells) {
             auto nbsec = nbcells - nbkps - nboccup;
