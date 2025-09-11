@@ -6,6 +6,7 @@ export module cv;
 export namespace cv {
 
 using cv::Mat;
+using cv::Mat_;
 
 using cv::circle;
 using cv::cvtColor;
@@ -48,6 +49,7 @@ using cv::FILLED;
 
 const int MAT_8UC1 = CV_8UC1;
 const int MAT_8UC3 = CV_8UC3;
+const int MAT_32F = CV_32F;
 
 // core/utility.hpp
 void parallel_for(const Range& range, std::function<void(const Range&)> functor, double nstripes = -1.)
@@ -56,5 +58,7 @@ void parallel_for(const Range& range, std::function<void(const Range&)> functor,
 }
 
 using cv::ParallelLoopBody;
+
+cv::Mat p2d_mat = (cv::Mat_<double>(3, 1) << 1, 1, 1);
 
 };

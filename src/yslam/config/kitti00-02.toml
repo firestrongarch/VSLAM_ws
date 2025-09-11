@@ -8,6 +8,7 @@ type = "stereo"
 
 # stereo baseline times fx
 bf = 386.1448
+baseline = 0.537166
 
 [camera.size]
 width = 1241

@@ -10,8 +10,8 @@ set(CMAKE_CXX_EXTENSIONS ON)
 project(Yslam VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_PREFIX_PATH "E:/CPP/vcpkg/installed/x64-mingw-dynamic")
-set(CMAKE_BUILD_PARALLEL_LEVEL 1)
 
+# set(CMAKE_BUILD_PARALLEL_LEVEL 1)
 find_package(tomlplusplus CONFIG REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(ncnn REQUIRED)

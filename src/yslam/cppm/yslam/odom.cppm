@@ -59,18 +59,22 @@ void Odom::run(const std::string& config_file)
             continue;
         }
 
-        cam->Track(current_frame);
+        cam->Track({ .img0 = current_frame->last->img0,
+            .img1 = current_frame->img0,
+            .kps0 = current_frame->last->kps,
+            .kps1 = current_frame->kps });
         // If tracked points are less than a threshold, detect new keypoints
         if (current_frame->kps.size() < 100) {
-            cv::Mat mask;
-            for (auto& kp : current_frame->kps) {
-                cv::circle(mask, kp.pt, 10, cv::Scalar(0), -1);
-            }
-            std::vector<cv::KeyPoint> kps;
-            extractor->detect(current_frame->img0, kps, mask);
-            for (auto& kp : kps) {
-                current_frame->kps.push_back(KeyPoint(kp));
-            }
+            // cv::Mat mask;
+            // for (const auto& kp : current_frame->kps) {
+            //     cv::circle(mask, kp.pt, 10, cv::Scalar(0), -1);
+            // }
+            // std::vector<cv::KeyPoint> kps;
+            // extractor->detect(current_frame->img0, kps, mask);
+            // for (const auto& kp : kps) {
+            //     current_frame->kps.push_back(KeyPoint(kp));
+            // }
+            cam->Extract3d(current_frame);
         }
 
         current_frame->last = current_frame;
