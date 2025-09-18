@@ -2,7 +2,7 @@ import std;
 import odom;
 int main(int argc, char* argv[])
 {
-    // std::printf("Hello, from slam!\n");
+    // std::println("Hello, from slam!");
     // std::print("Hello, from slam!\n");
     std::cout << "Hello, from slam!\n";
 
