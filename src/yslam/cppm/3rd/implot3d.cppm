@@ -1,8 +1,10 @@
+
 module;
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlgpu3.h"
 #include <SDL3/SDL.h>
+#include <cmath>
 #include <implot3d.h>
 #include <stdio.h> // printf, fprintf
 #include <stdlib.h> // abort
@@ -26,6 +28,36 @@ using ImPlot3D::ShowStyleEditor;
 
 using ::ImPlot3DLineFlags_;
 using ::ImPlot3DMarker_;
+
+void DemoLinePlots()
+{
+    static float xs1[1001], ys1[1001], zs1[1001];
+    for (int i = 0; i < 1001; i++) {
+        xs1[i] = i * 0.001f;
+        ys1[i] = 0.5f + 0.5f * cosf(50 * (xs1[i] + (float)ImGui::GetTime() / 10));
+        zs1[i] = 0.5f + 0.5f * sinf(50 * (xs1[i] + (float)ImGui::GetTime() / 10));
+    }
+    static double xs2[20], ys2[20], zs2[20];
+    for (int i = 0; i < 20; i++) {
+        xs2[i] = i * 1 / 19.0f;
+        ys2[i] = xs2[i] * xs2[i];
+        zs2[i] = xs2[i] * ys2[i];
+    }
+    if (ImPlot3D::BeginPlot("Line Plots")) {
+        ImPlot3D::SetupAxes("x", "y", "z");
+        ImPlot3D::PlotLine("f(x)", xs1, ys1, zs1, 1001);
+        ImPlot3D::SetNextMarkerStyle(ImPlot3DMarker_Circle);
+        ImPlot3D::PlotLine("g(x)", xs2, ys2, zs2, 20, ImPlot3DLineFlags_Segments);
+        ImPlot3D::EndPlot();
+    }
+}
+void DemoHeader(const char* label, void (*demo)())
+{
+    if (ImGui::TreeNodeEx(label)) {
+        demo();
+        ImGui::TreePop();
+    }
+}
 
 int test()
 {
@@ -64,6 +96,7 @@ int test()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot3D::CreateContext(); // 添加这一行
     ImGuiIO& io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
@@ -138,41 +171,56 @@ int test()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        // Show
+        static bool show_implot3d_metrics = false;
+        static bool show_implot3d_style_editor = false;
+        static bool show_imgui_metrics = false;
+        static bool show_imgui_style_editor = false;
+        static bool show_imgui_demo = false;
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        // if (show_implot3d_metrics)
+        //     ImPlot3D::ShowMetricsWindow(&show_implot3d_metrics);
+        if (show_implot3d_style_editor) {
+            ImGui::Begin("Style Editor (ImPlot3D)", &show_implot3d_style_editor);
+            ImPlot3D::ShowStyleEditor();
             ImGui::End();
         }
-
-        // 3. Show another simple window.
-        if (show_another_window) {
-            ImGui::Begin("Another Window", &show_another_window); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+        if (show_imgui_style_editor) {
+            ImGui::Begin("Style Editor (ImGui)", &show_imgui_style_editor);
+            ImGui::ShowStyleEditor();
             ImGui::End();
         }
+        if (show_imgui_metrics)
+            ImGui::ShowMetricsWindow(&show_imgui_metrics);
+        if (show_imgui_demo)
+            ImGui::ShowDemoWindow(&show_imgui_demo);
+        ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(600, 750), ImGuiCond_FirstUseEver);
+        static bool implot3d_demo_open = false;
+        ImGui::Begin("ImPlot3D Demo", &implot3d_demo_open, ImGuiWindowFlags_MenuBar);
+        if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("Tools")) {
+                ImGui::MenuItem("Metrics", nullptr, &show_implot3d_metrics);
+                ImGui::MenuItem("Style Editor", nullptr, &show_implot3d_style_editor);
+                ImGui::Separator();
+                ImGui::MenuItem("ImGui Metrics", nullptr, &show_imgui_metrics);
+                ImGui::MenuItem("ImGui Style Editor", nullptr, &show_imgui_style_editor);
+                ImGui::MenuItem("ImGui Demo", nullptr, &show_imgui_demo);
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+
+        ImGui::Text("ImPlot3D says olá! (%s)", IMPLOT3D_VERSION);
+        ImGui::Spacing();
+        if (ImGui::BeginTabBar("ImPlot3DDemoTabs")) {
+            if (ImGui::BeginTabItem("Plots")) {
+                DemoHeader("Line Plots", DemoLinePlots);
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+        ImGui::End();
 
         // Rendering
         ImGui::Render();
@@ -214,6 +262,7 @@ int test()
     SDL_WaitForGPUIdle(gpu_device);
     ImGui_ImplSDL3_Shutdown();
     ImGui_ImplSDLGPU3_Shutdown();
+    ImPlot3D::DestroyContext(); // 添加这一行
     ImGui::DestroyContext();
 
     SDL_ReleaseWindowFromGPUDevice(gpu_device, window);

@@ -1,3 +1,6 @@
+module;
+#include <opencv2/core/mat.hpp>
+
 export module camera;
 import cv;
 import types;
@@ -83,9 +86,20 @@ public:
                 points4d.at<float>(0, i) / w,
                 points4d.at<float>(1, i) / w,
                 points4d.at<float>(2, i) / w);
-            auto map_point = std::make_shared<MapPoint>(p3d, MapPoint::factory_id++);
+            // // 检查深度是否在合理范围内 (0.1米到100米)
+            // if (p3d.z <= 0.1 || p3d.z > 100) {
+            //     continue;
+            // }
+            // 只有当3D点有效时，才保存对应的2D点
+            cv::Mat p3d_mat = (cv::Mat_<double>(4, 1) << p3d.x, p3d.y, p3d.z, 1);
+            cv::Mat p3d_world_mat = frame->T_wc * p3d_mat;
+            cv::Point3d p3d_world(p3d_world_mat.at<double>(0), p3d_world_mat.at<double>(1), p3d_world_mat.at<double>(2));
+
+            auto map_point = std::make_shared<MapPoint>(p3d_world, MapPoint::factory_id++);
             new_kps0[i].map_point = map_point;
             Map::GetInstance().InsertMapPoint(map_point);
+
+            // std::println("3D Point: ({}, {}, {})", p3d_world.x, p3d_world.y, p3d_world.z);
         }
         kps.insert(kps.end(), new_kps0.begin(), new_kps0.end());
     }
@@ -111,14 +125,12 @@ public:
             cv::Size(21, 21),
             7);
 
-        kps0.clear();
         // Filter points based on status
         for (int i = 0; i < status.size(); ++i) {
             if (status[i]) {
                 KeyPoint kp0, kp1;
-                kp0.pt = pts0[i];
-                kps0.emplace_back(kp0);
                 kp1.pt = pts1[i];
+                kp1.map_point = kps0[i].map_point; // 保持3D点关联
                 kps1.emplace_back(kp1);
             }
         }

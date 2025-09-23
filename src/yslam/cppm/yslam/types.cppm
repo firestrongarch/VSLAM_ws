@@ -53,7 +53,8 @@ struct Frame {
         0, 0, 1); // Camera intrinsic matrix
     inline static std::shared_ptr<Frame> last;
 
-    cv::Mat T_wc; // World to camera pose
+    cv::Mat T_wc = cv::Mat::eye(4, 4, CV_64F);
+    cv::Mat T_ww = cv::Mat::eye(4, 4, CV_64F);
     inline static cv::Mat T_01 = (cv::Mat_<double>(4, 4) << 1, 0, 0, 0.537166,
         0, 1, 0, 0,
         0, 0, 1, 0,
@@ -115,6 +116,10 @@ public:
             all_map_points_.insert(make_pair(map_point->ID, map_point));
         }
     }
+    void InsertPoseVO(const cv::Mat& pose)
+    {
+        poses_vo_.push_back(pose);
+    }
     MapPoints GetAllMapPoints();
     KeyFrames GetAllKeyFrames();
 
@@ -133,6 +138,8 @@ private:
 
     KeyFrames all_key_frames_;
     KeyFrames active_key_frames_;
+
+    std::vector<cv::Mat> poses_vo_;
 
     unsigned int num_active_key_frames_;
 };

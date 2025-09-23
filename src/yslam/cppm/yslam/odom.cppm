@@ -8,6 +8,8 @@ import toml;
 import convert;
 import lockfree;
 import camera;
+import optimizer;
+import implot3d;
 // import tracker;
 
 export namespace Yslam {
@@ -22,7 +24,7 @@ public:
 
 private:
     std::shared_ptr<Kitti> kitti_;
-    boost::lockfree::spsc_queue<std::shared_ptr<Frame>> frame_queue_ { 100 };
+    boost::lockfree::spsc_queue<std::shared_ptr<Frame>> frame_queue_ { 5000 };
     // std::shared_ptr<Tracker> tracker_;
 };
 
@@ -41,6 +43,7 @@ void Odom::run(const std::string& config_file)
     // Implementation for running the odometry with the given config file
 
     std::jthread view_thread(&Odom::view, this);
+    std::jthread view_thread2(&ImPlot3D::test);
 
     auto extractor = cv::ORB::create();
     auto cam = std::make_shared<Stereo>();
@@ -63,6 +66,10 @@ void Odom::run(const std::string& config_file)
             .img1 = current_frame->img0,
             .kps0 = current_frame->last->kps,
             .kps1 = current_frame->kps });
+
+        static Optimizer opt;
+        opt.PerspectiveNPoint(current_frame);
+
         // If tracked points are less than a threshold, detect new keypoints
         if (current_frame->kps.size() < 100) {
             // cv::Mat mask;
@@ -84,17 +91,20 @@ void Odom::run(const std::string& config_file)
 
 void Odom::view()
 {
-    std::shared_ptr<Frame> frame;
     while (1) {
+        std::shared_ptr<Frame> frame;
         frame_queue_.pop(frame);
         if (!frame) {
+            cv::waitKey(1);
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
         auto image_kps = frame->img0.clone();
+        auto kps = frame->kps;
+        std::println("Frame ID: {}, Keypoints: {}", frame->ID, kps.size());
         cv::cvtColor(image_kps, image_kps, cv::COLOR_GRAY2BGR);
         // cv::drawKeypoints(image_kps, ptsToKps(frame->last->pts), image_kps, cv::Scalar(0, 255, 0));
-        for (const auto& kp : frame->kps) {
+        for (const auto& kp : kps) {
             cv::Point2f pt1, pt2;
             pt1.x = kp.pt.x - 5;
             pt1.y = kp.pt.y - 5;

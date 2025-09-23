@@ -38,6 +38,8 @@ using cv::Rect;
 using cv::Scalar;
 using cv::Size;
 
+using cv::Rodrigues;
+using cv::solvePnPRansac;
 using cv::triangulatePoints;
 
 // using CV_8UC1;
@@ -50,6 +52,7 @@ using cv::FILLED;
 const int MAT_8UC1 = CV_8UC1;
 const int MAT_8UC3 = CV_8UC3;
 const int MAT_32F = CV_32F;
+const int MAT_64F = CV_64F;
 
 // core/utility.hpp
 void parallel_for(const Range& range, std::function<void(const Range&)> functor, double nstripes = -1.)
