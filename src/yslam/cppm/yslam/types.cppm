@@ -120,6 +120,11 @@ public:
     {
         poses_vo_.push_back(pose);
     }
+    std::vector<cv::Mat> GetAllPosesVO()
+    {
+        return poses_vo_;
+    }
+
     MapPoints GetAllMapPoints();
     KeyFrames GetAllKeyFrames();
 

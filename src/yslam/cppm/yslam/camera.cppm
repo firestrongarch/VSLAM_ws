@@ -1,6 +1,3 @@
-module;
-#include <opencv2/core/mat.hpp>
-
 export module camera;
 import cv;
 import types;
@@ -91,8 +88,11 @@ public:
             //     continue;
             // }
             // 只有当3D点有效时，才保存对应的2D点
-            cv::Mat p3d_mat = (cv::Mat_<double>(4, 1) << p3d.x, p3d.y, p3d.z, 1);
-            cv::Mat p3d_world_mat = frame->T_wc * p3d_mat;
+            // cv::Mat p3d_mat = (cv::Mat_<double>(4, 1) << p3d.x, p3d.y, p3d.z, 1);
+            cv::Vec4d p3d_vec(p3d.x, p3d.y, p3d.z, 1.0);
+            cv::Mat p3d_mat = cv::Mat(p3d_vec).reshape(1, 4); // 转换为4x1矩阵
+
+            cv::Mat p3d_world_mat = cv::MatMul(frame->T_wc, p3d_mat);
             cv::Point3d p3d_world(p3d_world_mat.at<double>(0), p3d_world_mat.at<double>(1), p3d_world_mat.at<double>(2));
 
             auto map_point = std::make_shared<MapPoint>(p3d_world, MapPoint::factory_id++);

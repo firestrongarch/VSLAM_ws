@@ -7,6 +7,13 @@ export namespace cv {
 
 using cv::Mat;
 using cv::Mat_;
+using cv::MatExpr;
+using cv::Vec4d;
+
+auto MatMul(const Mat& a, const Mat& b) -> Mat
+{
+    return a * b;
+}
 
 using cv::circle;
 using cv::cvtColor;

@@ -1,7 +1,3 @@
-module;
-
-#include <opencv2/core/mat.hpp>
-
 export module optimizer;
 import types;
 import cv;
@@ -12,7 +8,8 @@ class Optimizer {
 public:
     void PerspectiveNPoint(std::shared_ptr<Frame> frame)
     {
-        frame->T_wc = frame->T_ww * Frame::last->T_wc;
+        // frame->T_wc = frame->T_ww * Frame::last->T_wc;
+        frame->T_wc = cv::MatMul(frame->T_ww, Frame::last->T_wc);
         cv::Mat T_cw = frame->T_wc.inv();
         cv::Mat R = T_cw(cv::Range(0, 3), cv::Range(0, 3));
 
@@ -60,7 +57,7 @@ public:
         }
         Map::GetInstance().InsertPoseVO(frame->T_wc);
 
-        frame->T_ww = frame->T_wc * Frame::last->T_wc.inv();
+        frame->T_ww = cv::MatMul(frame->T_wc, Frame::last->T_wc.inv());
     }
 };
 
