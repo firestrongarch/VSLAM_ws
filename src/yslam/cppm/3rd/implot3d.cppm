@@ -59,6 +59,7 @@ using ImPlot3D::SetupBoxScale;
 using ImPlot3D::ShowDemoWindow;
 using ImPlot3D::ShowStyleEditor;
 
+using ::ImPlot3DAxisFlags_;
 using ::ImPlot3DLineFlags_;
 using ::ImPlot3DMarker_;
 
@@ -192,6 +193,8 @@ int Run(std::function<void()> func = show)
     ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(main_scale); // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
     // style.FontScaleDpi = main_scale; // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+    auto& style3d = ImPlot3D::GetStyle();
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);

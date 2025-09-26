@@ -5,6 +5,7 @@ export module types;
 
 import cv;
 import std;
+import lockfree;
 
 export namespace Yslam {
 
@@ -135,6 +136,8 @@ public:
     }
     // std::shared_ptr<Frame> current_keyframe_ { nullptr };
 
+    boost::lockfree::spsc_queue<std::shared_ptr<Frame>> frame_queue_ { 5000 };
+
 private:
     Map() = default;
 
@@ -145,7 +148,6 @@ private:
     KeyFrames active_key_frames_;
 
     std::vector<cv::Mat> poses_vo_;
-
     unsigned int num_active_key_frames_;
 };
 

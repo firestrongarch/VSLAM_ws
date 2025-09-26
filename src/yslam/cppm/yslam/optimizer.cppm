@@ -38,7 +38,7 @@ public:
                 rvec,
                 tvec,
                 true,
-                100, // max iterations
+                10, // max iterations
                 8.0, // reprojection error
                 0.99, // confidence
                 inliers);
