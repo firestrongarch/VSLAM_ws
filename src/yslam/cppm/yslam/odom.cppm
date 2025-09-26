@@ -51,6 +51,7 @@ void Odom::run(const std::string& config_file)
     auto extractor = cv::ORB::create();
     auto cam = std::make_shared<Stereo>();
     for (int i = 0; i < kitti_->size(); ++i) {
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         cv::Mat left_image = cv::imread(kitti_->images_0[i], 0);
         cv::Mat right_image = cv::imread(kitti_->images_1[i], 0);
         auto current_frame = std::make_shared<Frame>(
@@ -75,20 +76,18 @@ void Odom::run(const std::string& config_file)
 
         // If tracked points are less than a threshold, detect new keypoints
         if (current_frame->kps.size() < 100) {
-            // cv::Mat mask;
-            // for (const auto& kp : current_frame->kps) {
-            //     cv::circle(mask, kp.pt, 10, cv::Scalar(0), -1);
-            // }
-            // std::vector<cv::KeyPoint> kps;
-            // extractor->detect(current_frame->img0, kps, mask);
-            // for (const auto& kp : kps) {
-            //     current_frame->kps.push_back(KeyPoint(kp));
-            // }
             cam->Extract3d(current_frame);
         }
 
         current_frame->last = current_frame;
         Map::GetInstance().frame_queue_.push(current_frame);
+
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        static float total_time = 0.0;
+        total_time += elapsed;
+        float avg_time = total_time / (i + 1);
+        Viewer::GetInstance().track_fps_ = 1000.0 / avg_time;
     }
 }
 

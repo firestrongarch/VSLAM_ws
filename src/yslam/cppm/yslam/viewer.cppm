@@ -13,6 +13,8 @@ public:
     // void Imgui();
     static Viewer& GetInstance();
 
+    float track_fps_ = 0;
+
 private:
     Viewer() = default;
     ~Viewer() = default;
@@ -51,6 +53,7 @@ void Viewer::Run()
 
     // 显示一个ImGui窗口
     ImGui::Begin("Camera Feed");
+    ImGui::Text("Avg Odom FPS: %.2f", track_fps_);
     // 显示OpenCV图像
     ImPlot3D::ShowMat(image_kps);
     ImGui::End();
@@ -69,7 +72,7 @@ void Viewer::Run()
         zs1[i] = pose.at<double>(2, 3);
     }
     if (ImPlot3D::BeginPlot("Line Plots")) {
-        ImPlot3D::SetupBoxInitialRotation(90, 0);
+        ImPlot3D::SetupBoxInitialRotation(360, 0);
         // ImPlot3D::SetupBoxRotation(0, 180);
         ImPlot3D::SetupBoxScale(1.5, 1.5, 1.5);
         ImPlot3D::SetupAxes("x", "y", "z",
