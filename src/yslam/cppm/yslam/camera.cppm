@@ -51,7 +51,7 @@ public:
         }
 
         std::vector<cv::KeyPoint> kps1;
-        auto ex = cv::ORB::create(2000);
+        auto ex = cv::ORB::create(1000);
         ex->detect(img0, kps1, mask);
 
         std::vector<KeyPoint> new_kps0, new_kps1;

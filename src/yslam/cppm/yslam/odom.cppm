@@ -21,11 +21,12 @@ public:
     void run(const std::string& config_file);
     void stop();
     void readConfig(const std::string& config_file);
-    void view();
-    void Imgui();
+
+    bool NeedNewKeyFrame();
 
 private:
     std::shared_ptr<Kitti> kitti_;
+    std::shared_ptr<Frame> current_frame { nullptr };
     // std::shared_ptr<Tracker> tracker_;
 };
 
@@ -54,7 +55,7 @@ void Odom::run(const std::string& config_file)
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         cv::Mat left_image = cv::imread(kitti_->images_0[i], 0);
         cv::Mat right_image = cv::imread(kitti_->images_1[i], 0);
-        auto current_frame = std::make_shared<Frame>(
+        current_frame = std::make_shared<Frame>(
             Frame {
                 .ID = i,
                 .timestamp = kitti_->timestamps[i],
@@ -63,6 +64,7 @@ void Odom::run(const std::string& config_file)
 
         if (current_frame->last == nullptr) {
             cam->Init(current_frame);
+            Map::GetInstance().InsertKeyFrame(current_frame);
             continue;
         }
 
@@ -75,8 +77,9 @@ void Odom::run(const std::string& config_file)
         opt.PerspectiveNPoint(current_frame);
 
         // If tracked points are less than a threshold, detect new keypoints
-        if (current_frame->kps.size() < 100) {
+        if (NeedNewKeyFrame()) {
             cam->Extract3d(current_frame);
+            Map::GetInstance().InsertKeyFrame(current_frame);
         }
 
         current_frame->last = current_frame;
@@ -89,6 +92,22 @@ void Odom::run(const std::string& config_file)
         float avg_time = total_time / (i + 1);
         Viewer::GetInstance().track_fps_ = 1000.0 / avg_time;
     }
+}
+
+bool Odom::NeedNewKeyFrame()
+{
+    float track_last_ratio = static_cast<float>(current_frame->kps.size()) / static_cast<float>(current_frame->last->kps.size());
+    if (track_last_ratio < 0.7) {
+        return true;
+    }
+
+    float track_kf_ratio = static_cast<float>(current_frame->kps.size()) / static_cast<float>(Map::GetInstance().ref_kf_->kps.size());
+    if (track_kf_ratio < 0.25) {
+        return true;
+    }
+
+    // Implementation for determining whether a new keyframe is needed
+    return false;
 }
 
 void Odom::stop()

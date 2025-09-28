@@ -100,17 +100,52 @@ struct Frame {
     }
 };
 
+struct Pose {
+    Pose() = default;
+    Pose(const cv::Quatd& q, const cv::Point3d& t)
+        : q(q)
+        , t(t)
+    {
+    }
+
+    cv::Quatd q; // rotation
+    cv::Point3d t; // translation
+};
+
+class KeyFrame : public Frame {
+public:
+    KeyFrame() = delete;
+    KeyFrame(const Frame& frame)
+        : Frame(frame)
+        , KF_ID(factory_kf_id++)
+    {
+        pose.q = cv::Quatd::createFromRotMat(frame.T_wc(cv::Range(0, 3), cv::Range(0, 3)));
+        pose.t = cv::Point3d(
+            frame.T_wc.at<double>(0, 3),
+            frame.T_wc.at<double>(1, 3),
+            frame.T_wc.at<double>(2, 3));
+    }
+
+    Pose pose; // Pose of the keyframe
+
+    const int KF_ID;
+    inline static int factory_kf_id = 0;
+};
+
 class Map {
 public:
-    using KeyFrames = std::unordered_map<unsigned long, std::shared_ptr<Frame>>;
+    using KeyFrames = std::unordered_map<unsigned long, std::shared_ptr<KeyFrame>>;
     using MapPoints = std::unordered_map<unsigned long, std::shared_ptr<MapPoint>>;
 
     Map(const Map&) = delete;
 
-    // void InsertKeyFrame(std::shared_ptr<Frame> key_frame)
-    // {
-    //     all_key_frames_.insert({ key_frame->id, key_frame });
-    // }
+    void InsertKeyFrame(std::shared_ptr<Frame> frame)
+    {
+        ref_kf_ = frame;
+        auto key_frame = std::make_shared<KeyFrame>(*frame);
+        kf_queue_.push(key_frame);
+        all_key_frames_.insert({ key_frame->KF_ID, key_frame });
+    }
     void InsertMapPoint(std::shared_ptr<MapPoint> map_point)
     {
         if (all_map_points_.find(map_point->ID) == all_map_points_.end()) {
@@ -137,6 +172,11 @@ public:
     // std::shared_ptr<Frame> current_keyframe_ { nullptr };
 
     boost::lockfree::spsc_queue<std::shared_ptr<Frame>> frame_queue_ { 5000 };
+    boost::lockfree::spsc_queue<std::shared_ptr<KeyFrame>> kf_queue_ { 5000 };
+
+    std::shared_ptr<Frame> ref_kf_ { nullptr };
+
+    KeyFrames all_key_frames_;
 
 private:
     Map() = default;
@@ -144,7 +184,6 @@ private:
     MapPoints all_map_points_;
     MapPoints active_map_point_;
 
-    KeyFrames all_key_frames_;
     KeyFrames active_key_frames_;
 
     std::vector<cv::Mat> poses_vo_;

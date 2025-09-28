@@ -32,23 +32,22 @@ void Viewer::Run()
 {
     std::shared_ptr<Frame> frame;
     Map::GetInstance().frame_queue_.pop(frame);
-    if (!frame) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        return;
-    }
-    auto image_kps = frame->img0.clone();
-    auto kps = frame->kps;
-    std::println("Frame ID: {}, Keypoints: {}", frame->ID, kps.size());
-    cv::cvtColor(image_kps, image_kps, cv::COLOR_GRAY2BGR);
-    // cv::drawKeypoints(image_kps, ptsToKps(frame->last->pts), image_kps, cv::Scalar(0, 255, 0));
-    for (const auto& kp : kps) {
-        cv::Point2f pt1, pt2;
-        pt1.x = kp.pt.x - 5;
-        pt1.y = kp.pt.y - 5;
-        pt2.x = kp.pt.x + 5;
-        pt2.y = kp.pt.y + 5;
-        cv::rectangle(image_kps, pt1, pt2, cv::Scalar(0, 255, 0));
-        cv::circle(image_kps, kp.pt, 2, cv::Scalar(0, 255, 0), cv::FILLED);
+    static cv::Mat image_kps = frame->last->img0.clone();
+    if (frame) {
+        image_kps = frame->img0.clone();
+        auto kps = frame->kps;
+        std::println("Frame ID: {}, Keypoints: {}", frame->ID, kps.size());
+        cv::cvtColor(image_kps, image_kps, cv::COLOR_GRAY2BGR);
+        // cv::drawKeypoints(image_kps, ptsToKps(frame->last->pts), image_kps, cv::Scalar(0, 255, 0));
+        for (const auto& kp : kps) {
+            cv::Point2f pt1, pt2;
+            pt1.x = kp.pt.x - 5;
+            pt1.y = kp.pt.y - 5;
+            pt2.x = kp.pt.x + 5;
+            pt2.y = kp.pt.y + 5;
+            cv::rectangle(image_kps, pt1, pt2, cv::Scalar(0, 255, 0));
+            cv::circle(image_kps, kp.pt, 2, cv::Scalar(0, 255, 0), cv::FILLED);
+        }
     }
 
     // 显示一个ImGui窗口
@@ -61,15 +60,24 @@ void Viewer::Run()
     ImGui::Begin("ImPlot3D Demo");
     ImGui::Spacing();
 
-    auto poses = Map::GetInstance().GetAllPosesVO();
-
-    int size = poses.size();
+    auto poses_vo = Map::GetInstance().GetAllPosesVO();
+    int size1 = poses_vo.size();
     static double xs1[5000], ys1[5000], zs1[5000];
-    for (int i = 0; i < size; ++i) {
-        const auto& pose = poses[i];
+    for (int i = 0; i < size1; ++i) {
+        const auto& pose = poses_vo[i];
         xs1[i] = pose.at<double>(0, 3);
         ys1[i] = pose.at<double>(1, 3);
         zs1[i] = pose.at<double>(2, 3);
+    }
+
+    auto kfs = Map::GetInstance().all_key_frames_;
+    int size2 = kfs.size();
+    static double xs2[5000], ys2[5000], zs2[5000];
+    for (int i = 0; i < size2; ++i) {
+        const auto& pose = kfs.at(i)->pose;
+        xs2[i] = pose.t.x;
+        ys2[i] = pose.t.y;
+        zs2[i] = pose.t.z;
     }
     if (ImPlot3D::BeginPlot("Line Plots")) {
         ImPlot3D::SetupBoxInitialRotation(360, 0);
@@ -80,8 +88,8 @@ void Viewer::Run()
             ImPlot3D::ImPlot3DAxisFlags_::ImPlot3DAxisFlags_AutoFit,
             ImPlot3D::ImPlot3DAxisFlags_::ImPlot3DAxisFlags_AutoFit);
         // ImPlot3D::SetNextMarkerStyle(ImPlot3D::ImPlot3DMarker_::ImPlot3DMarker_Circle);
-        ImPlot3D::PlotLine("f(x)", xs1, ys1, zs1, size);
-
+        ImPlot3D::PlotLine("VO", xs1, ys1, zs1, size1);
+        ImPlot3D::PlotLine("KF", xs2, ys2, zs2, size2);
         // ImPlot3D::PlotLine("g(x)", xs2, ys2, zs2, 20, ImPlot3D::ImPlot3DLineFlags_::ImPlot3DLineFlags_Segments);
         ImPlot3D::EndPlot();
     }

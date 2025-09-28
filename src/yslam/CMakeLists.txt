@@ -18,11 +18,21 @@ find_package(ncnn REQUIRED)
 find_package(Boost REQUIRED COMPONENTS lockfree)
 find_package(imgui CONFIG REQUIRED)
 find_package(implot3d CONFIG REQUIRED)
+find_package(Ceres CONFIG REQUIRED)
+
+set(GFLAGS_USE_TARGET_NAMESPACE ON)
+find_package(glog REQUIRED)
+find_package(gflags REQUIRED)
 
 file(GLOB_RECURSE 3rd_sources CONFIGURE_DEPENDS cppm/3rd/*.cppm)
 add_library(3rd SHARED)
 target_sources(3rd PUBLIC FILE_SET CXX_MODULES FILES ${3rd_sources})
-target_link_libraries(3rd PUBLIC ${OpenCV_LIBS} tomlplusplus::tomlplusplus ncnn Boost::lockfree implot3d::implot3d)
+target_link_libraries(3rd PUBLIC ${OpenCV_LIBS}
+    tomlplusplus::tomlplusplus
+    ncnn
+    Boost::lockfree
+    implot3d::implot3d
+    ceres)
 
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS cppm/yslam/*.cppm)
 add_library(Yslam SHARED)
