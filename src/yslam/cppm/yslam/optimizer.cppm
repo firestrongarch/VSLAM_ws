@@ -76,15 +76,25 @@ public:
             std::vector<int> inliers;
             std::vector<cv::Point3d> points3d;
             std::vector<cv::Point2f> points2f;
-            for (const auto& kp : frame->kps) {
+            // for (const auto& kp : frame->kps) {
+            //     auto mp = kp.map_point.lock();
+            //     // if (!mp || mp->is_outlier) {
+            //     //     continue;
+            //     // }
+            //     cv::Point3d p3d = *kp.map_point.lock();
+            //     points3d.push_back(p3d);
+            //     points2f.push_back(kp.pt);
+            // }
+            std::erase_if(frame->kps, [&](auto& kp) {
                 auto mp = kp.map_point.lock();
-                // if (!mp || mp->is_outlier) {
-                //     continue;
-                // }
+                if (!mp || mp->is_outlier) {
+                    return true;
+                }
                 cv::Point3d p3d = *kp.map_point.lock();
                 points3d.push_back(p3d);
                 points2f.push_back(kp.pt);
-            }
+                return false;
+            });
 
             // std::println("PnP iteration {}: {} points", i, points3d.size());
             cv::solvePnPRansac(
@@ -96,7 +106,7 @@ public:
                 tvec,
                 true,
                 10, // max iterations
-                7.815, // reprojection error
+                8, // reprojection error
                 0.99, // confidence
                 inliers);
             // 根据inliers筛选特征点
@@ -163,7 +173,7 @@ public:
                 // cost_fun.
                 problem.AddResidualBlock(
                     cost_fun,
-                    new ceres::HuberLoss(5.891),
+                    new ceres::HuberLoss(std::sqrt(7.815)),
                     pose_blocks[kf->ID].data(),
                     mp_blocks[mp->ID].data());
             }
@@ -187,7 +197,8 @@ public:
 
         // 配置并运行求解器
         ceres::Solver::Options options;
-        options.linear_solver_type = ceres::DENSE_SCHUR;
+        // options.linear_solver_type = ceres::DENSE_SCHUR;
+        options.linear_solver_type = ceres::SPARSE_SCHUR;
         options.preconditioner_type = ceres::PreconditionerType::SCHUR_JACOBI;
         options.minimizer_progress_to_stdout = false;
         options.max_num_iterations = 40;
