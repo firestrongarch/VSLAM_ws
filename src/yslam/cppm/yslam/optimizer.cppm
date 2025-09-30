@@ -77,9 +77,10 @@ public:
             std::vector<cv::Point3d> points3d;
             std::vector<cv::Point2f> points2f;
             for (const auto& kp : frame->kps) {
-                if (!kp.map_point.lock()) {
-                    throw std::runtime_error("Map point not found");
-                }
+                auto mp = kp.map_point.lock();
+                // if (!mp || mp->is_outlier) {
+                //     continue;
+                // }
                 cv::Point3d p3d = *kp.map_point.lock();
                 points3d.push_back(p3d);
                 points2f.push_back(kp.pt);
@@ -117,149 +118,182 @@ public:
     }
 
     // 使用四元数的Bundle Adjustment方法
-    void BundleAdjustment(std::vector<std::shared_ptr<Frame>>& keyframes)
+    void BundleAdjustment(std::list<std::shared_ptr<KeyFrame>>& kfs)
     {
-        ceres::Problem problem;
-
-        // 获取地图中所有的地图点
-        auto& map_instance = Map::GetInstance();
-        auto all_map_points_map = map_instance.GetAllMapPoints();
-
-        // 转换为向量以便索引访问，使用MapPoint的ID作为索引
-        std::vector<std::shared_ptr<MapPoint>> map_points;
-        int max_id = 0;
-
-        // 先找到最大的ID以确定vector大小
-        for (const auto& pair : all_map_points_map) {
-            if (pair.second->ID > max_id) {
-                max_id = pair.second->ID;
-            }
-        }
-
-        // 调整vector大小
-        map_points.resize(max_id + 1);
-
-        // 填充vector，使用MapPoint的ID作为索引
-        for (const auto& pair : all_map_points_map) {
-            map_points[pair.second->ID] = pair.second;
-        }
-
         // 为每个关键帧创建位姿参数块 (四元数+平移)
-        std::vector<std::vector<double>> camera_poses(keyframes.size(), std::vector<double>(7, 0.0));
-        for (std::size_t i = 0; i < keyframes.size(); ++i) {
-            auto& frame = keyframes[i];
+        std::unordered_map<int, std::vector<double>> pose_blocks;
+        std::unordered_map<int, std::vector<double>> mp_blocks;
+        for (auto& kf : kfs) {
             // 将T_cw转换为四元数表示
-            cv::Mat T_cw = frame->T_wc.inv();
+            cv::Mat T_cw = kf->T_wc.inv();
             cv::Mat R = T_cw(cv::Range(0, 3), cv::Range(0, 3));
             cv::Mat t = T_cw(cv::Range(0, 3), cv::Range(3, 4));
 
             // 将旋转矩阵转换为四元数
             cv::Quatd quat = cv::Quatd::createFromRotMat(R);
 
+            quat = quat.normalize();
             // 填充参数 [w, x, y, z, tx, ty, tz]
-            camera_poses[i][0] = quat.w;
-            camera_poses[i][1] = quat.x;
-            camera_poses[i][2] = quat.y;
-            camera_poses[i][3] = quat.z;
+            pose_blocks[kf->ID] = { quat.w, quat.x, quat.y, quat.z,
+                t.at<double>(0, 0), t.at<double>(1, 0), t.at<double>(2, 0) };
 
-            camera_poses[i][4] = t.at<double>(0, 0);
-            camera_poses[i][5] = t.at<double>(1, 0);
-            camera_poses[i][6] = t.at<double>(2, 0);
-        }
-
-        // 为每个地图点创建参数块
-        std::vector<std::vector<double>> point_positions(map_points.size(), std::vector<double>(3, 0.0));
-        for (std::size_t i = 0; i < map_points.size(); ++i) {
-            if (map_points[i]) { // 检查指针是否有效
-                auto& point = map_points[i];
-                point_positions[i][0] = point->x;
-                point_positions[i][1] = point->y;
-                point_positions[i][2] = point->z;
-            }
-        }
-
-        // 添加重投影误差项
-        for (std::size_t i = 0; i < keyframes.size(); ++i) {
-            auto& frame = keyframes[i];
-            for (const auto& kp : frame->kps) {
+            // 为每个地图点创建参数块
+            for (const auto& kp : kf->kps) {
                 auto map_point_ptr = kp.map_point.lock();
-                if (!map_point_ptr)
-                    continue;
-
-                // 使用MapPoint的ID作为索引
-                int point_id = map_point_ptr->ID;
-
-                // 检查ID是否在有效范围内并且指针有效
-                if (point_id >= 0 && point_id < static_cast<int>(map_points.size()) && map_points[point_id]) {
-                    // 创建重投影误差成本函数
-                    ceres::CostFunction* cost_function = ReprojectionError::Create(*map_point_ptr, kp.pt, frame->K);
-
-                    // 添加残差块
-                    problem.AddResidualBlock(cost_function,
-                        new ceres::HuberLoss(1.0), // 使用Huber损失函数提高鲁棒性
-                        camera_poses[i].data(),
-                        point_positions[point_id].data());
+                if (map_point_ptr) {
+                    if (map_point_ptr->is_outlier)
+                        continue;
+                    mp_blocks.insert_or_assign(map_point_ptr->ID, std::vector<double> { map_point_ptr->x, map_point_ptr->y, map_point_ptr->z });
+                    // 将地图点的位置添加到参数块
+                    // mp_blocks[map_point_ptr->ID] = { map_point_ptr->x, map_point_ptr->y, map_point_ptr->z };
                 }
             }
         }
 
-        // 固定第一个关键帧的位姿（作为参考坐标系）
-        if (!camera_poses.empty()) {
-            problem.SetParameterBlockConstant(camera_poses[0].data());
-            problem.SetManifold(camera_poses[0].data(), new ceres::QuaternionManifold);
+        std::unordered_map<int, ceres::CostFunction*> cost_functions;
+        ceres::Problem problem;
+        // 添加重投影误差项
+        for (auto& kf : kfs) {
+            for (const auto& kp : kf->kps) {
+                auto mp = kp.map_point.lock();
+                if (!mp || mp->is_outlier)
+                    continue;
+
+                auto cost_fun = ReprojectionError::Create(*mp, kp.pt, kf->K);
+                // cost_fun.
+                problem.AddResidualBlock(
+                    cost_fun,
+                    new ceres::HuberLoss(5.891),
+                    pose_blocks[kf->ID].data(),
+                    mp_blocks[mp->ID].data());
+            }
         }
 
-        // 为所有其他关键帧添加四元数流形
-        for (std::size_t i = 1; i < camera_poses.size(); ++i) {
-            problem.SetManifold(camera_poses[i].data(), new ceres::QuaternionManifold);
+        // 设置第一个关键帧固定
+        if (!pose_blocks.empty()) {
+            auto first_kf_id = kfs.front()->ID;
+            problem.SetParameterBlockConstant(pose_blocks[first_kf_id].data());
+            // 对于固定帧，可以完全固定整个参数块，或者使用局部参数化
         }
 
-        // 配置求解器选项
+        // 为其余关键帧设置四元数流形
+        for (auto& kf : kfs) {
+            if (kf->ID == kfs.front()->ID)
+                continue;
+            // 使用EigenQuaternionManifold配合SubsetManifold
+            problem.SetManifold(pose_blocks[kf->ID].data(),
+                new ceres::ProductManifold<ceres::QuaternionManifold, ceres::EuclideanManifold<3>>());
+        }
+
+        // 配置并运行求解器
         ceres::Solver::Options options;
-        options.linear_solver_type = ceres::LinearSolverType::SPARSE_SCHUR;
+        options.linear_solver_type = ceres::DENSE_SCHUR;
+        options.preconditioner_type = ceres::PreconditionerType::SCHUR_JACOBI;
         options.minimizer_progress_to_stdout = false;
-        options.max_num_iterations = 50;
+        options.max_num_iterations = 40;
+        options.function_tolerance = 1e-6;
+        options.gradient_tolerance = 1e-10;
+        options.parameter_tolerance = 1e-8;
+        options.num_threads = 4; // 根据CPU核心数量调整
+        // options.num_linear_solver_threads = 4;
 
-        // 求解优化问题
         ceres::Solver::Summary summary;
+        // std::printf("Bundle Adjustment: \n");
         ceres::Solve(options, &problem, &summary);
+        // std::printf("Bundle Adjustment Finished \n");
 
         // 更新优化后的位姿和地图点位置
-        for (std::size_t i = 0; i < keyframes.size(); ++i) {
-            auto& frame = keyframes[i];
-            // 将优化后的四元数转换回变换矩阵
-            cv::Quatd quat(
-                camera_poses[i][0], // w
-                camera_poses[i][1], // x
-                camera_poses[i][2], // y
-                camera_poses[i][3] // z
-            );
+        for (auto& kf : kfs) {
+            std::vector<double>& pose_data = pose_blocks[kf->ID];
 
-            // 归一化四元数
+            cv::Quatd quat(pose_data[0], pose_data[1], pose_data[2], pose_data[3]);
             quat = quat.normalize();
 
             cv::Mat R = cv::Mat(quat.toRotMat3x3());
-            cv::Mat t(3, 1, cv::MAT_64F);
-            t.at<double>(0, 0) = camera_poses[i][4];
-            t.at<double>(1, 0) = camera_poses[i][5];
-            t.at<double>(2, 0) = camera_poses[i][6];
+            cv::Mat t = cv::Mat::zeros(3, 1, cv::MAT_64F);
+            t.at<double>(0, 0) = pose_data[4];
+            t.at<double>(1, 0) = pose_data[5];
+            t.at<double>(2, 0) = pose_data[6];
 
             cv::Mat T_cw = cv::Mat::eye(4, 4, cv::MAT_64F);
             R.copyTo(T_cw(cv::Rect(0, 0, 3, 3)));
             t.copyTo(T_cw(cv::Rect(3, 0, 1, 3)));
 
-            frame->T_wc = T_cw.inv();
+            kf->T_wc = T_cw.inv();
         }
+        // std::printf("Updated poses...\n");
 
-        for (std::size_t i = 0; i < map_points.size(); ++i) {
-            if (map_points[i]) { // 检查指针是否有效
-                auto& point = map_points[i];
-                point->x = point_positions[i][0];
-                point->y = point_positions[i][1];
-                point->z = point_positions[i][2];
+        for (auto& kf : kfs) {
+            for (const auto& kp : kf->kps) {
+                auto mp = kp.map_point.lock();
+                if (mp && !mp->is_outlier) {
+                    const std::vector<double>& pos = mp_blocks[mp->ID];
+                    mp->x = pos[0];
+                    mp->y = pos[1];
+                    mp->z = pos[2];
+                }
             }
         }
+        // std::printf("Updated map points...\n");
+
+        // ===== 新增：计算每个地图点的重投影误差，并根据阈值标记为外点 =====
+        {
+            const double reproj_threshold_pixels = 5.891; // 可调整阈值（像素）
+            for (auto& kf : kfs) {
+                // 使用更新后的位姿和相机内参
+                cv::Mat T_cw = kf->T_wc.inv();
+                cv::Mat R = T_cw(cv::Range(0, 3), cv::Range(0, 3));
+                cv::Mat t = T_cw(cv::Range(0, 3), cv::Range(3, 4));
+
+                double fx = kf->K.at<double>(0, 0);
+                double fy = kf->K.at<double>(1, 1);
+                double cx = kf->K.at<double>(0, 2);
+                double cy = kf->K.at<double>(1, 2);
+
+                for (const auto& kp : kf->kps) {
+                    auto mp = kp.map_point.lock();
+                    if (!mp || mp->is_outlier)
+                        continue;
+
+                    // 使用最新地图点坐标
+                    cv::Mat pw = cv::Mat::zeros(3, 1, cv::MAT_64F);
+                    pw.at<double>(0, 0) = mp->x;
+                    pw.at<double>(1, 0) = mp->y;
+                    pw.at<double>(2, 0) = mp->z;
+                    cv::Mat pc;
+                    cv::add(cv::MatMul(R, pw), t, pc);
+                    double X = pc.at<double>(0, 0);
+                    double Y = pc.at<double>(1, 0);
+                    double Z = pc.at<double>(2, 0);
+
+                    double reproj_err = 1e6;
+                    if (Z > 1e-6) {
+                        double u = fx * (X / Z) + cx;
+                        double v = fy * (Y / Z) + cy;
+                        double dx = u - kp.pt.x;
+                        double dy = v - kp.pt.y;
+                        reproj_err = std::sqrt(dx * dx + dy * dy);
+                    } else {
+                        // 点在相机后方或深度无效，视为大误差
+                        reproj_err = reproj_threshold_pixels * 10.0;
+                    }
+
+                    // 输出每个地图点重投影误差
+                    // std::printf("KF %d MP %d reproj_err = %.3f px\n", kf->ID, mp->ID, reproj_err);
+
+                    // 根据阈值标记为外点
+                    if (reproj_err > reproj_threshold_pixels) {
+                        mp->is_outlier = true;
+                    } else {
+                        mp->is_outlier = false;
+                    }
+                }
+            }
+            // std::printf("Marked outliers by reprojection error (threshold = %.2f px)\n", reproj_threshold_pixels);
+        }
+        // ===== 新增结束 =====
     }
 };
 
+// Yslam
 }

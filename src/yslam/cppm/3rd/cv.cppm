@@ -16,6 +16,7 @@ auto MatMul(const Mat& a, const Mat& b) -> Mat
 {
     return a * b;
 }
+using cv::add;
 
 using cv::circle;
 using cv::cvtColor;

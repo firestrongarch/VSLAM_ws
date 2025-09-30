@@ -98,6 +98,7 @@ public:
             auto map_point = std::make_shared<MapPoint>(p3d_world, MapPoint::factory_id++);
             new_kps0[i].map_point = map_point;
             kps.emplace_back(new_kps0[i]);
+            map_point->obs.push_back(frame);
             Map::GetInstance().InsertMapPoint(map_point);
 
             // std::println("3D Point: ({}, {}, {})", p3d_world.x, p3d_world.y, p3d_world.z);
@@ -132,8 +133,12 @@ public:
                 kp1.pt = pts1[i];
                 kp1.map_point = kps0[i].map_point; // 保持3D点关联
                 kps1.emplace_back(kp1);
+            } else {
+                kps0[i].is_outlier = true;
             }
         }
+
+        std::erase_if(kps0, [](const KeyPoint& kp) { return kp.is_outlier; });
     }
 };
 

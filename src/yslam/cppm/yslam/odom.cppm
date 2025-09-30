@@ -11,6 +11,7 @@ import camera;
 import optimizer;
 import implot3d;
 import viewer;
+import backend;
 // import tracker;
 
 export namespace Yslam {
@@ -46,6 +47,9 @@ void Odom::run(const std::string& config_file)
 
     // std::jthread view_thread(&Odom::view, this);
     std::jthread view_thread2(ImPlot3D::Run, [this]() { Viewer::GetInstance().Run(); });
+    std::jthread backend_thread([]() {
+        Backend::GetInstance().Run();
+    });
     std::printf("Starting odometry...\n");
     // std::this_thread::sleep_for(std::chrono::seconds(1)); // Ensure the viewer thread starts first
 
@@ -72,6 +76,12 @@ void Odom::run(const std::string& config_file)
             .img1 = current_frame->img0,
             .kps0 = current_frame->last->kps,
             .kps1 = current_frame->kps });
+        for (auto& kp : current_frame->kps) {
+            auto mp = kp.map_point.lock();
+            if (mp) {
+                mp->obs.push_back(current_frame);
+            }
+        }
 
         static Optimizer opt;
         opt.PerspectiveNPoint(current_frame);

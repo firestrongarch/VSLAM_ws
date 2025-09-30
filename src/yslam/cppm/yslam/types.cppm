@@ -9,6 +9,7 @@ import lockfree;
 
 export namespace Yslam {
 
+class Frame;
 class MapPoint : public cv::Point3d {
 public:
     MapPoint() = delete;
@@ -21,6 +22,7 @@ public:
     const int ID;
     inline static int factory_id = 0;
     bool is_outlier = false;
+    std::list<std::weak_ptr<Frame>> obs; // Observing keyframes
 };
 
 class KeyPoint : public cv::KeyPoint {
@@ -161,8 +163,17 @@ public:
         return poses_vo_;
     }
 
-    MapPoints GetAllMapPoints();
-    KeyFrames GetAllKeyFrames();
+    void RemoveOutliers()
+    {
+        for (auto& [id, map_point] : all_map_points_) {
+            if (map_point->is_outlier) {
+                all_map_points_.erase(id);
+            }
+        }
+    }
+
+    // MapPoints GetAllMapPoints();
+    // KeyFrames GetAllKeyFrames();
 
     static auto& GetInstance()
     {
@@ -177,14 +188,13 @@ public:
     std::shared_ptr<Frame> ref_kf_ { nullptr };
 
     KeyFrames all_key_frames_;
-
-private:
-    Map() = default;
-
     MapPoints all_map_points_;
     MapPoints active_map_point_;
 
     KeyFrames active_key_frames_;
+
+private:
+    Map() = default;
 
     std::vector<cv::Mat> poses_vo_;
     unsigned int num_active_key_frames_;

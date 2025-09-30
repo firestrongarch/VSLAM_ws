@@ -14,6 +14,8 @@ export module implot3d;
 import std;
 
 export namespace ImGui {
+using ::ImGuiCond_;
+using ::ImVec2;
 using ImGui::Begin;
 using ImGui::BeginMenu;
 using ImGui::BeginMenuBar;
@@ -27,6 +29,8 @@ using ImGui::EndTabItem;
 using ImGui::GetTime;
 using ImGui::Image;
 using ImGui::MenuItem;
+using ImGui::SetNextWindowPos;
+using ImGui::SetNextWindowSize;
 using ImGui::Spacing;
 using ImGui::Text;
 using ImGui::TreeNode;

@@ -50,15 +50,14 @@ void Viewer::Run()
         }
     }
 
+    ImGui::SetNextWindowPos(ImGui::ImVec2(0, 0), ImGui::ImGuiCond_::ImGuiCond_FirstUseEver);
+    // ImGui::SetNextWindowSize(ImGui::ImVec2(640, 480), ImGui::ImGuiCond_::ImGuiCond_FirstUseEver);
     // 显示一个ImGui窗口
     ImGui::Begin("Camera Feed");
     ImGui::Text("Avg Odom FPS: %.2f", track_fps_);
     // 显示OpenCV图像
     ImPlot3D::ShowMat(image_kps);
     ImGui::End();
-
-    ImGui::Begin("ImPlot3D Demo");
-    ImGui::Spacing();
 
     auto poses_vo = Map::GetInstance().GetAllPosesVO();
     int size1 = poses_vo.size();
@@ -74,11 +73,23 @@ void Viewer::Run()
     int size2 = kfs.size();
     static double xs2[5000], ys2[5000], zs2[5000];
     for (int i = 0; i < size2; ++i) {
-        const auto& pose = kfs.at(i)->pose;
-        xs2[i] = pose.t.x;
-        ys2[i] = pose.t.y;
-        zs2[i] = pose.t.z;
+        const auto& pose = kfs.at(i)->T_wc;
+        xs2[i] = pose.at<double>(0, 3);
+        ys2[i] = pose.at<double>(1, 3);
+        zs2[i] = pose.at<double>(2, 3);
     }
+
+    // auto mps = Map::GetInstance().all_map_points_;
+    // int size3 = mps.size();
+    // static std::vector<double> xs3, ys3, zs3;
+    // for (auto [id, mp] : mps) {
+    //     xs3.push_back(mp->x);
+    //     ys3.push_back(mp->y);
+    //     zs3.push_back(mp->z);
+    // }
+
+    ImGui::Begin("ImPlot3D Demo");
+    ImGui::Spacing();
     if (ImPlot3D::BeginPlot("Line Plots")) {
         ImPlot3D::SetupBoxInitialRotation(360, 0);
         // ImPlot3D::SetupBoxRotation(0, 180);
@@ -90,6 +101,7 @@ void Viewer::Run()
         // ImPlot3D::SetNextMarkerStyle(ImPlot3D::ImPlot3DMarker_::ImPlot3DMarker_Circle);
         ImPlot3D::PlotLine("VO", xs1, ys1, zs1, size1);
         ImPlot3D::PlotLine("KF", xs2, ys2, zs2, size2);
+        // ImPlot3D::PlotScatter("Mps", xs3.data(), ys3.data(), zs3.data(), xs3.size());
         // ImPlot3D::PlotLine("g(x)", xs2, ys2, zs2, 20, ImPlot3D::ImPlot3DLineFlags_::ImPlot3DLineFlags_Segments);
         ImPlot3D::EndPlot();
     }
